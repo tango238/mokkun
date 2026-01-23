@@ -1,0 +1,7 @@
+/**
+ * Mokkun Theme Index
+ * Imports all built-in themes
+ */
+
+@import './light.css';
+@import './dark.css';

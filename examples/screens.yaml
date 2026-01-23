@@ -1,0 +1,110 @@
+view:
+  login:
+    title: "ログイン"
+    description: "システムにログインしてください"
+    fields:
+      - id: email
+        type: text
+        label: "メールアドレス"
+        placeholder: "example@example.com"
+        required: true
+      - id: password
+        type: text
+        label: "パスワード"
+        placeholder: "パスワードを入力"
+        required: true
+    actions:
+      - id: login
+        type: submit
+        label: "ログイン"
+        style: primary
+      - id: register_link
+        type: navigate
+        label: "新規登録はこちら"
+        to: register
+
+  register:
+    title: "新規登録"
+    description: "アカウントを作成してください"
+    fields:
+      - id: name
+        type: text
+        label: "名前"
+        placeholder: "山田 太郎"
+        required: true
+      - id: email
+        type: text
+        label: "メールアドレス"
+        placeholder: "example@example.com"
+        required: true
+      - id: password
+        type: text
+        label: "パスワード"
+        placeholder: "8文字以上"
+        required: true
+      - id: password_confirm
+        type: text
+        label: "パスワード（確認）"
+        placeholder: "もう一度入力"
+        required: true
+      - id: gender
+        type: radio_group
+        label: "性別"
+        options:
+          - label: "男性"
+            value: male
+          - label: "女性"
+            value: female
+          - label: "その他"
+            value: other
+      - id: interests
+        type: checkbox_group
+        label: "興味のある分野"
+        options:
+          - label: "テクノロジー"
+            value: tech
+          - label: "デザイン"
+            value: design
+          - label: "ビジネス"
+            value: business
+    actions:
+      - id: register
+        type: submit
+        label: "登録"
+        style: primary
+      - id: login_link
+        type: navigate
+        label: "ログインはこちら"
+        to: login
+
+  dashboard:
+    title: "ダッシュボード"
+    description: "ようこそ！"
+    fields:
+      - id: total_users
+        type: text
+        label: "総ユーザー数"
+        placeholder: "1,234"
+      - id: active_users
+        type: text
+        label: "アクティブユーザー"
+        placeholder: "567"
+      - id: theme_select
+        type: select
+        label: "テーマ選択"
+        options:
+          - label: "ライト"
+            value: light
+          - label: "ダーク"
+            value: dark
+    actions:
+      - id: settings
+        type: custom
+        label: "設定"
+        style: secondary
+        handler: handleSettings
+      - id: logout
+        type: custom
+        label: "ログアウト"
+        style: danger
+        handler: handleLogout

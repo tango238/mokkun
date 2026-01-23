@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mokkun - インラインYAMLサンプル</title>
+  <link rel="stylesheet" href="../dist/mokkun.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    .demo-header {
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #ddd;
+    }
+    .demo-header h1 {
+      margin: 0 0 10px 0;
+      font-size: 1.5rem;
+    }
+    .demo-header p {
+      margin: 0;
+      color: #666;
+    }
+    .controls {
+      margin-top: 10px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .controls button {
+      padding: 6px 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background: #fff;
+      cursor: pointer;
+    }
+    .controls button:hover {
+      background: #f0f0f0;
+    }
+    .controls button.active {
+      background: #007bff;
+      color: #fff;
+      border-color: #007bff;
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-header">
+    <h1>Mokkun インラインYAMLサンプル</h1>
+    <p>YAMLをJavaScript内で直接定義するサンプルです</p>
+    <div class="controls">
+      <strong>画面:</strong>
+      <button onclick="showScreen('contact')">お問い合わせ</button>
+      <button onclick="showScreen('survey')">アンケート</button>
+      <button onclick="showScreen('settings')">設定</button>
+      |
+      <strong>テーマ:</strong>
+      <button onclick="setTheme('light')">Light</button>
+      <button onclick="setTheme('dark')">Dark</button>
+    </div>
+  </div>
+
+  <div id="mokkun-app"></div>
+
+  <script type="module">
+    import { Mokkun } from '../dist/mokkun.esm.js';
+
+    // インラインでYAMLを定義
+    const yamlContent = `
+view:
+  contact:
+    title: "お問い合わせ"
+    description: "お気軽にお問い合わせください"
+    fields:
+      - id: name
+        type: text
+        label: "お名前"
+        placeholder: "山田 太郎"
+        required: true
+      - id: email
+        type: text
+        label: "メールアドレス"
+        placeholder: "example@example.com"
+        required: true
+      - id: category
+        type: select
+        label: "お問い合わせ種別"
+        options:
+          - label: "製品について"
+            value: product
+          - label: "サポートについて"
+            value: support
+          - label: "その他"
+            value: other
+      - id: message
+        type: textarea
+        label: "お問い合わせ内容"
+        placeholder: "詳細をご記入ください"
+        required: true
+    actions:
+      - id: send
+        type: submit
+        label: "送信"
+        style: primary
+      - id: clear
+        type: reset
+        label: "クリア"
+        style: secondary
+
+  survey:
+    title: "アンケート"
+    description: "サービス改善のためにご協力ください"
+    fields:
+      - id: satisfaction
+        type: radio_group
+        label: "サービスの満足度"
+        options:
+          - label: "とても満足"
+            value: "5"
+          - label: "満足"
+            value: "4"
+          - label: "普通"
+            value: "3"
+          - label: "不満"
+            value: "2"
+          - label: "とても不満"
+            value: "1"
+        required: true
+      - id: features
+        type: checkbox_group
+        label: "よく使う機能（複数選択可）"
+        options:
+          - label: "検索機能"
+            value: search
+          - label: "通知機能"
+            value: notification
+          - label: "レポート機能"
+            value: report
+          - label: "エクスポート機能"
+            value: export
+      - id: feedback
+        type: textarea
+        label: "ご意見・ご要望"
+        placeholder: "自由にご記入ください"
+    actions:
+      - id: submit
+        type: submit
+        label: "回答を送信"
+        style: primary
+
+  settings:
+    title: "設定"
+    description: "アプリケーションの設定を変更できます"
+    fields:
+      - id: language
+        type: select
+        label: "言語"
+        options:
+          - label: "日本語"
+            value: ja
+          - label: "English"
+            value: en
+      - id: items_per_page
+        type: number
+        label: "1ページあたりの表示件数"
+    actions:
+      - id: save
+        type: submit
+        label: "保存"
+        style: primary
+      - id: reset
+        type: reset
+        label: "デフォルトに戻す"
+        style: secondary
+`;
+
+    let mokkunInstance = null;
+
+    const instance = await Mokkun.init({
+      container: '#mokkun-app',
+      yamlContent: yamlContent,
+      theme: 'light',
+      onReady: (inst) => {
+        mokkunInstance = inst;
+        console.log('Mokkun ready');
+        console.log('Available screens:', inst.getScreenNames());
+      },
+      onError: (error) => {
+        console.error('Mokkun error:', error);
+        document.getElementById('mokkun-app').innerHTML =
+          '<p style="color: red;">Error: ' + error.message + '</p>';
+      }
+    });
+
+    mokkunInstance = instance;
+
+    // 画面切り替え関数をグローバルに公開
+    window.showScreen = (screenName) => {
+      if (mokkunInstance) {
+        mokkunInstance.showScreen(screenName);
+        console.log('Screen changed to:', screenName);
+      }
+    };
+
+    // テーマ切り替え関数をグローバルに公開
+    window.setTheme = (theme) => {
+      if (mokkunInstance) {
+        mokkunInstance.setTheme(theme);
+        console.log('Theme changed to:', theme);
+      }
+    };
+  </script>
+</body>
+</html>

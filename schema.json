@@ -1,0 +1,1726 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mokkun.dev/schema.json",
+  "title": "Mokkun YAML Schema",
+  "description": "mokkunプロジェクトの入力YAMLファイル形式のJSON Schema定義",
+  "type": "object",
+  "required": ["view"],
+  "properties": {
+    "view": {
+      "description": "画面定義（オブジェクト形式または配列形式）",
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/ScreenDefinition"
+          }
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ScreenDefinitionWithName"
+          }
+        }
+      ]
+    },
+    "common_components": {
+      "description": "共通コンポーネント定義",
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/CommonComponent"
+          }
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CommonComponentRaw"
+          }
+        }
+      ]
+    },
+    "validations": {
+      "description": "共通バリデーション定義",
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/ValidationRule"
+          }
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ValidationRuleRaw"
+          }
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "ScreenDefinition": {
+      "type": "object",
+      "required": ["title"],
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "画面タイトル"
+        },
+        "description": {
+          "type": "string",
+          "description": "画面の説明"
+        },
+        "actor": {
+          "type": "string",
+          "description": "アクター（この画面を使用するユーザー種別）"
+        },
+        "purpose": {
+          "type": "string",
+          "description": "画面の目的"
+        },
+        "navigation": {
+          "$ref": "#/$defs/NavigationSetting"
+        },
+        "wizard": {
+          "$ref": "#/$defs/WizardConfig"
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/FormSection"
+          },
+          "description": "フォームセクション"
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/InputField"
+          },
+          "description": "入力フィールドのリスト"
+        },
+        "input_fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/InputField"
+          },
+          "description": "入力フィールド（配列形式の別名）"
+        },
+        "display_fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "表示フィールド"
+        },
+        "filters": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "フィルター"
+        },
+        "tabs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "タブ設定"
+        },
+        "integration": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "連携サービス"
+        },
+        "related_models": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "関連モデル"
+        },
+        "related_usecases": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "関連ユースケース"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              { "$ref": "#/$defs/Action" },
+              { "type": "string" }
+            ]
+          },
+          "description": "画面上のアクション"
+        },
+        "layout": {
+          "$ref": "#/$defs/LayoutConfig"
+        },
+        "validations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ScreenValidation"
+          },
+          "description": "画面固有バリデーション"
+        }
+      }
+    },
+    "ScreenDefinitionWithName": {
+      "allOf": [
+        { "$ref": "#/$defs/ScreenDefinition" },
+        {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "画面名（配列形式の場合のキー）"
+            }
+          }
+        }
+      ],
+      "anyOf": [
+        { "required": ["title"] },
+        { "required": ["name"] }
+      ]
+    },
+    "NavigationSetting": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "ナビゲーションタイプ"
+        },
+        "description": {
+          "type": "string",
+          "description": "説明"
+        }
+      }
+    },
+    "FormSection": {
+      "type": "object",
+      "required": ["section_name"],
+      "properties": {
+        "section_name": {
+          "type": "string",
+          "description": "セクション名"
+        },
+        "icon": {
+          "type": "string",
+          "description": "アイコン"
+        },
+        "publish_toggle": {
+          "type": "boolean",
+          "description": "公開トグル"
+        },
+        "input_fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/InputField"
+          },
+          "description": "入力フィールド"
+        }
+      }
+    },
+    "WizardConfig": {
+      "type": "object",
+      "required": ["steps"],
+      "properties": {
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/WizardStep"
+          },
+          "description": "ウィザードのステップ"
+        },
+        "layout": {
+          "type": "string",
+          "enum": ["horizontal", "vertical"],
+          "description": "レイアウトタイプ（水平/垂直）"
+        },
+        "validate_on_step": {
+          "type": "boolean",
+          "description": "ステップ間でのバリデーション"
+        },
+        "allow_back": {
+          "type": "boolean",
+          "description": "戻るボタンを許可するか"
+        },
+        "show_progress": {
+          "type": "boolean",
+          "description": "プログレスバーを表示するか"
+        },
+        "clickable_steps": {
+          "type": "boolean",
+          "description": "クリック可能なステップ（過去ステップへの戻り）"
+        },
+        "activeIndex": {
+          "type": "integer",
+          "description": "現在のステップインデックス（0始まり）"
+        }
+      }
+    },
+    "WizardStep": {
+      "type": "object",
+      "required": ["id", "title", "fields"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "ステップID"
+        },
+        "title": {
+          "type": "string",
+          "description": "ステップ名（メインラベル）"
+        },
+        "subtitle": {
+          "type": "string",
+          "description": "サブタイトル（補足テキスト）"
+        },
+        "description": {
+          "type": "string",
+          "description": "ステップの説明"
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/InputField"
+          },
+          "description": "このステップの入力フィールド"
+        },
+        "next_condition": {
+          "$ref": "#/$defs/Condition",
+          "description": "次のステップに進む条件"
+        },
+        "status": {
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": ["pending", "completed", "error", "warning", "closed"]
+            },
+            {
+              "type": "object",
+              "required": ["type", "text"],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["pending", "completed", "error", "warning", "closed"]
+                },
+                "text": {
+                  "type": "string"
+                }
+              }
+            }
+          ],
+          "description": "ステップのステータス"
+        },
+        "skippable": {
+          "type": "boolean",
+          "description": "スキップ可能か"
+        }
+      }
+    },
+    "LayoutConfig": {
+      "type": "object",
+      "properties": {
+        "columns": {
+          "type": "integer",
+          "description": "カラム数"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["form", "grid", "stack", "tabs"],
+          "description": "レイアウトタイプ"
+        },
+        "gap": {
+          "type": "string",
+          "description": "余白"
+        }
+      }
+    },
+    "InputField": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "フィールドID"
+        },
+        "field_name": {
+          "type": "string",
+          "description": "フィールド名（配列形式のIDとして使用）"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "text",
+            "number",
+            "textarea",
+            "select",
+            "multi_select",
+            "combobox",
+            "radio_group",
+            "checkbox",
+            "checkbox_group",
+            "date_picker",
+            "time_picker",
+            "duration_picker",
+            "duration_input",
+            "file_upload",
+            "repeater",
+            "data_table",
+            "google_map_embed",
+            "photo_manager",
+            "toggle",
+            "image_uploader",
+            "badge",
+            "heading",
+            "tooltip",
+            "pagination",
+            "float_area",
+            "loader"
+          ],
+          "description": "フィールドタイプ"
+        },
+        "label": {
+          "type": "string",
+          "description": "ラベル"
+        },
+        "description": {
+          "type": "string",
+          "description": "説明/ヘルプテキスト"
+        },
+        "required": {
+          "type": "boolean",
+          "description": "必須かどうか"
+        },
+        "disabled": {
+          "type": "boolean",
+          "description": "無効化"
+        },
+        "readonly": {
+          "type": "boolean",
+          "description": "読み取り専用"
+        },
+        "placeholder": {
+          "type": "string",
+          "description": "プレースホルダー"
+        },
+        "default": {
+          "description": "デフォルト値"
+        },
+        "validation": {
+          "oneOf": [
+            { "$ref": "#/$defs/FieldValidation" },
+            { "type": "string" }
+          ],
+          "description": "バリデーションルール"
+        },
+        "visible_when": {
+          "$ref": "#/$defs/Condition",
+          "description": "表示条件"
+        },
+        "class": {
+          "type": "string",
+          "description": "CSSクラス"
+        },
+        "min_length": {
+          "type": "integer",
+          "description": "最小文字数（text, textarea用）"
+        },
+        "max_length": {
+          "type": "integer",
+          "description": "最大文字数（text, textarea用）"
+        },
+        "pattern": {
+          "type": "string",
+          "description": "入力パターン（正規表現、text用）"
+        },
+        "input_type": {
+          "type": "string",
+          "enum": ["text", "email", "url", "tel", "password"],
+          "description": "入力タイプ（text用）"
+        },
+        "min": {
+          "type": "number",
+          "description": "最小値（number用）"
+        },
+        "max": {
+          "type": "number",
+          "description": "最大値（number用）"
+        },
+        "step": {
+          "type": "number",
+          "description": "ステップ（number用）"
+        },
+        "unit": {
+          "type": "string",
+          "description": "単位表示（number用）"
+        },
+        "rows": {
+          "type": "integer",
+          "description": "行数（textarea用）"
+        },
+        "resizable": {
+          "type": "boolean",
+          "description": "リサイズ可能か（textarea用）"
+        },
+        "options": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  { "$ref": "#/$defs/SelectOption" },
+                  { "type": "string" }
+                ]
+              }
+            },
+            { "type": "string" }
+          ],
+          "description": "選択肢（select, multi_select, radio_group, checkbox_group用）"
+        },
+        "searchable": {
+          "type": "boolean",
+          "description": "検索可能か（select, multi_select用）"
+        },
+        "clearable": {
+          "type": "boolean",
+          "description": "クリア可能か（select用）"
+        },
+        "min_selections": {
+          "type": "integer",
+          "description": "最小選択数（multi_select, checkbox_group用）"
+        },
+        "max_selections": {
+          "type": "integer",
+          "description": "最大選択数（multi_select, checkbox_group用）"
+        },
+        "direction": {
+          "type": "string",
+          "enum": ["horizontal", "vertical"],
+          "description": "レイアウト方向（radio_group, checkbox_group用）"
+        },
+        "format": {
+          "type": "string",
+          "description": "フォーマット（date_picker, time_picker, duration_input用）"
+        },
+        "min_date": {
+          "type": "string",
+          "description": "最小日付（date_picker用）"
+        },
+        "max_date": {
+          "type": "string",
+          "description": "最大日付（date_picker用）"
+        },
+        "include_time": {
+          "type": "boolean",
+          "description": "時間も含めるか（date_picker用）"
+        },
+        "minute_step": {
+          "type": "integer",
+          "description": "分のステップ（time_picker用）"
+        },
+        "use_24_hour": {
+          "type": "boolean",
+          "description": "24時間表記か（time_picker用）"
+        },
+        "units": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["hours", "minutes", "seconds", "days"]
+          },
+          "description": "選択可能な単位（duration_picker用）"
+        },
+        "min_duration": {
+          "type": "integer",
+          "description": "最小期間（秒、duration_picker用）"
+        },
+        "max_duration": {
+          "type": "integer",
+          "description": "最大期間（秒、duration_picker用）"
+        },
+        "display_unit": {
+          "type": "string",
+          "enum": ["hours", "minutes", "seconds"],
+          "description": "表示単位（duration_input用）"
+        },
+        "accept": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "許可するファイルタイプ（file_upload用）"
+        },
+        "accepted_types": {
+          "type": "string",
+          "description": "許可するファイルタイプ（文字列形式）"
+        },
+        "max_size": {
+          "type": "integer",
+          "description": "最大ファイルサイズ（バイト、file_upload用）"
+        },
+        "multiple": {
+          "type": "boolean",
+          "description": "複数ファイル許可（file_upload用）"
+        },
+        "max_files": {
+          "type": "integer",
+          "description": "最大ファイル数（file_upload, image_uploader用）"
+        },
+        "drag_drop": {
+          "type": "boolean",
+          "description": "ドラッグ&ドロップ許可（file_upload用）"
+        },
+        "storage": {
+          "type": "string",
+          "description": "ストレージパス"
+        },
+        "item_fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/InputField"
+          },
+          "description": "繰り返す入力フィールド群（repeater用）"
+        },
+        "min_items": {
+          "type": "integer",
+          "description": "最小アイテム数（repeater用）"
+        },
+        "max_items": {
+          "type": "integer",
+          "description": "最大アイテム数（repeater用）"
+        },
+        "add_button_label": {
+          "type": "string",
+          "description": "追加ボタンのラベル（repeater用）"
+        },
+        "show_remove_button": {
+          "type": "boolean",
+          "description": "削除ボタンを表示（repeater用）"
+        },
+        "sortable": {
+          "type": "boolean",
+          "description": "並べ替え可能（repeater用）"
+        },
+        "columns": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/DataTableColumn"
+              }
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "description": "カラム定義（data_table用）またはカラム数（photo_manager用）"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DataTableRow"
+          },
+          "description": "静的データ（data_table用）"
+        },
+        "selection": {
+          "type": "string",
+          "enum": ["none", "single", "multiple"],
+          "description": "行選択モード（data_table用）"
+        },
+        "row_actions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DataTableRowAction"
+          },
+          "description": "行アクション（data_table用）"
+        },
+        "default_sort": {
+          "$ref": "#/$defs/DataTableSortConfig",
+          "description": "デフォルトのソート設定（data_table用）"
+        },
+        "pagination": {
+          "$ref": "#/$defs/DataTablePaginationConfig",
+          "description": "ページネーション設定（data_table用）"
+        },
+        "filters": {
+          "$ref": "#/$defs/DataTableFilterConfig",
+          "description": "フィルター設定（data_table用）"
+        },
+        "empty_state": {
+          "$ref": "#/$defs/DataTableEmptyState",
+          "description": "空状態の設定（data_table用）"
+        },
+        "height": {
+          "type": "string",
+          "description": "高さ（data_table, google_map_embed用）"
+        },
+        "width": {
+          "type": "string",
+          "description": "幅（google_map_embed用）"
+        },
+        "striped": {
+          "type": "boolean",
+          "description": "ストライプ行を有効にするか（data_table用）"
+        },
+        "hoverable": {
+          "type": "boolean",
+          "description": "ホバー効果を有効にするか（data_table用）"
+        },
+        "bordered": {
+          "type": "boolean",
+          "description": "枠線を表示するか（data_table用）"
+        },
+        "compact": {
+          "type": "boolean",
+          "description": "コンパクトモード（data_table用）"
+        },
+        "responsive": {
+          "type": "boolean",
+          "description": "レスポンシブモード（data_table用）"
+        },
+        "fixed_header": {
+          "oneOf": [
+            { "$ref": "#/$defs/DataTableFixedHeaderConfig" },
+            { "type": "boolean" }
+          ],
+          "description": "固定ヘッダー設定（data_table用）"
+        },
+        "grouping": {
+          "$ref": "#/$defs/DataTableGroupConfig",
+          "description": "行グループ化設定（data_table用）"
+        },
+        "column_resize": {
+          "oneOf": [
+            { "$ref": "#/$defs/DataTableResizeConfig" },
+            { "type": "boolean" }
+          ],
+          "description": "列リサイズ設定（data_table用）"
+        },
+        "table_layout": {
+          "type": "string",
+          "enum": ["auto", "fixed"],
+          "description": "テーブルのレイアウト（data_table用）"
+        },
+        "show_open_link": {
+          "type": "boolean",
+          "description": "「Googleマップで開く」リンクを表示（google_map_embed用）"
+        },
+        "zoom": {
+          "type": "integer",
+          "description": "ズームレベル（google_map_embed用）"
+        },
+        "photos": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PhotoConfig"
+          },
+          "description": "写真リスト（photo_manager用）"
+        },
+        "max_photos": {
+          "type": "integer",
+          "description": "最大写真枚数（photo_manager用）"
+        },
+        "max_file_size": {
+          "type": "integer",
+          "description": "最大ファイルサイズ（MB、photo_manager用）またはバイト（image_uploader用）"
+        },
+        "accepted_formats": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "対応フォーマット（photo_manager, image_uploader用）"
+        },
+        "checked_label": {
+          "type": "string",
+          "description": "チェック時のラベル（toggle用）"
+        },
+        "unchecked_label": {
+          "type": "string",
+          "description": "非チェック時のラベル（toggle用）"
+        },
+        "size": {
+          "type": "string",
+          "enum": ["small", "medium", "large"],
+          "description": "サイズ（toggle用）"
+        },
+        "name": {
+          "type": "string",
+          "description": "name属性（toggle用）"
+        },
+        "min_files": {
+          "type": "integer",
+          "description": "最小ファイル数（image_uploader用）"
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["single", "multi"],
+          "description": "選択モード（combobox用）"
+        },
+        "async_loader": {
+          "type": "string",
+          "description": "非同期ローダーエンドポイント（combobox用）"
+        },
+        "min_search_length": {
+          "type": "integer",
+          "description": "最小検索文字数（combobox用）"
+        },
+        "debounce_ms": {
+          "type": "integer",
+          "description": "デバウンス遅延（ms、combobox用）"
+        },
+        "no_options_message": {
+          "type": "string",
+          "description": "オプションなしメッセージ（combobox用）"
+        },
+        "loading_message": {
+          "type": "string",
+          "description": "ローディングメッセージ（combobox用）"
+        },
+        "label_position": {
+          "type": "string",
+          "enum": ["left", "right"],
+          "description": "ラベル位置（checkbox, toggle用）"
+        },
+        "color": {
+          "type": "string",
+          "enum": ["gray", "blue", "green", "yellow", "red"],
+          "description": "カラー（badge用）"
+        },
+        "dot": {
+          "type": "boolean",
+          "description": "dot表示モード（badge用）"
+        },
+        "count": {
+          "type": "integer",
+          "description": "表示する数値（badge用）"
+        },
+        "max_count": {
+          "type": "integer",
+          "description": "カウント表示の上限（badge用）"
+        },
+        "text": {
+          "type": "string",
+          "description": "テキストコンテンツ（badge用）"
+        },
+        "level": {
+          "type": "integer",
+          "enum": [1, 2, 3, 4, 5, 6],
+          "description": "見出しレベル（heading用）"
+        },
+        "align": {
+          "type": "string",
+          "enum": ["left", "center", "right"],
+          "description": "テキスト配置（heading, pagination用）"
+        },
+        "content": {
+          "type": "string",
+          "description": "ツールチップのコンテンツ（tooltip用）"
+        },
+        "position": {
+          "type": "string",
+          "enum": ["top", "bottom", "left", "right"],
+          "description": "位置（tooltip, float_area用）"
+        },
+        "delay": {
+          "type": "integer",
+          "description": "遅延表示時間（ミリ秒、tooltip用）"
+        },
+        "show_arrow": {
+          "type": "boolean",
+          "description": "矢印を表示するか（tooltip用）"
+        },
+        "is_html": {
+          "type": "boolean",
+          "description": "HTMLコンテンツとして解釈するか（tooltip用）"
+        },
+        "max_width": {
+          "type": "string",
+          "description": "最大幅（tooltip用）"
+        },
+        "total_items": {
+          "type": "integer",
+          "description": "総アイテム数（pagination用）"
+        },
+        "current_page": {
+          "type": "integer",
+          "description": "現在のページ（pagination用）"
+        },
+        "page_size": {
+          "type": "integer",
+          "description": "1ページあたりのアイテム数（pagination用）"
+        },
+        "page_size_options": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          },
+          "description": "ページサイズの選択肢（pagination用）"
+        },
+        "show_page_size_selector": {
+          "type": "boolean",
+          "description": "ページサイズ選択を表示するか（pagination用）"
+        },
+        "show_item_count": {
+          "type": "boolean",
+          "description": "表示件数を表示するか（pagination用）"
+        },
+        "show_jump_buttons": {
+          "type": "boolean",
+          "description": "最初/最後へのジャンプボタンを表示するか（pagination用）"
+        },
+        "max_page_buttons": {
+          "type": "integer",
+          "description": "ページ番号ボタンの最大表示数（pagination用）"
+        },
+        "show_shadow": {
+          "type": "boolean",
+          "description": "影を表示するか（float_area用）"
+        },
+        "show_border": {
+          "type": "boolean",
+          "description": "ボーダーを表示するか（float_area用）"
+        },
+        "z_index": {
+          "type": "integer",
+          "description": "z-index（float_area用）"
+        },
+        "sticky": {
+          "type": "boolean",
+          "description": "sticky配置を使用（float_area用）"
+        },
+        "float_align": {
+          "type": "string",
+          "enum": ["left", "center", "right", "space-between"],
+          "description": "コンテンツの配置（float_area用）"
+        },
+        "padding": {
+          "type": "string",
+          "description": "コンテンツのパディング（float_area用）"
+        },
+        "gap": {
+          "type": "string",
+          "description": "コンテンツ間のギャップ（float_area用）"
+        },
+        "aria_label": {
+          "type": "string",
+          "description": "アクセシビリティ用ラベル（float_area用）"
+        },
+        "loader_size": {
+          "type": "string",
+          "enum": ["small", "medium", "large"],
+          "description": "サイズ（loader用）"
+        },
+        "loader_type": {
+          "type": "string",
+          "enum": ["primary", "light"],
+          "description": "カラータイプ（loader用）"
+        },
+        "overlay": {
+          "type": "boolean",
+          "description": "フルスクリーンオーバーレイ（loader用）"
+        },
+        "show_progress": {
+          "type": "boolean",
+          "description": "プログレスバーを表示（loader用）"
+        },
+        "initial_progress": {
+          "type": "integer",
+          "description": "初期プログレス値（loader用）"
+        }
+      }
+    },
+    "SelectOption": {
+      "type": "object",
+      "required": ["value", "label"],
+      "properties": {
+        "value": {
+          "oneOf": [
+            { "type": "string" },
+            { "type": "number" }
+          ],
+          "description": "値"
+        },
+        "label": {
+          "type": "string",
+          "description": "表示ラベル"
+        },
+        "disabled": {
+          "type": "boolean",
+          "description": "無効化"
+        },
+        "group": {
+          "type": "string",
+          "description": "グループ"
+        },
+        "icon": {
+          "type": "string",
+          "description": "アイコン"
+        },
+        "description": {
+          "type": "string",
+          "description": "説明"
+        }
+      }
+    },
+    "FieldValidation": {
+      "type": "object",
+      "properties": {
+        "required": {
+          "oneOf": [
+            { "type": "boolean" },
+            { "type": "string" }
+          ],
+          "description": "必須"
+        },
+        "min": {
+          "oneOf": [
+            { "type": "number" },
+            { "type": "string" }
+          ],
+          "description": "最小長/最小値"
+        },
+        "max": {
+          "oneOf": [
+            { "type": "number" },
+            { "type": "string" }
+          ],
+          "description": "最大長/最大値"
+        },
+        "pattern": {
+          "oneOf": [
+            { "type": "string" },
+            {
+              "type": "object",
+              "required": ["regex", "message"],
+              "properties": {
+                "regex": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          ],
+          "description": "パターン（正規表現）"
+        },
+        "custom": {
+          "type": "string",
+          "description": "カスタムバリデーター"
+        },
+        "message": {
+          "type": "string",
+          "description": "エラーメッセージ"
+        }
+      }
+    },
+    "Action": {
+      "type": "object",
+      "required": ["id", "type", "label"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "アクションID"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["submit", "navigate", "custom", "reset"],
+          "description": "アクションタイプ"
+        },
+        "label": {
+          "type": "string",
+          "description": "ラベル"
+        },
+        "icon": {
+          "type": "string",
+          "description": "アイコン"
+        },
+        "style": {
+          "type": "string",
+          "enum": ["primary", "secondary", "danger", "link"],
+          "description": "スタイル"
+        },
+        "disabled_when": {
+          "$ref": "#/$defs/Condition",
+          "description": "無効化条件"
+        },
+        "confirm": {
+          "$ref": "#/$defs/ConfirmConfig",
+          "description": "確認ダイアログ"
+        },
+        "url": {
+          "type": "string",
+          "description": "送信先URL（submit用）"
+        },
+        "method": {
+          "type": "string",
+          "enum": ["GET", "POST", "PUT", "DELETE", "PATCH"],
+          "description": "HTTPメソッド（submit用）"
+        },
+        "on_success": {
+          "$ref": "#/$defs/NavigationConfig",
+          "description": "成功時の遷移先（submit用）"
+        },
+        "on_error": {
+          "$ref": "#/$defs/ErrorHandlerConfig",
+          "description": "失敗時のアクション（submit用）"
+        },
+        "to": {
+          "type": "string",
+          "description": "遷移先（navigate用）"
+        },
+        "params": {
+          "type": "object",
+          "description": "パラメータ（navigate, custom用）"
+        },
+        "handler": {
+          "type": "string",
+          "description": "カスタムハンドラー名（custom用）"
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "リセット対象のフィールド（reset用）"
+        }
+      }
+    },
+    "ConfirmConfig": {
+      "type": "object",
+      "required": ["title", "message"],
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "タイトル"
+        },
+        "message": {
+          "type": "string",
+          "description": "メッセージ"
+        },
+        "confirm_label": {
+          "type": "string",
+          "description": "確認ボタンのラベル"
+        },
+        "cancel_label": {
+          "type": "string",
+          "description": "キャンセルボタンのラベル"
+        }
+      }
+    },
+    "NavigationConfig": {
+      "type": "object",
+      "required": ["to"],
+      "properties": {
+        "to": {
+          "type": "string",
+          "description": "遷移先"
+        },
+        "params": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "パラメータ"
+        },
+        "message": {
+          "type": "string",
+          "description": "メッセージ"
+        }
+      }
+    },
+    "ErrorHandlerConfig": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "description": "エラーメッセージ"
+        },
+        "retry": {
+          "type": "boolean",
+          "description": "リトライ可能か"
+        },
+        "redirect": {
+          "type": "string",
+          "description": "リダイレクト先"
+        }
+      }
+    },
+    "Condition": {
+      "oneOf": [
+        { "$ref": "#/$defs/SimpleCondition" },
+        { "$ref": "#/$defs/AndCondition" },
+        { "$ref": "#/$defs/OrCondition" },
+        { "$ref": "#/$defs/NotCondition" }
+      ]
+    },
+    "SimpleCondition": {
+      "type": "object",
+      "required": ["field", "operator"],
+      "properties": {
+        "field": {
+          "type": "string",
+          "description": "対象フィールド"
+        },
+        "operator": {
+          "type": "string",
+          "enum": ["eq", "ne", "gt", "gte", "lt", "lte", "in", "not_in", "contains", "empty", "not_empty"],
+          "description": "演算子"
+        },
+        "value": {
+          "description": "比較値"
+        }
+      }
+    },
+    "AndCondition": {
+      "type": "object",
+      "required": ["and"],
+      "properties": {
+        "and": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Condition"
+          },
+          "description": "AND条件"
+        }
+      }
+    },
+    "OrCondition": {
+      "type": "object",
+      "required": ["or"],
+      "properties": {
+        "or": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Condition"
+          },
+          "description": "OR条件"
+        }
+      }
+    },
+    "NotCondition": {
+      "type": "object",
+      "required": ["not"],
+      "properties": {
+        "not": {
+          "$ref": "#/$defs/Condition",
+          "description": "NOT条件"
+        }
+      }
+    },
+    "CommonComponent": {
+      "type": "object",
+      "required": ["name", "type"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "コンポーネント名"
+        },
+        "description": {
+          "type": "string",
+          "description": "説明"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["field_group", "action_group", "layout", "template"],
+          "description": "コンポーネントタイプ"
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/InputField"
+          },
+          "description": "フィールド定義（field_groupの場合）"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Action"
+          },
+          "description": "アクション定義（action_groupの場合）"
+        },
+        "layout": {
+          "$ref": "#/$defs/LayoutConfig",
+          "description": "レイアウト設定（layoutの場合）"
+        },
+        "template": {
+          "type": "string",
+          "description": "テンプレート（templateの場合）"
+        },
+        "params": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ComponentParam"
+          },
+          "description": "パラメータ定義"
+        }
+      }
+    },
+    "CommonComponentRaw": {
+      "type": "object",
+      "required": ["component_name"],
+      "properties": {
+        "component_name": {
+          "type": "string",
+          "description": "コンポーネント名"
+        },
+        "description": {
+          "type": "string",
+          "description": "説明"
+        },
+        "used_in": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "使用箇所"
+        }
+      }
+    },
+    "ComponentParam": {
+      "type": "object",
+      "required": ["name", "type"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "パラメータ名"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["string", "number", "boolean", "array", "object"],
+          "description": "型"
+        },
+        "required": {
+          "type": "boolean",
+          "description": "必須か"
+        },
+        "default": {
+          "description": "デフォルト値"
+        }
+      }
+    },
+    "ValidationRule": {
+      "type": "object",
+      "required": ["name", "rules"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "ルール名"
+        },
+        "rules": {
+          "$ref": "#/$defs/FieldValidation",
+          "description": "バリデーション定義"
+        },
+        "message": {
+          "type": "string",
+          "description": "エラーメッセージ"
+        }
+      }
+    },
+    "ValidationRuleRaw": {
+      "type": "object",
+      "required": ["field", "rule"],
+      "properties": {
+        "field": {
+          "type": "string",
+          "description": "フィールド名"
+        },
+        "rule": {
+          "type": "string",
+          "description": "ルール"
+        }
+      }
+    },
+    "ScreenValidation": {
+      "type": "object",
+      "required": ["field", "rule"],
+      "properties": {
+        "field": {
+          "type": "string",
+          "description": "フィールド名"
+        },
+        "rule": {
+          "type": "string",
+          "description": "ルール"
+        }
+      }
+    },
+    "DataTableColumn": {
+      "type": "object",
+      "required": ["id", "label"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "カラムID"
+        },
+        "label": {
+          "type": "string",
+          "description": "カラムヘッダーラベル"
+        },
+        "field": {
+          "type": "string",
+          "description": "データフィールドキー（省略時はidを使用）"
+        },
+        "width": {
+          "type": "string",
+          "description": "カラム幅（px, %、またはauto）"
+        },
+        "min_width": {
+          "type": "string",
+          "description": "最小カラム幅（リサイズ時、px）"
+        },
+        "max_width": {
+          "type": "string",
+          "description": "最大カラム幅（リサイズ時、px）"
+        },
+        "resizable": {
+          "type": "boolean",
+          "description": "リサイズ可能か"
+        },
+        "sortable": {
+          "type": "boolean",
+          "description": "ソート可能か"
+        },
+        "filterable": {
+          "type": "boolean",
+          "description": "フィルタリング可能か"
+        },
+        "format": {
+          "type": "string",
+          "enum": ["text", "number", "date", "datetime", "currency", "status"],
+          "description": "表示フォーマット"
+        },
+        "status_map": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["label", "color"],
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "color": {
+                "type": "string",
+                "enum": ["success", "warning", "danger", "info", "default"]
+              }
+            }
+          },
+          "description": "ステータスフォーマット用のマッピング"
+        },
+        "currency_format": {
+          "type": "object",
+          "properties": {
+            "locale": {
+              "type": "string"
+            },
+            "currency": {
+              "type": "string"
+            }
+          },
+          "description": "通貨フォーマット用の設定"
+        },
+        "align": {
+          "type": "string",
+          "enum": ["left", "center", "right"],
+          "description": "テキストの配置"
+        },
+        "fixed": {
+          "type": "string",
+          "enum": ["left", "right"],
+          "description": "固定カラム"
+        },
+        "colspan": {
+          "type": "integer",
+          "description": "ヘッダーセルの結合数（colspan）"
+        },
+        "rowspan": {
+          "type": "integer",
+          "description": "ヘッダーセルの行結合数（rowspan）"
+        }
+      }
+    },
+    "DataTableRow": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "oneOf": [
+            { "type": "string" },
+            { "type": "number" }
+          ],
+          "description": "行ID（ユニーク）"
+        }
+      },
+      "additionalProperties": true
+    },
+    "DataTableRowAction": {
+      "type": "object",
+      "required": ["id", "label"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "アクションID"
+        },
+        "label": {
+          "type": "string",
+          "description": "アクションラベル"
+        },
+        "icon": {
+          "type": "string",
+          "description": "アイコン（オプション）"
+        },
+        "style": {
+          "type": "string",
+          "enum": ["primary", "secondary", "danger", "link"],
+          "description": "スタイル"
+        },
+        "confirm": {
+          "$ref": "#/$defs/ConfirmConfig",
+          "description": "確認ダイアログ"
+        },
+        "handler": {
+          "type": "string",
+          "description": "ハンドラー名（カスタムアクション用）"
+        }
+      }
+    },
+    "DataTableSortConfig": {
+      "type": "object",
+      "required": ["column", "direction"],
+      "properties": {
+        "column": {
+          "type": "string",
+          "description": "ソートするカラムID"
+        },
+        "direction": {
+          "type": "string",
+          "enum": ["asc", "desc"],
+          "description": "ソート方向"
+        }
+      }
+    },
+    "DataTablePaginationConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "ページネーションを有効にするか"
+        },
+        "page_size": {
+          "type": "integer",
+          "description": "1ページあたりの行数"
+        },
+        "page_size_options": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          },
+          "description": "ページサイズの選択肢"
+        },
+        "current_page": {
+          "type": "integer",
+          "description": "現在のページ（0始まり）"
+        },
+        "total_count": {
+          "type": "integer",
+          "description": "総件数（サーバーサイドページング用）"
+        }
+      }
+    },
+    "DataTableFilterConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "フィルターを有効にするか"
+        },
+        "show_search": {
+          "type": "boolean",
+          "description": "キーワード検索を表示するか"
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DataTableFilterField"
+          },
+          "description": "フィルターフィールド"
+        },
+        "layout": {
+          "type": "string",
+          "enum": ["inline", "stacked"],
+          "description": "フィルターのレイアウト"
+        }
+      }
+    },
+    "DataTableFilterField": {
+      "type": "object",
+      "required": ["id", "label", "column", "type"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "フィルターID"
+        },
+        "label": {
+          "type": "string",
+          "description": "フィルターラベル"
+        },
+        "column": {
+          "type": "string",
+          "description": "対象のカラムID"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["text", "select", "date_range", "number_range"],
+          "description": "フィルタータイプ"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SelectOption"
+          },
+          "description": "選択肢（selectタイプ用）"
+        },
+        "placeholder": {
+          "type": "string",
+          "description": "プレースホルダー"
+        }
+      }
+    },
+    "DataTableEmptyState": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "空状態のタイトル"
+        },
+        "description": {
+          "type": "string",
+          "description": "空状態の説明"
+        },
+        "icon": {
+          "type": "string",
+          "description": "空状態のアイコン"
+        },
+        "action": {
+          "type": "object",
+          "required": ["label", "handler"],
+          "properties": {
+            "label": {
+              "type": "string"
+            },
+            "handler": {
+              "type": "string"
+            }
+          },
+          "description": "空状態のアクション"
+        }
+      }
+    },
+    "PhotoConfig": {
+      "type": "object",
+      "required": ["id", "src"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "写真ID"
+        },
+        "src": {
+          "type": "string",
+          "description": "画像URL"
+        },
+        "alt": {
+          "type": "string",
+          "description": "代替テキスト"
+        },
+        "is_main": {
+          "type": "boolean",
+          "description": "メイン写真かどうか"
+        }
+      }
+    },
+    "DataTableCellMerge": {
+      "type": "object",
+      "properties": {
+        "colspan": {
+          "type": "integer",
+          "description": "列方向の結合数"
+        },
+        "rowspan": {
+          "type": "integer",
+          "description": "行方向の結合数"
+        },
+        "hidden": {
+          "type": "boolean",
+          "description": "このセルが他のセルに結合されている（非表示）"
+        }
+      }
+    },
+    "DataTableGroupConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "グループ化を有効にするか"
+        },
+        "field": {
+          "type": "string",
+          "description": "グループのフィールドキー"
+        },
+        "header_renderer": {
+          "type": "string",
+          "description": "グループヘッダーをカスタマイズする関数名"
+        },
+        "default_expanded": {
+          "type": "boolean",
+          "description": "グループの初期展開状態"
+        },
+        "collapsible": {
+          "type": "boolean",
+          "description": "折りたたみ可能か"
+        }
+      }
+    },
+    "DataTableFixedHeaderConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "固定ヘッダーを有効にするか"
+        },
+        "offset": {
+          "type": "integer",
+          "description": "固定時のオフセット（px）"
+        }
+      }
+    },
+    "DataTableResizeConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "列リサイズを有効にするか"
+        },
+        "min_width": {
+          "type": "integer",
+          "description": "最小カラム幅（px）"
+        },
+        "max_width": {
+          "type": "integer",
+          "description": "最大カラム幅（px）"
+        },
+        "on_resize": {
+          "type": "string",
+          "description": "リサイズ時のコールバック"
+        }
+      }
+    }
+  }
+}

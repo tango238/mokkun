@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mokkun - ESM形式サンプル</title>
+  <link rel="stylesheet" href="../dist/mokkun.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    .demo-header {
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #ddd;
+    }
+    .demo-header h1 {
+      margin: 0 0 10px 0;
+      font-size: 1.5rem;
+    }
+    .demo-header p {
+      margin: 0;
+      color: #666;
+    }
+    .theme-buttons {
+      margin-top: 10px;
+    }
+    .theme-buttons button {
+      margin-right: 8px;
+      padding: 6px 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background: #fff;
+      cursor: pointer;
+    }
+    .theme-buttons button:hover {
+      background: #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-header">
+    <h1>Mokkun ESM形式サンプル</h1>
+    <p>ES Modules形式でMokkunを読み込むサンプルです</p>
+    <div class="theme-buttons">
+      <button onclick="setTheme('light')">Light</button>
+      <button onclick="setTheme('dark')">Dark</button>
+    </div>
+  </div>
+
+  <div id="mokkun-app"></div>
+
+  <script type="module">
+    import { Mokkun } from '../dist/mokkun.esm.js';
+
+    let mokkunInstance = null;
+
+    Mokkun.init({
+      container: '#mokkun-app',
+      yamlUrl: './screens.yaml',
+      theme: 'light',
+      onReady: (instance) => {
+        mokkunInstance = instance;
+        console.log('Mokkun ready');
+        console.log('Available screens:', instance.getScreenNames());
+      },
+      onError: (error) => {
+        console.error('Mokkun error:', error);
+        document.getElementById('mokkun-app').innerHTML =
+          '<p style="color: red;">Error: ' + error.message + '</p>';
+      }
+    });
+
+    // テーマ切り替え関数をグローバルに公開
+    window.setTheme = (theme) => {
+      if (mokkunInstance) {
+        mokkunInstance.setTheme(theme);
+        console.log('Theme changed to:', theme);
+      }
+    };
+  </script>
+</body>
+</html>

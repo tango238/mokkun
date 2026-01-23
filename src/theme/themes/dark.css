@@ -1,0 +1,66 @@
+/**
+ * Mokkun Dark Theme
+ * Modern dark theme for reduced eye strain
+ */
+
+[data-theme="dark"] {
+  /* Primary Colors */
+  --primary-color: #60a5fa;
+  --primary-color-hover: #3b82f6;
+  --primary-color-light: #1e3a5f;
+
+  /* Secondary Colors */
+  --secondary-color: #94a3b8;
+  --secondary-color-hover: #cbd5e1;
+
+  /* Background Colors */
+  --background-color: #0f172a;
+  --background-color-subtle: #1e293b;
+  --surface-color: #1e293b;
+
+  /* Text Colors */
+  --text-color: #f1f5f9;
+  --text-color-muted: #94a3b8;
+  --text-color-inverse: #0f172a;
+
+  /* Border Colors */
+  --border-color: #334155;
+  --border-color-focus: var(--primary-color);
+
+  /* Input Colors */
+  --input-background: #1e293b;
+  --input-border: #334155;
+  --input-text: #f1f5f9;
+  --input-placeholder: #64748b;
+
+  /* Button Colors */
+  --button-background: var(--primary-color);
+  --button-text: #0f172a;
+  --button-secondary-background: #334155;
+  --button-secondary-text: #f1f5f9;
+  --button-secondary-border: #475569;
+
+  /* Status Colors */
+  --error-color: #f87171;
+  --error-color-light: #450a0a;
+  --success-color: #4ade80;
+  --success-color-light: #052e16;
+  --warning-color: #fbbf24;
+  --warning-color-light: #451a03;
+  --info-color: #60a5fa;
+  --info-color-light: #172554;
+
+  /* Shadow Colors */
+  --shadow-color: rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+
+  /* Focus Ring */
+  --focus-ring-color: rgba(96, 165, 250, 0.4);
+
+  /* Scrollbar (for webkit browsers) */
+  --scrollbar-track: #1e293b;
+  --scrollbar-thumb: #475569;
+  --scrollbar-thumb-hover: #64748b;
+}

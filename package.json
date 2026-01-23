@@ -1,0 +1,57 @@
+{
+  "name": "mokkun",
+  "version": "1.0.0",
+  "description": "YAML-based presentation and form builder",
+  "type": "module",
+  "main": "dist/mokkun.js",
+  "module": "dist/mokkun.esm.js",
+  "types": "dist/types/lib.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/lib.d.ts",
+      "import": "./dist/mokkun.esm.js",
+      "require": "./dist/mokkun.js"
+    },
+    "./style.css": "./dist/mokkun.css"
+  },
+  "files": [
+    "dist/mokkun.js",
+    "dist/mokkun.esm.js",
+    "dist/mokkun.css",
+    "dist/mokkun.js.map",
+    "dist/mokkun.esm.js.map",
+    "dist/types",
+    "dist/example.html"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "build:lib": "tsc && vite build --mode library",
+    "build:types": "tsc --declaration --emitDeclarationOnly --outDir dist/types src/lib.ts",
+    "build:example": "node scripts/build-example.js",
+    "build:all": "npm run build:lib && npm run build:types && npm run build:example",
+    "preview": "vite preview",
+    "preview:lib": "npx serve dist",
+    "test": "vitest",
+    "test:run": "vitest run"
+  },
+  "keywords": [
+    "yaml",
+    "form-builder",
+    "presentation",
+    "wizard",
+    "typescript",
+    "mockup"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "jsdom": "^27.4.0",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.7",
+    "vitest": "^4.0.17"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0"
+  }
+}

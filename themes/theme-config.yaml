@@ -1,0 +1,31 @@
+# Mokkun Theme Configuration
+# テーマ設定ファイル
+
+# Default theme to use when no preference is stored
+default_theme: light
+
+# Available themes
+themes:
+  - id: light
+    name: ライト
+    description: デフォルトの明るいテーマ
+    # Built-in theme (no custom_css needed)
+
+  - id: dark
+    name: ダーク
+    description: 目に優しいダークテーマ
+    # Built-in theme (no custom_css needed)
+
+# Custom theme example (for reference)
+# custom_themes:
+#   - id: custom-blue
+#     name: カスタムブルー
+#     description: カスタムテーマの例
+#     css_variables:
+#       --primary-color: "#1976d2"
+#       --primary-color-hover: "#1565c0"
+#       --background-color: "#fafafa"
+#       --text-color: "#333333"
+#       --border-color: "#e0e0e0"
+#       --error-color: "#d32f2f"
+#       --success-color: "#388e3c"
