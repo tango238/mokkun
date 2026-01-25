@@ -292,3 +292,15 @@ export {
   type InformationPanelConfig,
   type InformationPanelType,
 } from './information-panel'
+export {
+  AppHeader,
+  createAppHeader,
+  type Tenant,
+  type UserInfo,
+  type NavItem,
+  type NavDropdownItem,
+  type AppLauncherItem,
+  type AppHeaderState,
+  type AppHeaderCallbacks,
+  type AppHeaderConfig,
+} from './app-header'
