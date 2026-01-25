@@ -292,3 +292,10 @@ export {
   type InformationPanelConfig,
   type InformationPanelType,
 } from './information-panel'
+export {
+  Calendar,
+  createCalendar,
+  type CalendarState,
+  type CalendarCallbacks,
+  type CalendarConfig,
+} from './calendar'
