@@ -292,3 +292,11 @@ export {
   type InformationPanelConfig,
   type InformationPanelType,
 } from './information-panel'
+export {
+  Browser,
+  createBrowser,
+  type BrowserItem,
+  type BrowserState,
+  type BrowserCallbacks,
+  type BrowserConfig,
+} from './browser'

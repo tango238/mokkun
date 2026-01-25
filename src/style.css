@@ -6868,3 +6868,167 @@ body.dialog-open {
     padding: 0.25rem;
   }
 }
+
+/* =============================================================================
+   Browser Component
+   階層構造を持つデータの中から項目を単一選択するコンポーネント
+   ============================================================================= */
+
+.mokkun-browser {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  background-color: var(--color-surface);
+  overflow: hidden;
+}
+
+.browser-columns {
+  display: flex;
+  flex-direction: row;
+  overflow-x: auto;
+  min-height: 200px;
+}
+
+.browser-column {
+  flex: 0 0 auto;
+  width: 200px;
+  min-width: 200px;
+  border-right: 1px solid var(--color-border);
+  overflow-y: auto;
+  background-color: var(--color-surface);
+}
+
+.browser-column:last-child {
+  border-right: none;
+}
+
+/* Browser Item */
+.browser-item {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  margin: 2px 4px;
+  cursor: pointer;
+  border-radius: var(--border-radius-sm);
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+  user-select: none;
+}
+
+.browser-item:hover:not(.is-disabled) {
+  background-color: var(--color-bg-subtle);
+}
+
+.browser-item.is-selected {
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.browser-item.is-leaf-selected {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.browser-item.is-leaf-selected .browser-item-arrow {
+  color: white;
+}
+
+.browser-item.is-focused:not(.is-leaf-selected) {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+.browser-item.is-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Hidden radio button */
+.browser-item-radio {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Item content */
+.browser-item-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: var(--spacing-sm);
+}
+
+.browser-item-label {
+  flex: 1;
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Arrow icon for items with children */
+.browser-item-arrow {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  color: var(--color-text-muted);
+}
+
+.browser-item-arrow svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* =============================================================================
+   Browser - Dark Theme Support
+   ============================================================================= */
+
+[data-theme="dark"] .mokkun-browser {
+  border-color: var(--color-border);
+  background-color: var(--color-surface);
+}
+
+[data-theme="dark"] .browser-column {
+  border-color: var(--color-border);
+  background-color: var(--color-surface);
+}
+
+[data-theme="dark"] .browser-item:hover:not(.is-disabled) {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .browser-item.is-selected {
+  background-color: rgba(59, 130, 246, 0.2);
+  color: var(--color-primary);
+}
+
+[data-theme="dark"] .browser-item.is-leaf-selected {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+/* =============================================================================
+   Browser - Responsive
+   ============================================================================= */
+
+@media (max-width: 640px) {
+  .browser-column {
+    width: 160px;
+    min-width: 160px;
+  }
+  
+  .browser-item {
+    padding: var(--spacing-xs);
+  }
+  
+  .browser-item-label {
+    font-size: 0.8125rem;
+  }
+}
