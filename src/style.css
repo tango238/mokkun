@@ -8142,3 +8142,30 @@ body.dialog-open {
     gap: 0.375rem;
   }
 }
+
+/* =============================================================================
+   Delete Confirm Dialog - Inline Preview Mode
+   ============================================================================= */
+
+/* Preview mode for delete confirm dialog when used as a field in mockups */
+.field-type-delete_confirm_dialog {
+  margin: var(--spacing-lg) 0;
+}
+
+.field-type-delete_confirm_dialog .dialog-overlay {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 350px;
+  border-radius: var(--radius-lg);
+  animation: none;
+}
+
+.field-type-delete_confirm_dialog .delete-confirm-dialog {
+  position: relative;
+  top: auto;
+  left: auto;
+  transform: none;
+  animation: none;
+}

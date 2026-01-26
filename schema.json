@@ -82,6 +82,14 @@
         "navigation": {
           "$ref": "#/$defs/NavigationSetting"
         },
+        "app_header": {
+          "$ref": "#/$defs/AppHeaderConfig",
+          "description": "アプリケーションヘッダー設定"
+        },
+        "app_navi": {
+          "$ref": "#/$defs/AppNaviConfig",
+          "description": "アプリナビゲーション設定"
+        },
         "wizard": {
           "$ref": "#/$defs/WizardConfig"
         },
@@ -382,7 +390,9 @@
             "tooltip",
             "pagination",
             "float_area",
-            "loader"
+            "loader",
+            "calendar",
+            "browser"
           ],
           "description": "フィールドタイプ"
         },
@@ -934,6 +944,38 @@
         "initial_progress": {
           "type": "integer",
           "description": "初期プログレス値（loader用）"
+        },
+        "browser_items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/BrowserItem"
+          },
+          "description": "階層データアイテム（browser用）"
+        },
+        "max_columns": {
+          "type": "integer",
+          "description": "最大カラム数（browser用、デフォルト: 3）"
+        },
+        "default_value": {
+          "type": "string",
+          "description": "初期選択値（browser用）"
+        },
+        "calendar_from": {
+          "type": "string",
+          "description": "選択可能な日付範囲の開始日（calendar用、ISO 8601形式）"
+        },
+        "calendar_to": {
+          "type": "string",
+          "description": "選択可能な日付範囲の終了日（calendar用、ISO 8601形式）"
+        },
+        "week_starts_on": {
+          "type": "integer",
+          "enum": [0, 1],
+          "description": "週の開始曜日（calendar用、0: 日曜, 1: 月曜）"
+        },
+        "locale": {
+          "type": "string",
+          "description": "ロケール（calendar用）"
         }
       }
     },
@@ -1719,6 +1761,264 @@
         "on_resize": {
           "type": "string",
           "description": "リサイズ時のコールバック"
+        }
+      }
+    },
+    "AppHeaderConfig": {
+      "type": "object",
+      "required": ["app_name", "user_info"],
+      "properties": {
+        "logo": {
+          "type": "string",
+          "description": "ロゴ（SVG HTML文字列）"
+        },
+        "logo_alt": {
+          "type": "string",
+          "description": "ロゴの代替テキスト"
+        },
+        "logo_href": {
+          "type": "string",
+          "description": "ロゴのリンク先"
+        },
+        "app_name": {
+          "type": "string",
+          "description": "アプリ名"
+        },
+        "tenants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tenant"
+          },
+          "description": "テナント一覧"
+        },
+        "current_tenant_id": {
+          "type": "string",
+          "description": "現在のテナントID"
+        },
+        "user_info": {
+          "$ref": "#/$defs/UserInfo",
+          "description": "ユーザー情報"
+        },
+        "navigations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/HeaderNavItem"
+          },
+          "description": "ナビゲーション一覧"
+        },
+        "help_page_url": {
+          "type": "string",
+          "description": "ヘルプページURL"
+        },
+        "show_release_note": {
+          "type": "boolean",
+          "description": "リリースノート表示"
+        },
+        "release_note_text": {
+          "type": "string",
+          "description": "リリースノートテキスト"
+        }
+      }
+    },
+    "Tenant": {
+      "type": "object",
+      "required": ["id", "name"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "テナントID"
+        },
+        "name": {
+          "type": "string",
+          "description": "テナント名"
+        }
+      }
+    },
+    "UserInfo": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "ユーザー名"
+        },
+        "email": {
+          "type": "string",
+          "description": "メールアドレス"
+        },
+        "avatar_url": {
+          "type": "string",
+          "description": "アバターURL"
+        }
+      }
+    },
+    "HeaderNavItem": {
+      "type": "object",
+      "required": ["id", "label"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "アイテムID"
+        },
+        "label": {
+          "type": "string",
+          "description": "ラベル"
+        },
+        "href": {
+          "type": "string",
+          "description": "リンク先URL"
+        },
+        "active": {
+          "type": "boolean",
+          "description": "アクティブ状態"
+        },
+        "disabled": {
+          "type": "boolean",
+          "description": "無効化"
+        },
+        "dropdown": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/HeaderNavDropdownItem"
+          },
+          "description": "ドロップダウンメニュー"
+        }
+      }
+    },
+    "HeaderNavDropdownItem": {
+      "type": "object",
+      "required": ["id", "label"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "アイテムID"
+        },
+        "label": {
+          "type": "string",
+          "description": "ラベル"
+        },
+        "href": {
+          "type": "string",
+          "description": "リンク先URL"
+        },
+        "divider": {
+          "type": "boolean",
+          "description": "区切り線"
+        }
+      }
+    },
+    "AppNaviConfig": {
+      "type": "object",
+      "required": ["items"],
+      "properties": {
+        "label": {
+          "type": "string",
+          "description": "ナビゲーションラベル（アクセシビリティ用）"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AppNaviItem"
+          },
+          "description": "ナビゲーションアイテム"
+        }
+      }
+    },
+    "AppNaviItem": {
+      "type": "object",
+      "required": ["id", "label", "type"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "アイテムID"
+        },
+        "label": {
+          "type": "string",
+          "description": "表示ラベル"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["button", "anchor", "dropdown"],
+          "description": "アイテムタイプ"
+        },
+        "icon": {
+          "type": "string",
+          "description": "アイコン（HTML文字列）"
+        },
+        "disabled": {
+          "type": "boolean",
+          "description": "無効化"
+        },
+        "current": {
+          "type": "boolean",
+          "description": "現在のページ/セクションを示す"
+        },
+        "href": {
+          "type": "string",
+          "description": "リンク先URL（anchorタイプ用）"
+        },
+        "target": {
+          "type": "string",
+          "enum": ["_blank", "_self", "_parent", "_top"],
+          "description": "ターゲット属性（anchorタイプ用）"
+        },
+        "dropdown_items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AppNaviDropdownMenuItem"
+          },
+          "description": "ドロップダウンメニュー項目（dropdownタイプ用）"
+        }
+      }
+    },
+    "AppNaviDropdownMenuItem": {
+      "type": "object",
+      "required": ["id", "label"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "アイテムID"
+        },
+        "label": {
+          "type": "string",
+          "description": "表示ラベル"
+        },
+        "icon": {
+          "type": "string",
+          "description": "アイコン（HTML文字列）"
+        },
+        "disabled": {
+          "type": "boolean",
+          "description": "無効化"
+        },
+        "href": {
+          "type": "string",
+          "description": "リンク先URL"
+        }
+      }
+    },
+    "BrowserItem": {
+      "type": "object",
+      "required": ["value", "label"],
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "アイテムの値（一意）"
+        },
+        "label": {
+          "type": "string",
+          "description": "表示ラベル"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/BrowserItem"
+          },
+          "description": "子アイテム"
+        },
+        "disabled": {
+          "type": "boolean",
+          "description": "無効化"
         }
       }
     }

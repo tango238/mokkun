@@ -34,7 +34,7 @@ export interface MokkunSchemaRaw {
 /**
  * 画面定義（配列形式用、nameプロパティを持つ）
  */
-export interface ScreenDefinitionRaw extends Omit<ScreenDefinition, 'fields'> {
+export interface ScreenDefinitionRaw extends Omit<ScreenDefinition, 'fields' | 'app_header' | 'app_navi'> {
   /** 画面名（配列形式の場合のキー） */
   name?: string
   /** アクター（この画面を使用するユーザー種別） */
@@ -43,6 +43,10 @@ export interface ScreenDefinitionRaw extends Omit<ScreenDefinition, 'fields'> {
   purpose?: string
   /** ナビゲーション設定 */
   navigation?: NavigationSetting
+  /** アプリケーションヘッダー設定 */
+  app_header?: AppHeaderConfigSchema
+  /** アプリケーションナビゲーション設定 */
+  app_navi?: AppNaviConfigSchema
   /** セクション（統合フォーム用） */
   sections?: FormSection[]
   /** 入力フィールドのリスト（配列形式でも対応） */
@@ -165,6 +169,10 @@ export interface ScreenDefinition {
   title: string
   /** 画面の説明 */
   description?: string
+  /** アプリケーションヘッダー設定 */
+  app_header?: AppHeaderConfigSchema
+  /** アプリケーションナビゲーション設定 */
+  app_navi?: AppNaviConfigSchema
   /** ウィザード設定（複数ステップの場合） */
   wizard?: WizardConfig
   /** セクション（統合フォーム用、SectionNavで表示） */
@@ -175,6 +183,164 @@ export interface ScreenDefinition {
   actions?: Action[]
   /** レイアウト設定 */
   layout?: LayoutConfig
+}
+
+// =============================================================================
+// AppHeader Config for YAML / アプリヘッダー設定
+// =============================================================================
+
+/**
+ * テナント情報
+ */
+export interface TenantSchema {
+  /** テナントID */
+  id: string
+  /** テナント名 */
+  name: string
+}
+
+/**
+ * ユーザー情報
+ */
+export interface UserInfoSchema {
+  /** ユーザー名 */
+  name: string
+  /** メールアドレス（オプション） */
+  email?: string
+  /** アバターURL（オプション） */
+  avatarUrl?: string
+}
+
+/**
+ * ナビゲーションドロップダウンアイテム
+ */
+export interface HeaderNavDropdownItemSchema {
+  /** アイテムID */
+  id: string
+  /** ラベル */
+  label: string
+  /** リンク先URL */
+  href?: string
+  /** 区切り線 */
+  divider?: boolean
+}
+
+/**
+ * ナビゲーションアイテム
+ */
+export interface HeaderNavItemSchema {
+  /** アイテムID */
+  id: string
+  /** ラベル */
+  label: string
+  /** リンク先URL */
+  href?: string
+  /** アクティブ状態 */
+  active?: boolean
+  /** 無効化 */
+  disabled?: boolean
+  /** ドロップダウンメニュー */
+  dropdown?: HeaderNavDropdownItemSchema[]
+}
+
+/**
+ * アプリランチャーアイテム
+ */
+export interface AppLauncherItemSchema {
+  /** アプリID */
+  id: string
+  /** アプリ名 */
+  name: string
+  /** アプリURL */
+  url: string
+  /** アイコン（SVG HTML文字列） */
+  icon?: string
+}
+
+/**
+ * AppHeader設定
+ */
+export interface AppHeaderConfigSchema {
+  /** ロゴ（SVG HTML文字列） */
+  logo?: string
+  /** ロゴの代替テキスト */
+  logoAlt?: string
+  /** ロゴのリンク先 */
+  logoHref?: string
+  /** アプリ名 */
+  appName: string
+  /** テナント一覧 */
+  tenants?: TenantSchema[]
+  /** 現在のテナントID */
+  currentTenantId?: string
+  /** ユーザー情報 */
+  userInfo: UserInfoSchema
+  /** ナビゲーション一覧 */
+  navigations?: HeaderNavItemSchema[]
+  /** アプリランチャー一覧 */
+  appLauncher?: AppLauncherItemSchema[]
+  /** ヘルプページURL */
+  helpPageUrl?: string
+  /** リリースノート表示 */
+  showReleaseNote?: boolean
+  /** リリースノートテキスト */
+  releaseNoteText?: string
+  /** データ同期ボタン表示 */
+  showDataSync?: boolean
+}
+
+// =============================================================================
+// AppNavi Config for YAML / アプリナビゲーション設定
+// =============================================================================
+
+/**
+ * ドロップダウンメニューアイテム
+ */
+export interface AppNaviDropdownMenuItemSchema {
+  /** アイテムID */
+  id: string
+  /** 表示ラベル */
+  label: string
+  /** アイコン（HTML文字列） */
+  icon?: string
+  /** 無効化 */
+  disabled?: boolean
+  /** リンク先URL */
+  href?: string
+}
+
+/**
+ * ナビゲーションアイテム
+ */
+export interface AppNaviItemSchema {
+  /** アイテムID */
+  id: string
+  /** 表示ラベル */
+  label: string
+  /** タイプ（button, anchor, dropdown） */
+  type: 'button' | 'anchor' | 'dropdown'
+  /** アイコン（HTML文字列） */
+  icon?: string
+  /** 無効化 */
+  disabled?: boolean
+  /** 現在のページ/セクションを示す */
+  current?: boolean
+  /** リンク先URL（anchorタイプ用） */
+  href?: string
+  /** ターゲット属性（anchorタイプ用） */
+  target?: '_blank' | '_self' | '_parent' | '_top'
+  /** ドロップダウンメニュー項目（dropdownタイプ用） */
+  dropdownItems?: AppNaviDropdownMenuItemSchema[]
+}
+
+/**
+ * AppNavi設定（YAML用）
+ */
+export interface AppNaviConfigSchema {
+  /** ナビゲーションラベル（アクセシビリティ用） */
+  label?: string
+  /** ナビゲーションアイテム */
+  items: AppNaviItemSchema[]
 }
 
 /**
@@ -1122,6 +1288,250 @@ export interface LoaderField extends BaseInputField {
   initialProgress?: number
 }
 
+// =============================================================================
+// Browser Field / ブラウザフィールド
+// =============================================================================
+
+/**
+ * Browserアイテムの定義
+ */
+export interface BrowserItemSchema {
+  /** アイテムの値（一意） */
+  value: string
+  /** 表示ラベル */
+  label: string
+  /** 子アイテム */
+  children?: BrowserItemSchema[]
+  /** 無効化 */
+  disabled?: boolean
+}
+
+/**
+ * Browser field for YAML schema
+ *
+ * 機能:
+ * - 階層的なデータの表示
+ * - 複数カラム表示（最大3列）
+ * - キーボードナビゲーション
+ * - 単一選択
+ */
+export interface BrowserField extends BaseInputField {
+  type: 'browser'
+  /** アイテムの配列 */
+  items: BrowserItemSchema[]
+  /** 初期選択値 */
+  default?: string
+  /** 最大カラム数（デフォルト: 3） */
+  maxColumns?: number
+  /** 高さ（デフォルト: 'auto'） */
+  height?: string
+}
+
+// =============================================================================
+// Calendar Field / カレンダーフィールド
+// =============================================================================
+
+/**
+ * Calendar field for YAML schema
+ *
+ * 機能:
+ * - 月表示カレンダー
+ * - 日付選択
+ * - 選択可能な日付範囲の制限 (from/to)
+ * - 月移動ナビゲーション
+ * - キーボードナビゲーション
+ */
+export interface CalendarField extends BaseInputField {
+  type: 'calendar'
+  /** 初期選択日付（ISO 8601形式: YYYY-MM-DD） */
+  default?: string
+  /** 選択可能な日付範囲の開始日（ISO 8601形式） */
+  from?: string
+  /** 選択可能な日付範囲の終了日（ISO 8601形式） */
+  to?: string
+  /** 週の開始曜日 (0: 日曜, 1: 月曜) */
+  weekStartsOn?: 0 | 1
+  /** ロケール（デフォルト: 'ja-JP'） */
+  locale?: string
+}
+
+// =============================================================================
+// Additional Display Field Types / 追加表示フィールドタイプ
+// =============================================================================
+
+/**
+ * 通知バーフィールド
+ */
+export interface NotificationBarField extends BaseInputField {
+  type: 'notification_bar'
+  /** バリアント */
+  variant?: 'info' | 'success' | 'warning' | 'error'
+  /** 閉じるボタンを表示 */
+  dismissible?: boolean
+}
+
+/**
+ * レスポンスメッセージフィールド
+ */
+export interface ResponseMessageField extends BaseInputField {
+  type: 'response_message'
+  /** バリアント */
+  variant?: 'success' | 'error' | 'warning' | 'info'
+}
+
+/**
+ * タイムラインフィールド
+ */
+export interface TimelineField extends BaseInputField {
+  type: 'timeline'
+  /** タイムラインアイテム */
+  items?: Array<{
+    time: string
+    title: string
+    description?: string
+  }>
+}
+
+/**
+ * チップフィールド
+ */
+export interface ChipField extends BaseInputField {
+  type: 'chip'
+  /** バリアント */
+  variant?: 'default' | 'primary' | 'success' | 'warning' | 'danger'
+  /** 削除可能 */
+  removable?: boolean
+}
+
+/**
+ * ステータスラベルフィールド
+ */
+export interface StatusLabelField extends BaseInputField {
+  type: 'status_label'
+  /** バリアント */
+  variant?: 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'info'
+}
+
+/**
+ * セグメンテッドコントロールフィールド
+ */
+export interface SegmentedControlField extends BaseInputField {
+  type: 'segmented_control'
+  /** 選択肢 */
+  options?: SelectOption[]
+  /** デフォルト値 */
+  default?: string
+}
+
+/**
+ * タブフィールド
+ */
+export interface TabsField extends BaseInputField {
+  type: 'tabs'
+  /** タブアイテム */
+  tabs?: Array<{
+    id: string
+    label: string
+    content?: string
+  }>
+}
+
+/**
+ * ラインクランプフィールド
+ */
+export interface LineClampField extends BaseInputField {
+  type: 'line_clamp'
+  /** クランプする行数 */
+  lines?: number
+  /** テキスト */
+  text?: string
+}
+
+/**
+ * ディスクロージャーフィールド
+ */
+export interface DisclosureField extends BaseInputField {
+  type: 'disclosure'
+  /** 初期状態で開く */
+  defaultOpen?: boolean
+}
+
+/**
+ * アコーディオンパネルフィールド
+ */
+export interface AccordionPanelField extends BaseInputField {
+  type: 'accordion_panel'
+  /** 初期状態で開く */
+  defaultOpen?: boolean
+}
+
+/**
+ * セクションナビフィールド
+ */
+export interface SectionNavField extends BaseInputField {
+  type: 'section_nav'
+  /** ナビゲーションアイテム */
+  items?: Array<{
+    id: string
+    label: string
+    href?: string
+  }>
+}
+
+/**
+ * 定義リストフィールド
+ */
+export interface DefinitionListField extends BaseInputField {
+  type: 'definition_list'
+  /** 定義アイテム */
+  items?: Array<{
+    term: string
+    description: string
+  }>
+}
+
+/**
+ * ステッパーフィールド
+ */
+export interface StepperField extends BaseInputField {
+  type: 'stepper'
+  /** ステップ */
+  steps?: Array<{
+    id: string
+    label: string
+    completed?: boolean
+  }>
+  /** 現在のステップ */
+  currentStep?: number
+}
+
+/**
+ * インフォメーションパネルフィールド
+ */
+export interface InformationPanelField extends BaseInputField {
+  type: 'information_panel'
+  /** バリアント */
+  variant?: 'info' | 'success' | 'warning' | 'error'
+}
+
+/**
+ * ドロップダウンフィールド
+ */
+export interface DropdownFieldType extends BaseInputField {
+  type: 'dropdown'
+  /** 選択肢 */
+  options?: SelectOption[]
+}
+
+/**
+ * 削除確認ダイアログフィールド
+ */
+export interface DeleteConfirmDialogField extends BaseInputField {
+  type: 'delete_confirm_dialog'
+  /** 確認メッセージ */
+  message?: string
+}
+
 /**
  * 全ての入力フィールドのユニオン型
  */
@@ -1147,11 +1557,29 @@ export type InputField =
   | ToggleField
   | ImageUploaderField
   | BadgeField
+  | BrowserField
+  | CalendarField
   | HeadingField
   | TooltipField
   | PaginationField
   | FloatAreaField
   | LoaderField
+  | NotificationBarField
+  | ResponseMessageField
+  | TimelineField
+  | ChipField
+  | StatusLabelField
+  | SegmentedControlField
+  | TabsField
+  | LineClampField
+  | DisclosureField
+  | AccordionPanelField
+  | SectionNavField
+  | DefinitionListField
+  | StepperField
+  | InformationPanelField
+  | DropdownFieldType
+  | DeleteConfirmDialogField
 
 /**
  * 入力フィールドのタイプ

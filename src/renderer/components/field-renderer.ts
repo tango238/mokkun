@@ -16,6 +16,8 @@ import { Select } from './select'
 import { renderDataTableField } from './data-table'
 import { renderPhotoManagerField } from './photo-manager-renderer'
 import { ImageUploader } from './image-uploader'
+import { Browser } from './browser'
+import { Calendar } from './calendar'
 
 /**
  * フィールドをレンダリングするオプション
@@ -157,6 +159,12 @@ function createFieldInput(
 
     case 'heading':
       return createHeadingField(field, options)
+
+    case 'browser':
+      return createBrowserField(field, inputId, options)
+
+    case 'calendar':
+      return createCalendarField(field, inputId, options)
 
     default:
       return createElement('div', {
@@ -917,6 +925,79 @@ function createHeadingField(
   )
 
   heading.render()
+
+  return container
+}
+
+function createBrowserField(
+  field: Extract<InputField, { type: 'browser' }>,
+  _inputId: string,
+  options: RenderFieldOptions
+): HTMLElement {
+  const container = createElement('div', { className: 'browser-field-container' })
+
+  const browser = new Browser(
+    container,
+    {
+      items: field.items,
+      defaultValue: options.value !== undefined
+        ? String(options.value)
+        : field.default,
+      maxColumns: field.maxColumns,
+      height: field.height,
+      id: field.id,
+    },
+    {
+      onChange: (value, _path) => {
+        options.onChange?.(field.id, value)
+      },
+    }
+  )
+
+  browser.render()
+
+  return container
+}
+
+function createCalendarField(
+  field: Extract<InputField, { type: 'calendar' }>,
+  _inputId: string,
+  options: RenderFieldOptions
+): HTMLElement {
+  const container = createElement('div', { className: 'calendar-field-container' })
+
+  // 初期値の処理（string -> Date変換）
+  let initialValue: Date | undefined
+  if (options.value !== undefined) {
+    initialValue = new Date(String(options.value))
+  } else if (field.default) {
+    initialValue = new Date(field.default)
+  }
+
+  // from/to の処理
+  const fromDate = field.from ? new Date(field.from) : undefined
+  const toDate = field.to ? new Date(field.to) : undefined
+
+  const calendar = new Calendar(
+    container,
+    {
+      value: initialValue,
+      from: fromDate,
+      to: toDate,
+      weekStartsOn: field.weekStartsOn,
+      locale: field.locale,
+      disabled: field.disabled,
+    },
+    {
+      onSelectDate: (_event, date, _state) => {
+        // ISO形式で値を返す
+        const isoDate = date.toISOString().split('T')[0]
+        options.onChange?.(field.id, isoDate)
+      },
+    }
+  )
+
+  calendar.render()
 
   return container
 }

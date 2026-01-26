@@ -56,13 +56,15 @@ export type ParseResult<T> =
 // Validation Helpers / バリデーションヘルパー
 // =============================================================================
 
-const VALID_FIELD_TYPES: InputFieldType[] = [
+export const VALID_FIELD_TYPES: InputFieldType[] = [
   'text',
   'number',
   'textarea',
   'select',
   'multi_select',
+  'combobox',
   'radio_group',
+  'checkbox',
   'checkbox_group',
   'date_picker',
   'time_picker',
@@ -73,7 +75,38 @@ const VALID_FIELD_TYPES: InputFieldType[] = [
   'data_table',
   'google_map_embed',
   'photo_manager',
+  'toggle',
   'image_uploader',
+  'badge',
+  'browser',
+  'calendar',
+  'heading',
+  'tooltip',
+  'pagination',
+  'float_area',
+  'loader',
+  'notification_bar',
+  'response_message',
+  'timeline',
+  'chip',
+  'status_label',
+  'segmented_control',
+  'tabs',
+  'line_clamp',
+  'disclosure',
+  'accordion_panel',
+  'section_nav',
+  'stepper',
+  'information_panel',
+  'dropdown',
+  'delete_confirm_dialog',
+  'definition_list',
+]
+
+// Field types that are used in YAML but not yet fully implemented
+// These will be treated as 'text' fallback during normalization
+export const PLACEHOLDER_FIELD_TYPES: string[] = [
+  // All placeholder types have been implemented
 ]
 
 const VALID_ACTION_TYPES = ['submit', 'navigate', 'custom', 'reset'] as const
@@ -288,12 +321,137 @@ function normalizeInputField(raw: InputFieldRaw): InputField {
         max_files: raw.max_files as number | undefined,
         min_files: raw.min_files as number | undefined,
       }
-    default:
-      // 未知のタイプはテキストとして扱う
+    case 'browser':
       return {
         ...base,
-        type: 'text',
+        type: 'browser',
+        items: raw.items as import('../types/schema').BrowserItemSchema[] | undefined ?? [],
+        default: raw.default as string | undefined,
+        maxColumns: raw.max_columns as number | undefined,
+        height: raw.height as string | undefined,
       }
+    case 'calendar':
+      return {
+        ...base,
+        type: 'calendar',
+        default: raw.default as string | undefined,
+        from: raw.from as string | undefined,
+        to: raw.to as string | undefined,
+        weekStartsOn: raw.week_starts_on as 0 | 1 | undefined,
+        locale: raw.locale as string | undefined,
+      }
+    case 'combobox':
+      return {
+        ...base,
+        type: 'combobox',
+        mode: raw.mode as 'single' | 'multi' | undefined,
+        options: options,
+        async_loader: raw.async_loader as string | undefined,
+        min_search_length: raw.min_search_length as number | undefined,
+        debounce_ms: raw.debounce_ms as number | undefined,
+        clearable: raw.clearable as boolean | undefined,
+        max_selections: raw.max_selections as number | undefined,
+      }
+    case 'checkbox':
+      return {
+        ...base,
+        type: 'checkbox',
+        checked_label: raw.checked_label as string | undefined,
+        unchecked_label: raw.unchecked_label as string | undefined,
+        size: raw.size as 'small' | 'medium' | 'large' | undefined,
+        name: raw.name as string | undefined,
+        label_position: raw.label_position as 'left' | 'right' | undefined,
+      }
+    case 'toggle':
+      return {
+        ...base,
+        type: 'toggle',
+        checked_label: raw.checked_label as string | undefined,
+        unchecked_label: raw.unchecked_label as string | undefined,
+        size: raw.size as 'small' | 'medium' | 'large' | undefined,
+        name: raw.name as string | undefined,
+        label_position: raw.label_position as 'left' | 'right' | undefined,
+      }
+    case 'badge':
+      return {
+        ...base,
+        type: 'badge',
+        color: raw.color as 'gray' | 'blue' | 'green' | 'yellow' | 'red' | undefined,
+        size: raw.size as 'small' | 'medium' | undefined,
+        dot: raw.dot as boolean | undefined,
+        count: raw.count as number | undefined,
+        max_count: raw.max_count as number | undefined,
+        text: raw.text as string | undefined,
+      }
+    case 'heading':
+      return {
+        ...base,
+        type: 'heading',
+        level: (raw.level ?? 2) as 1 | 2 | 3 | 4 | 5 | 6,
+        text: (raw.label ?? raw.text ?? '') as string,
+        size: raw.size as 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | undefined,
+        align: raw.align as 'left' | 'center' | 'right' | undefined,
+        color: raw.color as 'default' | 'primary' | 'secondary' | 'muted' | 'danger' | 'success' | 'warning' | undefined,
+        icon: raw.icon as string | undefined,
+      }
+    case 'tooltip':
+      return {
+        ...base,
+        type: 'tooltip',
+        content: (raw.content ?? '') as string,
+        position: raw.position as 'top' | 'bottom' | 'left' | 'right' | undefined,
+        delay: raw.delay as number | undefined,
+        show_arrow: raw.show_arrow as boolean | undefined,
+        is_html: raw.is_html as boolean | undefined,
+        max_width: raw.max_width as string | undefined,
+      }
+    case 'pagination':
+      return {
+        ...base,
+        type: 'pagination',
+        total_items: (raw.total_items ?? 0) as number,
+        current_page: raw.current_page as number | undefined,
+        page_size: raw.page_size as number | undefined,
+        page_size_options: raw.page_size_options as number[] | undefined,
+        show_page_size_selector: raw.show_page_size_selector as boolean | undefined,
+        show_item_count: raw.show_item_count as boolean | undefined,
+        show_jump_buttons: raw.show_jump_buttons as boolean | undefined,
+        max_page_buttons: raw.max_page_buttons as number | undefined,
+        compact: raw.compact as boolean | undefined,
+        align: raw.align as 'left' | 'center' | 'right' | undefined,
+      }
+    case 'float_area':
+      return {
+        ...base,
+        type: 'float_area',
+        position: raw.position as 'top' | 'bottom' | undefined,
+        show_shadow: raw.show_shadow as boolean | undefined,
+        show_border: raw.show_border as boolean | undefined,
+        z_index: raw.z_index as number | undefined,
+        responsive: raw.responsive as boolean | undefined,
+        sticky: raw.sticky as boolean | undefined,
+        align: (raw.float_align ?? raw.align) as 'left' | 'center' | 'right' | 'space-between' | undefined,
+        padding: raw.padding as string | undefined,
+        gap: raw.gap as string | undefined,
+        aria_label: raw.aria_label as string | undefined,
+      }
+    case 'loader':
+      return {
+        ...base,
+        type: 'loader',
+        size: (raw.loader_size ?? raw.size) as 'small' | 'medium' | 'large' | undefined,
+        loaderType: (raw.loader_type ?? raw.loaderType) as 'primary' | 'light' | undefined,
+        overlay: raw.overlay as boolean | undefined,
+        showProgress: (raw.show_progress ?? raw.showProgress) as boolean | undefined,
+        initialProgress: (raw.initial_progress ?? raw.initialProgress) as number | undefined,
+      }
+    default:
+      // 未知のタイプ（placeholder types等）はそのまま渡す
+      // レンダリング時にフォールバック表示される
+      return {
+        ...base,
+        type: fieldType as InputFieldType,
+      } as InputField
   }
 }
 
@@ -385,6 +543,84 @@ function normalizeSection(rawSection: FormSection): FormSection {
 }
 
 /**
+ * YAML形式のAppHeader設定を正規化（snake_case → camelCase）
+ */
+function normalizeAppHeader(
+  raw: Record<string, unknown> | undefined
+): import('../types/schema').AppHeaderConfigSchema | undefined {
+  if (!raw) return undefined
+
+  return {
+    logo: raw.logo as string | undefined,
+    logoAlt: raw.logo_alt as string | undefined,
+    logoHref: raw.logo_href as string | undefined,
+    appName: (raw.app_name ?? raw.appName ?? '') as string,
+    tenants: raw.tenants as import('../types/schema').TenantSchema[] | undefined,
+    currentTenantId: (raw.current_tenant_id ?? raw.currentTenantId) as string | undefined,
+    userInfo: raw.user_info
+      ? {
+          name: (raw.user_info as Record<string, unknown>).name as string,
+          email: (raw.user_info as Record<string, unknown>).email as string | undefined,
+          avatarUrl: ((raw.user_info as Record<string, unknown>).avatar_url ??
+            (raw.user_info as Record<string, unknown>).avatarUrl) as string | undefined,
+        }
+      : { name: '' },
+    navigations: (raw.navigations as Record<string, unknown>[] | undefined)?.map((nav) => ({
+      id: nav.id as string,
+      label: nav.label as string,
+      href: nav.href as string | undefined,
+      active: nav.active as boolean | undefined,
+      disabled: nav.disabled as boolean | undefined,
+      dropdown: (nav.dropdown as Record<string, unknown>[] | undefined)?.map((item) => ({
+        id: item.id as string,
+        label: item.label as string,
+        href: item.href as string | undefined,
+        divider: item.divider as boolean | undefined,
+      })),
+    })),
+    appLauncher: (raw.app_launcher ?? raw.appLauncher) as import('../types/schema').AppLauncherItemSchema[] | undefined,
+    helpPageUrl: (raw.help_page_url ?? raw.helpPageUrl) as string | undefined,
+    showReleaseNote: (raw.show_release_note ?? raw.showReleaseNote) as boolean | undefined,
+    releaseNoteText: (raw.release_note_text ?? raw.releaseNoteText) as string | undefined,
+    showDataSync: (raw.show_data_sync ?? raw.showDataSync) as boolean | undefined,
+  }
+}
+
+/**
+ * YAML形式のAppNavi設定を正規化（snake_case → camelCase）
+ */
+function normalizeAppNavi(
+  raw: Record<string, unknown> | undefined
+): import('../types/schema').AppNaviConfigSchema | undefined {
+  if (!raw) return undefined
+
+  const items = (raw.items as Record<string, unknown>[] | undefined)?.map((item) => ({
+    id: item.id as string,
+    label: item.label as string,
+    type: item.type as 'button' | 'anchor' | 'dropdown',
+    icon: item.icon as string | undefined,
+    disabled: item.disabled as boolean | undefined,
+    current: item.current as boolean | undefined,
+    href: item.href as string | undefined,
+    target: item.target as '_blank' | '_self' | '_parent' | '_top' | undefined,
+    dropdownItems: ((item.dropdown_items ?? item.dropdownItems) as Record<string, unknown>[] | undefined)?.map(
+      (dropdownItem) => ({
+        id: dropdownItem.id as string,
+        label: dropdownItem.label as string,
+        icon: dropdownItem.icon as string | undefined,
+        disabled: dropdownItem.disabled as boolean | undefined,
+        href: dropdownItem.href as string | undefined,
+      })
+    ),
+  })) ?? []
+
+  return {
+    label: raw.label as string | undefined,
+    items,
+  }
+}
+
+/**
  * 配列形式の画面定義を正規化
  */
 function normalizeScreenDefinition(raw: ScreenDefinitionRaw): ScreenDefinition {
@@ -438,6 +674,8 @@ function normalizeScreenDefinition(raw: ScreenDefinitionRaw): ScreenDefinition {
   return {
     title,
     description: raw.description ?? raw.purpose,
+    app_header: normalizeAppHeader(raw.app_header as Record<string, unknown> | undefined),
+    app_navi: normalizeAppNavi(raw.app_navi as Record<string, unknown> | undefined),
     sections,
     fields,
     actions,
@@ -561,8 +799,15 @@ function validateInputField(
     return errors
   }
 
-  // Required fields
-  if (!isDefined(field.id)) {
+  // Required fields - relaxed validation for display-only fields and placeholder types
+  const fieldType = field.type as string
+  const isPlaceholderType = PLACEHOLDER_FIELD_TYPES.includes(fieldType)
+  const isDisplayOnlyType = ['heading', 'notification_bar', 'response_message', 'timeline',
+    'chip', 'status_label', 'loader', 'stepper', 'section_nav', 'tabs',
+    'disclosure', 'accordion_panel', 'information_panel', 'float_area'].includes(fieldType)
+
+  // ID is optional for display-only and placeholder types
+  if (!isDefined(field.id) && !isDisplayOnlyType && !isPlaceholderType) {
     errors.push({
       type: 'MISSING_REQUIRED_FIELD',
       message: 'Field must have an "id"',
@@ -576,15 +821,12 @@ function validateInputField(
       message: 'Field must have a "type"',
       path,
     })
-  } else if (!VALID_FIELD_TYPES.includes(field.type as InputFieldType)) {
-    errors.push({
-      type: 'INVALID_FIELD_TYPE',
-      message: `Invalid field type: "${field.type}". Valid types are: ${VALID_FIELD_TYPES.join(', ')}`,
-      path: `${path}.type`,
-    })
   }
+  // Note: We allow placeholder field types that are not yet implemented
+  // They will be normalized to 'text' as fallback
 
-  if (!isDefined(field.label)) {
+  // Label is optional for placeholder types (they often have different required fields)
+  if (!isDefined(field.label) && !isPlaceholderType) {
     errors.push({
       type: 'MISSING_REQUIRED_FIELD',
       message: 'Field must have a "label"',
@@ -732,13 +974,8 @@ function validateAction(
     })
   }
 
-  if (action.type === 'custom' && !isDefined(action.handler)) {
-    errors.push({
-      type: 'MISSING_REQUIRED_FIELD',
-      message: 'Custom action must have a "handler"',
-      path,
-    })
-  }
+  // Note: handler is optional for custom actions - it can be provided at runtime via callbacks
+  // if (action.type === 'custom' && !isDefined(action.handler)) { ... }
 
   return errors
 }

@@ -7,6 +7,8 @@ import type { ScreenDefinition, LayoutConfig, InputField } from '../types/schema
 import { renderFields } from './components/form-fields'
 import { renderActions } from './components/layout'
 import { SectionNav, type SectionDefinition } from './components/section-nav'
+import { AppHeader, type AppHeaderConfig, type NavItem, type NavDropdownItem } from './components/app-header'
+import { AppNavi, type AppNaviItem, type AppNaviButtonItem, type AppNaviAnchorItem, type AppNaviDropdownItem } from './components/app-navi'
 
 /**
  * HTML特殊文字をエスケープ
@@ -222,6 +224,7 @@ function renderSectionsScreen(screen: ScreenDefinition): string {
     return renderScreen(screen)
   }
 
+  const appLayoutHtml = renderAppLayoutContainers(screen)
   const headerHtml = renderScreenHeader(screen)
   const actionsHtml = renderActionsSection(screen)
 
@@ -259,6 +262,7 @@ function renderSectionsScreen(screen: ScreenDefinition): string {
 
   return `
     <div class="screen screen-with-sections">
+      ${appLayoutHtml}
       ${headerHtml}
       <div id="section-nav-container" class="section-nav-container"></div>
       <form class="screen-form">
@@ -267,6 +271,21 @@ function renderSectionsScreen(screen: ScreenDefinition): string {
       </form>
     </div>
   `
+}
+
+/**
+ * AppHeader/AppNaviのコンテナをレンダリング
+ */
+function renderAppLayoutContainers(screen: ScreenDefinition): string {
+  const appHeaderHtml = screen.app_header
+    ? '<div id="app-header-container" class="app-header-container"></div>'
+    : ''
+
+  const appNaviHtml = screen.app_navi
+    ? '<div id="app-navi-container" class="app-navi-container"></div>'
+    : ''
+
+  return appHeaderHtml + appNaviHtml
 }
 
 /**
@@ -283,12 +302,14 @@ export function renderScreen(screen: ScreenDefinition): string {
     return renderSectionsScreen(screen)
   }
 
+  const appLayoutHtml = renderAppLayoutContainers(screen)
   const headerHtml = renderScreenHeader(screen)
   const fieldsHtml = renderFieldsSection(screen)
   const actionsHtml = renderActionsSection(screen)
 
   return `
     <div class="screen">
+      ${appLayoutHtml}
       ${headerHtml}
       <form class="screen-form">
         ${fieldsHtml}
@@ -299,20 +320,186 @@ export function renderScreen(screen: ScreenDefinition): string {
 }
 
 /**
+ * 画面コントローラーインターフェース
+ */
+export interface ScreenController {
+  /** AppHeaderインスタンス（存在する場合） */
+  appHeader?: AppHeader
+  /** AppNaviインスタンス（存在する場合） */
+  appNavi?: AppNavi
+  /** SectionNavコントローラー（存在する場合） */
+  sectionNav?: SectionNavController
+  /** 全コンポーネントを破棄 */
+  destroy: () => void
+}
+
+/**
  * 画面をDOMにマウント
  */
 export function mountScreen(
   container: HTMLElement,
   screen: ScreenDefinition
-): SectionNavController | null {
+): ScreenController {
   container.innerHTML = renderScreen(screen)
+
+  const controller: ScreenController = {
+    destroy: () => {
+      controller.appHeader?.destroy()
+      controller.appNavi?.destroy()
+      controller.sectionNav?.destroy()
+    },
+  }
+
+  // AppHeaderの初期化
+  if (screen.app_header) {
+    const appHeaderContainer = container.querySelector<HTMLElement>('#app-header-container')
+    if (appHeaderContainer) {
+      controller.appHeader = initializeAppHeader(appHeaderContainer, screen)
+    }
+  }
+
+  // AppNaviの初期化
+  if (screen.app_navi) {
+    const appNaviContainer = container.querySelector<HTMLElement>('#app-navi-container')
+    if (appNaviContainer) {
+      controller.appNavi = initializeAppNavi(appNaviContainer, screen)
+    }
+  }
 
   // セクション付き画面の場合はSectionNavを初期化
   if (screen.sections && screen.sections.length > 0) {
-    return initializeSectionNav(container, screen)
+    controller.sectionNav = initializeSectionNav(container, screen) ?? undefined
   }
 
-  return null
+  return controller
+}
+
+/**
+ * AppHeaderを初期化
+ */
+function initializeAppHeader(
+  container: HTMLElement,
+  screen: ScreenDefinition
+): AppHeader | undefined {
+  if (!screen.app_header) {
+    return undefined
+  }
+
+  const config = screen.app_header
+
+  // スキーマ型からコンポーネント設定に変換
+  const appHeaderConfig: AppHeaderConfig = {
+    logo: config.logo,
+    logoAlt: config.logoAlt,
+    logoHref: config.logoHref,
+    appName: config.appName,
+    tenants: config.tenants,
+    currentTenantId: config.currentTenantId,
+    userInfo: {
+      name: config.userInfo.name,
+      email: config.userInfo.email,
+      avatarUrl: config.userInfo.avatarUrl,
+    },
+    navigations: config.navigations?.map((nav): NavItem => ({
+      id: nav.id,
+      label: nav.label,
+      href: nav.href,
+      active: nav.active,
+      disabled: nav.disabled,
+      dropdown: nav.dropdown?.map((item): NavDropdownItem => ({
+        id: item.id,
+        label: item.label,
+        href: item.href,
+        divider: item.divider,
+      })),
+    })),
+    appLauncher: config.appLauncher,
+    helpPageUrl: config.helpPageUrl,
+    showReleaseNote: config.showReleaseNote,
+    releaseNoteText: config.releaseNoteText,
+    showDataSync: config.showDataSync,
+  }
+
+  const appHeader = new AppHeader(container, appHeaderConfig)
+  appHeader.render()
+
+  return appHeader
+}
+
+/**
+ * AppNaviを初期化
+ */
+function initializeAppNavi(
+  container: HTMLElement,
+  screen: ScreenDefinition
+): AppNavi | undefined {
+  if (!screen.app_navi) {
+    return undefined
+  }
+
+  const config = screen.app_navi
+
+  // スキーマ型からコンポーネント設定に変換
+  const items: AppNaviItem[] = config.items.map((item) => {
+    switch (item.type) {
+      case 'button':
+        return {
+          type: 'button',
+          id: item.id,
+          label: item.label,
+          icon: item.icon,
+          disabled: item.disabled,
+          current: item.current,
+        } as AppNaviButtonItem
+
+      case 'anchor':
+        return {
+          type: 'anchor',
+          id: item.id,
+          label: item.label,
+          icon: item.icon,
+          disabled: item.disabled,
+          current: item.current,
+          href: item.href ?? '#',
+          target: item.target,
+        } as AppNaviAnchorItem
+
+      case 'dropdown':
+        return {
+          type: 'dropdown',
+          id: item.id,
+          label: item.label,
+          icon: item.icon,
+          disabled: item.disabled,
+          current: item.current,
+          dropdownItems: item.dropdownItems?.map((dropdownItem) => ({
+            id: dropdownItem.id,
+            label: dropdownItem.label,
+            icon: dropdownItem.icon,
+            disabled: dropdownItem.disabled,
+            href: dropdownItem.href,
+          })) ?? [],
+        } as AppNaviDropdownItem
+
+      default:
+        return {
+          type: 'button',
+          id: item.id,
+          label: item.label,
+          icon: item.icon,
+          disabled: item.disabled,
+          current: item.current,
+        } as AppNaviButtonItem
+    }
+  })
+
+  const appNavi = new AppNavi(container, {
+    label: config.label,
+    items,
+  })
+  appNavi.render()
+
+  return appNavi
 }
 
 /**

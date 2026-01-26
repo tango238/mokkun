@@ -81,6 +81,8 @@ mokkun/
 | duration_input | 期間入力 |
 | file_upload | ファイルアップロード |
 | image_uploader | 画像アップローダー |
+| calendar | カレンダー日付選択 |
+| browser | 階層構造データの単一選択 |
 
 ### データ表示
 
@@ -98,6 +100,8 @@ mokkun/
 
 | コンポーネント | 説明 |
 |---------------|------|
+| app_header | アプリケーションヘッダー（ロゴ、テナント切替、ユーザーメニュー） |
+| app_navi | アプリナビゲーション（主要機能の切り替え） |
 | heading | 見出し |
 | tabs | タブ |
 | accordion_panel | アコーディオン |

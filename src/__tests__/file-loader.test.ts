@@ -162,14 +162,15 @@ describe('readFile', () => {
     }
   })
 
-  it('should return error for invalid YAML field type', async () => {
+  it('should allow unknown YAML field types (for extensibility)', async () => {
+    // Unknown field types are now allowed to support placeholder/future types
     const file = createMockFile('form.yaml', invalidYamlContent)
     const result = await readFile(file, 'file')
 
-    expect(result.success).toBe(false)
-    if (!result.success) {
-      expect(result.error.type).toBe('YAML_PARSE_ERROR')
-      expect(result.error.parseErrors).toBeDefined()
+    expect(result.success).toBe(true)
+    if (result.success) {
+      // The unknown type should be preserved in the parsed result
+      expect(result.schema.view['test'].fields?.[0].type).toBe('invalid_type')
     }
   })
 

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mokkun Examples</title>
+  <link rel="stylesheet" href="../dist/mokkun.css">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+      background-color: #f5f6f7;
+    }
+
+    .page-container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top toolbar */
+    .toolbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: #1a1a2e;
+      color: #fff;
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 1000;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .toolbar h1 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .toolbar-section {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toolbar label {
+      font-size: 14px;
+      color: #a0a0a0;
+    }
+
+    .toolbar select {
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid #3a3a5a;
+      background: #2a2a4a;
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+      min-width: 180px;
+    }
+
+    .toolbar select:hover {
+      border-color: #5a5a8a;
+    }
+
+    .toolbar select:focus {
+      outline: none;
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+
+    .toolbar-spacer {
+      flex: 1;
+    }
+
+    .theme-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .theme-toggle button {
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: 1px solid #3a3a5a;
+      background: transparent;
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .theme-toggle button:hover {
+      background: #3a3a5a;
+    }
+
+    .theme-toggle button.active {
+      background: #6366f1;
+      border-color: #6366f1;
+    }
+
+    /* Main content */
+    #mokkun-app {
+      margin-top: 60px;
+      flex: 1;
+      padding: 24px;
+    }
+
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 50vh;
+      font-size: 18px;
+      color: #666;
+    }
+
+    .error {
+      background: #fee2e2;
+      border: 1px solid #ef4444;
+      border-radius: 8px;
+      padding: 16px 24px;
+      margin: 24px;
+      color: #b91c1c;
+    }
+
+    /* Dark theme */
+    body.dark-theme {
+      background-color: #1a1a2e;
+    }
+
+    body.dark-theme .toolbar {
+      background: #0f0f1a;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <div class="toolbar">
+      <h1>Mokkun</h1>
+
+      <div class="toolbar-section">
+        <label for="yaml-select">YAML:</label>
+        <select id="yaml-select">
+          <option value="screens.yaml">screens.yaml</option>
+          <option value="admin-dashboard.yaml">admin-dashboard.yaml</option>
+          <option value="spotly-admin.yaml">spotly-admin.yaml</option>
+          <option value="bootstrap-dashboard.yaml">bootstrap-dashboard.yaml</option>
+        </select>
+      </div>
+
+      <div class="toolbar-section">
+        <label for="screen-select">Screen:</label>
+        <select id="screen-select">
+          <option value="">Loading...</option>
+        </select>
+      </div>
+
+      <div class="toolbar-spacer"></div>
+
+      <div class="theme-toggle">
+        <button id="light-theme" class="active">Light</button>
+        <button id="dark-theme">Dark</button>
+      </div>
+    </div>
+
+    <div id="mokkun-app">
+      <div class="loading">Loading...</div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { Mokkun } from '../dist/mokkun.esm.js';
+
+    let mokkunInstance = null;
+    const yamlSelect = document.getElementById('yaml-select');
+    const screenSelect = document.getElementById('screen-select');
+    const lightThemeBtn = document.getElementById('light-theme');
+    const darkThemeBtn = document.getElementById('dark-theme');
+    let currentTheme = 'light';
+
+    // Get URL parameters
+    function getUrlParams() {
+      const params = new URLSearchParams(window.location.search);
+      return {
+        yaml: params.get('yaml') || 'screens.yaml',
+        screen: window.location.hash.slice(1) || ''
+      };
+    }
+
+    // Update URL
+    function updateUrl(yaml, screen) {
+      const url = new URL(window.location);
+      url.searchParams.set('yaml', yaml);
+      url.hash = screen || '';
+      window.history.replaceState({}, '', url);
+    }
+
+    // Theme toggle
+    function setTheme(theme) {
+      currentTheme = theme;
+      document.body.classList.toggle('dark-theme', theme === 'dark');
+      lightThemeBtn.classList.toggle('active', theme === 'light');
+      darkThemeBtn.classList.toggle('active', theme === 'dark');
+
+      if (mokkunInstance) {
+        mokkunInstance.setTheme(theme);
+      }
+    }
+
+    lightThemeBtn.addEventListener('click', () => setTheme('light'));
+    darkThemeBtn.addEventListener('click', () => setTheme('dark'));
+
+    // Load YAML
+    async function loadYaml(yamlFile, initialScreen) {
+      document.getElementById('mokkun-app').innerHTML = '<div class="loading">Loading...</div>';
+
+      if (mokkunInstance) {
+        mokkunInstance.destroy();
+        mokkunInstance = null;
+      }
+
+      try {
+        mokkunInstance = await Mokkun.init({
+          container: '#mokkun-app',
+          yamlUrl: './' + yamlFile,
+          theme: currentTheme,
+          onReady: (instance) => {
+            const screens = instance.getScreenNames();
+            screenSelect.innerHTML = '';
+
+            screens.forEach(name => {
+              const option = document.createElement('option');
+              option.value = name;
+              option.textContent = name;
+              screenSelect.appendChild(option);
+            });
+
+            // Show initial screen
+            if (initialScreen && screens.includes(initialScreen)) {
+              instance.showScreen(initialScreen);
+              screenSelect.value = initialScreen;
+            } else {
+              screenSelect.value = screens[0];
+              updateUrl(yamlFile, screens[0]);
+            }
+          },
+          onError: (error) => {
+            document.getElementById('mokkun-app').innerHTML = `
+              <div class="error">
+                <strong>Error</strong><br>
+                ${error.message}
+              </div>
+            `;
+          }
+        });
+      } catch (error) {
+        document.getElementById('mokkun-app').innerHTML = `
+          <div class="error">
+            <strong>Init Error</strong><br>
+            ${error.message}<br><br>
+            <small>Run <code>pnpm build</code> if needed.</small>
+          </div>
+        `;
+      }
+    }
+
+    // YAML select change
+    yamlSelect.addEventListener('change', (e) => {
+      const yamlFile = e.target.value;
+      updateUrl(yamlFile, '');
+      loadYaml(yamlFile, '');
+    });
+
+    // Screen select change
+    screenSelect.addEventListener('change', (e) => {
+      const screenName = e.target.value;
+      if (mokkunInstance && screenName) {
+        mokkunInstance.showScreen(screenName);
+        updateUrl(yamlSelect.value, screenName);
+      }
+    });
+
+    // Hash change
+    window.addEventListener('hashchange', () => {
+      const hash = window.location.hash.slice(1);
+      if (mokkunInstance && hash) {
+        mokkunInstance.showScreen(hash);
+        screenSelect.value = hash;
+      }
+    });
+
+    // Initialize
+    const params = getUrlParams();
+    yamlSelect.value = params.yaml;
+    loadYaml(params.yaml, params.screen);
+  </script>
+</body>
+</html>

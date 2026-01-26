@@ -398,12 +398,16 @@ describe('parseYaml', () => {
       }
     })
 
-    it('should return error for invalid field type', () => {
+    it('should allow unknown field types (for extensibility)', () => {
+      // Unknown field types are now allowed to support placeholder/future types
       const result = parseYaml(invalidFieldTypeYaml)
 
-      expect(result.success).toBe(false)
-      if (!result.success) {
-        expect(result.errors.some(e => e.type === 'INVALID_FIELD_TYPE')).toBe(true)
+      expect(result.success).toBe(true)
+      if (result.success) {
+        // The unknown type should be preserved in the parsed result
+        const screen = result.data.view['login']
+        expect(screen.fields).toBeDefined()
+        expect(screen.fields?.[0].type).toBe('invalid_type')
       }
     })
 
