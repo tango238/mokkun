@@ -13,6 +13,12 @@
  */
 
 import { createElement, generateId } from '../utils/dom'
+import {
+  escapeHtml,
+  createFieldWrapper,
+  getCommonAttributes,
+} from '../utils/field-helpers'
+import type { TextareaField } from '../../types/schema'
 
 // =============================================================================
 // Types
@@ -488,6 +494,37 @@ export class Textarea {
     this.textareaElement.style.height = 'auto'
     const scrollHeight = this.textareaElement.scrollHeight
     this.textareaElement.style.height = `${scrollHeight}px`
+  }
+
+  // ===========================================================================
+  // Static Field Renderer
+  // ===========================================================================
+
+  /**
+   * テキストエリアフィールドをHTMLとしてレンダリング（静的メソッド）
+   * SSR/初期レンダリング用
+   *
+   * @param field - テキストエリアフィールド定義
+   * @returns 生成されたHTML文字列
+   */
+  static renderField(field: TextareaField): string {
+    const attrs: string[] = [getCommonAttributes(field)]
+
+    if (field.rows) {
+      attrs.push(`rows="${field.rows}"`)
+    }
+    if (field.min_length !== undefined) {
+      attrs.push(`minlength="${field.min_length}"`)
+    }
+    if (field.max_length !== undefined) {
+      attrs.push(`maxlength="${field.max_length}"`)
+    }
+
+    const resizeClass = field.resizable === false ? 'no-resize' : ''
+    const defaultValue = field.default !== undefined ? escapeHtml(String(field.default)) : ''
+
+    const textarea = `<textarea class="form-textarea ${resizeClass}" ${attrs.join(' ')}>${defaultValue}</textarea>`
+    return createFieldWrapper(field, textarea)
   }
 }
 

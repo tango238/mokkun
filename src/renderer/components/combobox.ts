@@ -19,6 +19,12 @@
  */
 
 import { createElement, generateId, clearElement } from '../utils/dom'
+import {
+  escapeHtml,
+  createFieldWrapper,
+  getOptions,
+} from '../utils/field-helpers'
+import type { ComboboxField } from '../../types/schema'
 
 // =============================================================================
 // Types
@@ -936,5 +942,70 @@ export class Combobox {
 
     const option = this.state.filteredOptions[index]
     this.callbacks.onHighlight?.(option, this.state)
+  }
+
+  // ===========================================================================
+  // Static Field Renderer
+  // ===========================================================================
+
+  /**
+   * コンボボックスフィールドをHTMLとしてレンダリング（静的メソッド）
+   * SSR/初期レンダリング用
+   *
+   * @param field - コンボボックスフィールド定義
+   * @returns 生成されたHTML文字列
+   */
+  static renderField(field: ComboboxField): string {
+    const attrs: string[] = [
+      `id="${escapeHtml(field.id)}"`,
+      `name="${escapeHtml(field.id)}"`,
+      'role="combobox"',
+      'aria-haspopup="listbox"',
+      'aria-expanded="false"',
+    ]
+
+    if (field.required) {
+      attrs.push('required')
+    }
+    if (field.disabled) {
+      attrs.push('disabled')
+    }
+    if (field.placeholder) {
+      attrs.push(`placeholder="${escapeHtml(field.placeholder)}"`)
+    }
+
+    const options = getOptions(field.options ?? [])
+    const optionListId = `${field.id}-listbox`
+    attrs.push(`aria-controls="${optionListId}"`)
+
+    // オプションリストをhidden datalistとして準備
+    const optionHtml = options
+      .map((opt, index) => {
+        const disabled = opt.disabled ? 'aria-disabled="true"' : ''
+        return `
+          <div
+            role="option"
+            id="${escapeHtml(field.id)}-option-${index}"
+            data-value="${escapeHtml(String(opt.value))}"
+            ${disabled}
+          >
+            ${escapeHtml(opt.label)}
+          </div>
+        `
+      })
+      .join('')
+
+    const content = `
+      <div class="combobox-wrapper" data-state="closed">
+        <div class="combobox-control">
+          <input type="text" class="combobox-input" ${attrs.join(' ')} />
+          <button type="button" class="combobox-dropdown-indicator" aria-label="Open options">▼</button>
+        </div>
+        <div role="listbox" id="${optionListId}" class="combobox-dropdown" hidden>
+          ${optionHtml}
+        </div>
+      </div>
+    `
+    return createFieldWrapper(field, content)
   }
 }

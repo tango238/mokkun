@@ -11,7 +11,21 @@
  */
 
 import { createElement, generateId } from '../utils/dom'
-import type { SelectConfig, SelectState, SelectCallbacks, SelectOption, SelectOptionGroup } from '../../types/schema'
+import {
+  escapeHtml,
+  createFieldWrapper,
+  getCommonAttributes,
+  getOptions,
+} from '../utils/field-helpers'
+import type {
+  SelectConfig,
+  SelectState,
+  SelectCallbacks,
+  SelectOption,
+  SelectOptionGroup,
+  SelectField,
+  MultiSelectField,
+} from '../../types/schema'
 
 // =============================================================================
 // Type Guards
@@ -322,6 +336,99 @@ export class Select {
     }
 
     return optgroup
+  }
+
+  // ===========================================================================
+  // Static Field Renderers
+  // ===========================================================================
+
+  /**
+   * セレクトフィールドをHTMLとしてレンダリング（静的メソッド）
+   * SSR/初期レンダリング用
+   *
+   * @param field - セレクトフィールド定義
+   * @returns 生成されたHTML文字列
+   */
+  static renderSelectField(field: SelectField): string {
+    const attrs: string[] = [getCommonAttributes(field)]
+    const sizeClass = field.size ? `select-${field.size}` : 'select-default'
+    const options = getOptions(field.options)
+
+    // グループ化されたオプションとそうでないオプションを分離
+    const grouped = new Map<string, SelectOption[]>()
+    const ungrouped: SelectOption[] = []
+
+    for (const opt of options) {
+      if (opt.group) {
+        if (!grouped.has(opt.group)) {
+          grouped.set(opt.group, [])
+        }
+        grouped.get(opt.group)!.push(opt)
+      } else {
+        ungrouped.push(opt)
+      }
+    }
+
+    // オプションHTMLの生成
+    const renderOption = (opt: SelectOption) => {
+      const selected = field.default === opt.value ? 'selected' : ''
+      const disabled = opt.disabled ? 'disabled' : ''
+      return `<option value="${escapeHtml(String(opt.value))}" ${selected} ${disabled}>${escapeHtml(opt.label)}</option>`
+    }
+
+    // 未グループ化のオプション
+    const ungroupedHtml = ungrouped.map(renderOption).join('')
+
+    // グループ化されたオプション（optgroup）
+    const groupedHtml = Array.from(grouped.entries())
+      .map(([label, opts]) => {
+        const optionsHtml = opts.map(renderOption).join('')
+        return `<optgroup label="${escapeHtml(label)}">${optionsHtml}</optgroup>`
+      })
+      .join('')
+
+    // プレースホルダーまたは空オプション
+    const hasBlank = !field.required || field.clearable
+    const blankOption = hasBlank
+      ? `<option value="">${escapeHtml(field.placeholder ?? 'Select...')}</option>`
+      : ''
+
+    const select = `
+      <select class="field-select ${sizeClass}" ${attrs.join(' ')}>
+        ${blankOption}
+        ${ungroupedHtml}
+        ${groupedHtml}
+      </select>
+    `
+    return createFieldWrapper(field, select)
+  }
+
+  /**
+   * マルチセレクトフィールドをHTMLとしてレンダリング（静的メソッド）
+   * SSR/初期レンダリング用
+   *
+   * @param field - マルチセレクトフィールド定義
+   * @returns 生成されたHTML文字列
+   */
+  static renderMultiSelectField(field: MultiSelectField): string {
+    const attrs: string[] = [getCommonAttributes(field), 'multiple']
+    const options = getOptions(field.options)
+    const defaultValues = Array.isArray(field.default) ? field.default : []
+
+    const optionHtml = options
+      .map((opt) => {
+        const selected = defaultValues.includes(opt.value) ? 'selected' : ''
+        const disabled = opt.disabled ? 'disabled' : ''
+        return `<option value="${escapeHtml(String(opt.value))}" ${selected} ${disabled}>${escapeHtml(opt.label)}</option>`
+      })
+      .join('')
+
+    const select = `
+      <select class="form-select form-multiselect" ${attrs.join(' ')}>
+        ${optionHtml}
+      </select>
+    `
+    return createFieldWrapper(field, select)
   }
 }
 

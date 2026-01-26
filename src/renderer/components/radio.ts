@@ -10,6 +10,12 @@
  */
 
 import { createElement, generateId } from '../utils/dom'
+import {
+  escapeHtml,
+  createFieldWrapper,
+  getOptions,
+} from '../utils/field-helpers'
+import type { RadioGroupField } from '../../types/schema'
 
 // =============================================================================
 // Types
@@ -341,6 +347,48 @@ export class RadioButton {
     }
 
     return label
+  }
+
+  // ===========================================================================
+  // Static Field Renderer
+  // ===========================================================================
+
+  /**
+   * ラジオグループフィールドをHTMLとしてレンダリング（静的メソッド）
+   * SSR/初期レンダリング用
+   *
+   * @param field - ラジオグループフィールド定義
+   * @returns 生成されたHTML文字列
+   */
+  static renderRadioGroupField(field: RadioGroupField): string {
+    const options = getOptions(field.options)
+    const direction = field.direction ?? 'vertical'
+
+    const optionHtml = options
+      .map((opt) => {
+        const checked = field.default === opt.value ? 'checked' : ''
+        const disabled = opt.disabled || field.disabled ? 'disabled' : ''
+        const optionId = `${field.id}-${opt.value}`
+
+        return `
+          <label class="radio-option" for="${escapeHtml(optionId)}">
+            <input
+              type="radio"
+              id="${escapeHtml(optionId)}"
+              name="${escapeHtml(field.id)}"
+              value="${escapeHtml(String(opt.value))}"
+              ${checked}
+              ${disabled}
+              ${field.required ? 'required' : ''}
+            />
+            <span class="radio-label">${escapeHtml(opt.label)}</span>
+          </label>
+        `
+      })
+      .join('')
+
+    const content = `<div class="radio-group direction-${direction}">${optionHtml}</div>`
+    return createFieldWrapper(field, content)
   }
 }
 

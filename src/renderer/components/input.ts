@@ -12,6 +12,12 @@
  */
 
 import { createElement, generateId } from '../utils/dom'
+import {
+  escapeHtml,
+  createFieldWrapper,
+  getCommonAttributes,
+} from '../utils/field-helpers'
+import type { TextField, NumberField, DatePickerField, TimePickerField } from '../../types/schema'
 
 // =============================================================================
 // Types
@@ -522,6 +528,121 @@ export class Input {
    */
   private handleClear(): void {
     this.clear()
+  }
+
+  // ===========================================================================
+  // Static Field Renderers
+  // ===========================================================================
+
+  /**
+   * テキストフィールドをHTMLとしてレンダリング（静的メソッド）
+   * SSR/初期レンダリング用
+   *
+   * @param field - テキストフィールド定義
+   * @returns 生成されたHTML文字列
+   */
+  static renderTextField(field: TextField): string {
+    const inputType = field.input_type ?? 'text'
+    const attrs: string[] = [getCommonAttributes(field)]
+
+    if (field.min_length !== undefined) {
+      attrs.push(`minlength="${field.min_length}"`)
+    }
+    if (field.max_length !== undefined) {
+      attrs.push(`maxlength="${field.max_length}"`)
+    }
+    if (field.pattern) {
+      attrs.push(`pattern="${escapeHtml(field.pattern)}"`)
+    }
+    if (field.default !== undefined) {
+      attrs.push(`value="${escapeHtml(String(field.default))}"`)
+    }
+
+    const input = `<input type="${inputType}" class="form-input" ${attrs.join(' ')} />`
+    return createFieldWrapper(field, input)
+  }
+
+  /**
+   * 数値フィールドをHTMLとしてレンダリング（静的メソッド）
+   * SSR/初期レンダリング用
+   *
+   * @param field - 数値フィールド定義
+   * @returns 生成されたHTML文字列
+   */
+  static renderNumberField(field: NumberField): string {
+    const attrs: string[] = [getCommonAttributes(field)]
+
+    if (field.min !== undefined) {
+      attrs.push(`min="${field.min}"`)
+    }
+    if (field.max !== undefined) {
+      attrs.push(`max="${field.max}"`)
+    }
+    if (field.step !== undefined) {
+      attrs.push(`step="${field.step}"`)
+    }
+    if (field.default !== undefined) {
+      attrs.push(`value="${field.default}"`)
+    }
+
+    let input = `<input type="number" class="form-input" ${attrs.join(' ')} />`
+
+    if (field.unit) {
+      input = `
+        <div class="input-with-unit">
+          ${input}
+          <span class="input-unit">${escapeHtml(field.unit)}</span>
+        </div>
+      `
+    }
+
+    return createFieldWrapper(field, input)
+  }
+
+  /**
+   * 日付選択フィールドをHTMLとしてレンダリング（静的メソッド）
+   * SSR/初期レンダリング用
+   *
+   * @param field - 日付選択フィールド定義
+   * @returns 生成されたHTML文字列
+   */
+  static renderDatePickerField(field: DatePickerField): string {
+    const inputType = field.include_time ? 'datetime-local' : 'date'
+    const attrs: string[] = [getCommonAttributes(field)]
+
+    if (field.min_date) {
+      attrs.push(`min="${escapeHtml(field.min_date)}"`)
+    }
+    if (field.max_date) {
+      attrs.push(`max="${escapeHtml(field.max_date)}"`)
+    }
+    if (field.default !== undefined) {
+      attrs.push(`value="${escapeHtml(String(field.default))}"`)
+    }
+
+    const input = `<input type="${inputType}" class="form-input" ${attrs.join(' ')} />`
+    return createFieldWrapper(field, input)
+  }
+
+  /**
+   * 時間選択フィールドをHTMLとしてレンダリング（静的メソッド）
+   * SSR/初期レンダリング用
+   *
+   * @param field - 時間選択フィールド定義
+   * @returns 生成されたHTML文字列
+   */
+  static renderTimePickerField(field: TimePickerField): string {
+    const attrs: string[] = [getCommonAttributes(field)]
+
+    if (field.minute_step) {
+      attrs.push(`step="${field.minute_step * 60}"`)
+    }
+    if (field.default !== undefined) {
+      attrs.push(`value="${escapeHtml(String(field.default))}"`)
+    }
+
+    const input = `<input type="time" class="form-input" ${attrs.join(' ')} />`
+    return createFieldWrapper(field, input)
   }
 }
 

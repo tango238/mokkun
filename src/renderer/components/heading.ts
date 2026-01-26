@@ -10,6 +10,8 @@
  */
 
 import { createElement, generateId } from '../utils/dom'
+import { escapeHtml, getDefaultSizeForLevel } from '../utils/field-helpers'
+import type { HeadingField } from '../../types/schema'
 
 // =============================================================================
 // Types
@@ -246,15 +248,49 @@ export class Heading {
    * レベルに基づくデフォルトサイズを取得
    */
   private getDefaultSizeForLevel(level: 1 | 2 | 3 | 4 | 5 | 6): 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' {
-    const sizeMap: Record<number, 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl'> = {
-      1: '2xl',
-      2: 'xl',
-      3: 'lg',
-      4: 'md',
-      5: 'sm',
-      6: 'xs',
+    return getDefaultSizeForLevel(level)
+  }
+
+  // ===========================================================================
+  // Static Field Renderer
+  // ===========================================================================
+
+  /**
+   * 見出しフィールドをHTMLとしてレンダリング（静的メソッド）
+   * SSR/初期レンダリング用
+   *
+   * @param field - 見出しフィールド定義
+   * @returns 生成されたHTML文字列
+   */
+  static renderField(field: HeadingField): string {
+    const size = field.size ?? getDefaultSizeForLevel(field.level)
+    const align = field.align ?? 'left'
+    const color = field.color ?? 'default'
+    const tag = `h${field.level}`
+
+    const classes = [
+      'heading-field-container',
+      `heading-level-${field.level}`,
+      `heading-size-${size}`,
+      `heading-align-${align}`,
+      `heading-color-${color}`,
+    ]
+
+    if (field.class) {
+      classes.push(field.class)
     }
-    return sizeMap[level]
+
+    const iconHtml = field.icon ? `<span class="heading-icon">${escapeHtml(field.icon)}</span>` : ''
+
+    // 見出しフィールドはラベルや説明が不要なため、直接コンテンツを返す
+    return `
+      <div class="${classes.join(' ')}" data-field-id="${escapeHtml(field.id)}">
+        <${tag} class="heading-element" id="${escapeHtml(field.id)}">
+          ${iconHtml}
+          <span class="heading-text">${escapeHtml(field.text)}</span>
+        </${tag}>
+      </div>
+    `
   }
 }
 

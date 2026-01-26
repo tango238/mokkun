@@ -11,6 +11,12 @@
  */
 
 import { createElement, generateId } from '../utils/dom'
+import {
+  escapeHtml,
+  createFieldWrapper,
+  getOptions,
+} from '../utils/field-helpers'
+import type { CheckboxGroupField } from '../../types/schema'
 
 // =============================================================================
 // Types
@@ -400,6 +406,48 @@ export class Checkbox {
     }
 
     return label
+  }
+
+  // ===========================================================================
+  // Static Field Renderer
+  // ===========================================================================
+
+  /**
+   * チェックボックスグループフィールドをHTMLとしてレンダリング（静的メソッド）
+   * SSR/初期レンダリング用
+   *
+   * @param field - チェックボックスグループフィールド定義
+   * @returns 生成されたHTML文字列
+   */
+  static renderCheckboxGroupField(field: CheckboxGroupField): string {
+    const options = getOptions(field.options)
+    const direction = field.direction ?? 'vertical'
+    const defaultValues = Array.isArray(field.default) ? field.default : []
+
+    const optionHtml = options
+      .map((opt) => {
+        const checked = defaultValues.includes(opt.value) ? 'checked' : ''
+        const disabled = opt.disabled || field.disabled ? 'disabled' : ''
+        const optionId = `${field.id}-${opt.value}`
+
+        return `
+          <label class="checkbox-option" for="${escapeHtml(optionId)}">
+            <input
+              type="checkbox"
+              id="${escapeHtml(optionId)}"
+              name="${escapeHtml(field.id)}"
+              value="${escapeHtml(String(opt.value))}"
+              ${checked}
+              ${disabled}
+            />
+            <span class="checkbox-label">${escapeHtml(opt.label)}</span>
+          </label>
+        `
+      })
+      .join('')
+
+    const content = `<div class="checkbox-group direction-${direction}">${optionHtml}</div>`
+    return createFieldWrapper(field, content)
   }
 }
 
