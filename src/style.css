@@ -8385,3 +8385,251 @@ body.dialog-open {
   background-color: var(--background-color-subtle);
   border-color: var(--border-color);
 }
+
+/* =============================================================================
+   AlertBanner Component
+   アラートバナーコンポーネント
+   ============================================================================= */
+
+.mokkun-alert-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  transition: all var(--transition-normal);
+}
+
+/* Content */
+.alert-banner-content {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex: 1;
+  min-width: 0;
+}
+
+/* Icon */
+.alert-banner-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
+
+.alert-banner-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Message */
+.alert-banner-message {
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+
+/* Action button */
+.alert-banner-action {
+  flex-shrink: 0;
+  padding: var(--spacing-xs) var(--spacing-md);
+  border: 1px solid;
+  border-radius: var(--border-radius-sm);
+  background-color: transparent;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.alert-banner-action:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.alert-banner-action:active {
+  transform: scale(0.98);
+}
+
+/* Close button */
+.alert-banner-close {
+  flex-shrink: 0;
+  padding: var(--spacing-xs);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: var(--border-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color var(--transition-fast);
+}
+
+.alert-banner-close:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.alert-banner-close svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* =============================================================================
+   AlertBanner Type Variants
+   ============================================================================= */
+
+/* Info (default) */
+.alert-banner-info {
+  background-color: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #93c5fd;
+}
+
+.alert-banner-info .alert-banner-action {
+  color: #1e40af;
+  border-color: #1e40af;
+}
+
+.alert-banner-info .alert-banner-action:hover {
+  background-color: rgba(30, 64, 175, 0.1);
+}
+
+.alert-banner-info .alert-banner-close {
+  color: #1e40af;
+}
+
+/* Success */
+.alert-banner-success {
+  background-color: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+.alert-banner-success .alert-banner-action {
+  color: #166534;
+  border-color: #166534;
+}
+
+.alert-banner-success .alert-banner-action:hover {
+  background-color: rgba(22, 101, 52, 0.1);
+}
+
+.alert-banner-success .alert-banner-close {
+  color: #166534;
+}
+
+/* Warning */
+.alert-banner-warning {
+  background-color: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+}
+
+.alert-banner-warning .alert-banner-action {
+  color: #92400e;
+  border-color: #92400e;
+}
+
+.alert-banner-warning .alert-banner-action:hover {
+  background-color: rgba(146, 64, 14, 0.1);
+}
+
+.alert-banner-warning .alert-banner-close {
+  color: #92400e;
+}
+
+/* Error */
+.alert-banner-error {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+.alert-banner-error .alert-banner-action {
+  color: #991b1b;
+  border-color: #991b1b;
+}
+
+.alert-banner-error .alert-banner-action:hover {
+  background-color: rgba(153, 27, 27, 0.1);
+}
+
+.alert-banner-error .alert-banner-close {
+  color: #991b1b;
+}
+
+/* =============================================================================
+   AlertBanner Hidden State
+   ============================================================================= */
+
+.alert-banner-hidden,
+.mokkun-alert-banner[data-hidden] {
+  display: none;
+}
+
+/* =============================================================================
+   AlertBanner Dark Theme
+   ============================================================================= */
+
+[data-theme="dark"] .alert-banner-info {
+  background-color: #1e3a5f;
+  color: #93c5fd;
+  border-color: #3b82f6;
+}
+
+[data-theme="dark"] .alert-banner-info .alert-banner-action {
+  color: #93c5fd;
+  border-color: #93c5fd;
+}
+
+[data-theme="dark"] .alert-banner-info .alert-banner-close {
+  color: #93c5fd;
+}
+
+[data-theme="dark"] .alert-banner-success {
+  background-color: #14532d;
+  color: #86efac;
+  border-color: #22c55e;
+}
+
+[data-theme="dark"] .alert-banner-success .alert-banner-action {
+  color: #86efac;
+  border-color: #86efac;
+}
+
+[data-theme="dark"] .alert-banner-success .alert-banner-close {
+  color: #86efac;
+}
+
+[data-theme="dark"] .alert-banner-warning {
+  background-color: #451a03;
+  color: #fcd34d;
+  border-color: #f59e0b;
+}
+
+[data-theme="dark"] .alert-banner-warning .alert-banner-action {
+  color: #fcd34d;
+  border-color: #fcd34d;
+}
+
+[data-theme="dark"] .alert-banner-warning .alert-banner-close {
+  color: #fcd34d;
+}
+
+[data-theme="dark"] .alert-banner-error {
+  background-color: #450a0a;
+  color: #fca5a5;
+  border-color: #ef4444;
+}
+
+[data-theme="dark"] .alert-banner-error .alert-banner-action {
+  color: #fca5a5;
+  border-color: #fca5a5;
+}
+
+[data-theme="dark"] .alert-banner-error .alert-banner-close {
+  color: #fca5a5;
+}

@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AlertBanner Component Demo</title>
+  <link rel="stylesheet" href="../src/style.css">
+  <style>
+    body {
+      padding: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .demo-section {
+      margin-bottom: 3rem;
+    }
+
+    .demo-section h2 {
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--color-border);
+    }
+
+    .demo-section h3 {
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+      font-size: 1.125rem;
+      color: var(--color-text-muted);
+    }
+
+    .demo-container {
+      margin-bottom: 1.5rem;
+    }
+
+    .demo-controls {
+      margin-top: 1rem;
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .demo-controls button {
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+      border-radius: var(--border-radius-md);
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: all 0.2s;
+    }
+
+    .demo-controls button:hover {
+      background: var(--color-bg-subtle);
+      border-color: var(--color-primary);
+    }
+
+    .demo-controls button:active {
+      transform: scale(0.98);
+    }
+
+    .theme-toggle {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      padding: 0.75rem 1.5rem;
+      background: var(--color-primary);
+      color: white;
+      border: none;
+      border-radius: var(--border-radius-md);
+      cursor: pointer;
+      font-weight: 500;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      transition: all 0.2s;
+      z-index: 1000;
+    }
+
+    .theme-toggle:hover {
+      background: var(--color-primary-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .code-block {
+      background: var(--color-bg-subtle);
+      border: 1px solid var(--color-border);
+      border-radius: var(--border-radius-md);
+      padding: 1rem;
+      margin-top: 0.5rem;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 0.875rem;
+      overflow-x: auto;
+    }
+
+    .event-log {
+      background: var(--color-bg-subtle);
+      border: 1px solid var(--color-border);
+      border-radius: var(--border-radius-md);
+      padding: 1rem;
+      margin-top: 1rem;
+      max-height: 200px;
+      overflow-y: auto;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 0.875rem;
+    }
+
+    .event-log-item {
+      padding: 0.25rem 0;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .event-log-item:last-child {
+      border-bottom: none;
+    }
+
+    .event-log-time {
+      color: var(--color-text-muted);
+      margin-right: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <button class="theme-toggle" id="theme-toggle">🌙 ダークモード</button>
+
+  <h1>AlertBanner Component Demo</h1>
+  <p>通知バナーコンポーネントのデモンストレーション</p>
+
+  <!-- Type Variants -->
+  <div class="demo-section">
+    <h2>📌 タイプバリエーション</h2>
+
+    <h3>Info (情報)</h3>
+    <div id="demo-info" class="demo-container"></div>
+
+    <h3>Success (成功)</h3>
+    <div id="demo-success" class="demo-container"></div>
+
+    <h3>Warning (警告)</h3>
+    <div id="demo-warning" class="demo-container"></div>
+
+    <h3>Error (エラー)</h3>
+    <div id="demo-error" class="demo-container"></div>
+  </div>
+
+  <!-- With Action Button -->
+  <div class="demo-section">
+    <h2>🎯 アクションボタン付き</h2>
+    <div id="demo-action" class="demo-container"></div>
+    <div class="code-block">
+createAlertBanner(container, {
+  message: '接続が切断されました。',
+  type: 'error',
+  actionLabel: '再接続'
+}, {
+  onAction: () => console.log('再接続中...')
+})</div>
+  </div>
+
+  <!-- Non-closable -->
+  <div class="demo-section">
+    <h2>🔒 閉じるボタンなし</h2>
+    <div id="demo-non-closable" class="demo-container"></div>
+    <div class="code-block">
+createAlertBanner(container, {
+  message: 'システムメンテナンス中です...',
+  type: 'warning',
+  closable: false
+})</div>
+  </div>
+
+  <!-- Interactive Controls -->
+  <div class="demo-section">
+    <h2>🎮 インタラクティブコントロール</h2>
+    <div id="demo-interactive" class="demo-container"></div>
+    <div class="demo-controls">
+      <button id="btn-show">表示</button>
+      <button id="btn-hide">非表示</button>
+      <button id="btn-toggle">切り替え</button>
+      <button id="btn-change-message">メッセージ変更</button>
+      <button id="btn-change-to-error">エラーに変更</button>
+      <button id="btn-change-to-success">成功に変更</button>
+    </div>
+    <div id="event-log" class="event-log"></div>
+  </div>
+
+  <!-- Real-world Examples -->
+  <div class="demo-section">
+    <h2>💼 実際の使用例</h2>
+
+    <h3>1. Speaker未設定の警告（Homeページ）</h3>
+    <div id="demo-speaker-warning" class="demo-container"></div>
+
+    <h3>2. セッション期限切れ警告</h3>
+    <div id="demo-session-warning" class="demo-container"></div>
+
+    <h3>3. 保存成功通知</h3>
+    <div id="demo-save-success" class="demo-container"></div>
+
+    <h3>4. ネットワークエラー</h3>
+    <div id="demo-network-error" class="demo-container"></div>
+  </div>
+
+  <script type="module">
+    import { createAlertBanner } from '../src/renderer/components/alert-banner.ts'
+
+    // Theme toggle
+    const themeToggle = document.getElementById('theme-toggle')
+    const htmlElement = document.documentElement
+
+    themeToggle.addEventListener('click', () => {
+      const currentTheme = htmlElement.getAttribute('data-theme')
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark'
+      htmlElement.setAttribute('data-theme', newTheme)
+      themeToggle.textContent = newTheme === 'dark' ? '☀️ ライトモード' : '🌙 ダークモード'
+    })
+
+    // Event logging
+    function logEvent(message) {
+      const eventLog = document.getElementById('event-log')
+      const time = new Date().toLocaleTimeString('ja-JP')
+      const item = document.createElement('div')
+      item.className = 'event-log-item'
+      item.innerHTML = `<span class="event-log-time">${time}</span>${message}`
+      eventLog.insertBefore(item, eventLog.firstChild)
+    }
+
+    // Type Variants
+    createAlertBanner(document.getElementById('demo-info'), {
+      message: 'これは情報メッセージです。',
+      type: 'info'
+    })
+
+    createAlertBanner(document.getElementById('demo-success'), {
+      message: '操作が正常に完了しました！',
+      type: 'success'
+    })
+
+    createAlertBanner(document.getElementById('demo-warning'), {
+      message: '設定を確認してください。',
+      type: 'warning'
+    })
+
+    createAlertBanner(document.getElementById('demo-error'), {
+      message: 'エラーが発生しました。もう一度お試しください。',
+      type: 'error'
+    })
+
+    // With Action Button
+    createAlertBanner(
+      document.getElementById('demo-action'),
+      {
+        message: '接続が切断されました。',
+        type: 'error',
+        actionLabel: '再接続'
+      },
+      {
+        onAction: () => {
+          alert('再接続中...')
+        },
+        onClose: () => {
+          console.log('アラートが閉じられました')
+        }
+      }
+    )
+
+    // Non-closable
+    createAlertBanner(document.getElementById('demo-non-closable'), {
+      message: 'システムメンテナンス中です。完了までしばらくお待ちください...',
+      type: 'warning',
+      closable: false
+    })
+
+    // Interactive Controls
+    const interactiveContainer = document.getElementById('demo-interactive')
+    const interactiveBanner = createAlertBanner(
+      interactiveContainer,
+      {
+        message: 'このバナーは下のボタンで操作できます',
+        type: 'info',
+        actionLabel: 'アクション'
+      },
+      {
+        onAction: () => {
+          logEvent('✅ アクションボタンがクリックされました')
+        },
+        onClose: () => {
+          logEvent('❌ 閉じるボタンがクリックされました')
+        }
+      }
+    )
+
+    document.getElementById('btn-show').addEventListener('click', () => {
+      interactiveBanner.show()
+      logEvent('👁️ バナーを表示しました')
+    })
+
+    document.getElementById('btn-hide').addEventListener('click', () => {
+      interactiveBanner.hide()
+      logEvent('🙈 バナーを非表示にしました')
+    })
+
+    document.getElementById('btn-toggle').addEventListener('click', () => {
+      const isVisible = interactiveBanner.isVisible()
+      interactiveBanner.setVisible(!isVisible)
+      logEvent(`🔄 バナーを${isVisible ? '非表示' : '表示'}に切り替えました`)
+    })
+
+    const messages = [
+      'メッセージが更新されました',
+      '新しいメッセージです',
+      '別のメッセージに変更されました',
+      'これは変更されたメッセージです'
+    ]
+    let messageIndex = 0
+
+    document.getElementById('btn-change-message').addEventListener('click', () => {
+      const newMessage = messages[messageIndex % messages.length]
+      interactiveBanner.setMessage(newMessage)
+      logEvent(`📝 メッセージを変更: "${newMessage}"`)
+      messageIndex++
+    })
+
+    document.getElementById('btn-change-to-error').addEventListener('click', () => {
+      interactiveBanner.destroy()
+      const newBanner = createAlertBanner(
+        interactiveContainer,
+        {
+          message: 'エラー状態に変更されました',
+          type: 'error',
+          actionLabel: 'アクション'
+        },
+        {
+          onAction: () => logEvent('✅ アクションボタンがクリックされました'),
+          onClose: () => logEvent('❌ 閉じるボタンがクリックされました')
+        }
+      )
+      logEvent('🔴 エラータイプに変更されました')
+      // Update reference
+      Object.assign(interactiveBanner, newBanner)
+    })
+
+    document.getElementById('btn-change-to-success').addEventListener('click', () => {
+      interactiveBanner.destroy()
+      const newBanner = createAlertBanner(
+        interactiveContainer,
+        {
+          message: '成功状態に変更されました',
+          type: 'success',
+          actionLabel: 'アクション'
+        },
+        {
+          onAction: () => logEvent('✅ アクションボタンがクリックされました'),
+          onClose: () => logEvent('❌ 閉じるボタンがクリックされました')
+        }
+      )
+      logEvent('🟢 成功タイプに変更されました')
+      // Update reference
+      Object.assign(interactiveBanner, newBanner)
+    })
+
+    // Real-world Examples
+
+    // 1. Speaker Warning
+    createAlertBanner(
+      document.getElementById('demo-speaker-warning'),
+      {
+        message: 'Speakerが設定されていません。設定画面から設定してください。',
+        type: 'warning',
+        actionLabel: '設定画面へ',
+        role: 'alert',
+        ariaLabel: '警告: Speaker未設定'
+      },
+      {
+        onAction: () => {
+          alert('設定画面に移動します')
+        }
+      }
+    )
+
+    // 2. Session Warning
+    let sessionTimer
+    const sessionBanner = createAlertBanner(
+      document.getElementById('demo-session-warning'),
+      {
+        message: 'セッションの有効期限が5分後に切れます。',
+        type: 'warning',
+        actionLabel: 'セッションを延長',
+        role: 'alert'
+      },
+      {
+        onAction: () => {
+          sessionBanner.setMessage('セッションを延長しました。')
+          sessionBanner.destroy()
+          const successBanner = createAlertBanner(
+            document.getElementById('demo-session-warning'),
+            {
+              message: 'セッションを延長しました。',
+              type: 'success'
+            }
+          )
+          setTimeout(() => successBanner.hide(), 3000)
+        }
+      }
+    )
+
+    // 3. Save Success
+    const saveBanner = createAlertBanner(
+      document.getElementById('demo-save-success'),
+      {
+        message: '変更が正常に保存されました。',
+        type: 'success',
+        visible: true
+      }
+    )
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+      if (saveBanner.isVisible()) {
+        saveBanner.hide()
+      }
+    }, 5000)
+
+    // 4. Network Error
+    createAlertBanner(
+      document.getElementById('demo-network-error'),
+      {
+        message: 'ネットワークエラーが発生しました。インターネット接続を確認してください。',
+        type: 'error',
+        actionLabel: '再試行',
+        role: 'alert'
+      },
+      {
+        onAction: () => {
+          alert('再試行中...')
+          // Simulate retry logic
+        }
+      }
+    )
+  </script>
+</body>
+</html>
