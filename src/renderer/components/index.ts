@@ -341,3 +341,11 @@ export {
   type DateRangePickerCallbacks,
   type DateRangePickerConfig,
 } from './date-range-picker'
+export {
+  SearchInput,
+  createSearchInput,
+  type SearchInputState,
+  type SearchInputCallbacks,
+  type SearchInputConfig,
+  type KeyboardShortcut,
+} from './search-input'

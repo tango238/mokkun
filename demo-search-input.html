@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SearchInput Component Demo - Mokkun</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 2rem;
+        font-family: Inter, system-ui, -apple-system, sans-serif;
+        background: #f8fafc;
+      }
+
+      .demo-container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .demo-header {
+        margin-bottom: 2rem;
+      }
+
+      .demo-header h1 {
+        margin: 0 0 0.5rem;
+        font-size: 2rem;
+        color: #1e293b;
+      }
+
+      .demo-header p {
+        margin: 0;
+        color: #64748b;
+      }
+
+      .demo-section {
+        margin-bottom: 3rem;
+        background: white;
+        padding: 2rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+
+      .demo-section h2 {
+        margin: 0 0 1rem;
+        font-size: 1.25rem;
+        color: #1e293b;
+      }
+
+      .demo-section p {
+        margin: 0 0 1rem;
+        color: #64748b;
+        font-size: 0.875rem;
+      }
+
+      .demo-item {
+        margin-bottom: 1.5rem;
+      }
+
+      .demo-item:last-child {
+        margin-bottom: 0;
+      }
+
+      .demo-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #475569;
+      }
+
+      .demo-description {
+        margin-top: 0.5rem;
+        font-size: 0.75rem;
+        color: #94a3b8;
+      }
+
+      .event-log-section {
+        background: #f1f5f9;
+        padding: 1rem;
+        border-radius: 0.375rem;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+
+      .event-log-section h3 {
+        margin: 0 0 0.75rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #475569;
+      }
+
+      .event-log {
+        font-family: 'Monaco', 'Menlo', monospace;
+        font-size: 0.75rem;
+      }
+
+      .event-log > div {
+        padding: 0.25rem 0;
+        color: #475569;
+        border-bottom: 1px solid #e2e8f0;
+      }
+
+      .event-log > div:last-child {
+        border-bottom: none;
+      }
+
+      .control-panel {
+        margin-top: 1.5rem;
+        padding: 1rem;
+        background: #f8fafc;
+        border-radius: 0.375rem;
+        border: 1px solid #e2e8f0;
+      }
+
+      .control-panel h3 {
+        margin: 0 0 0.75rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #475569;
+      }
+
+      .control-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+
+      .control-button {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        border: 1px solid #cbd5e1;
+        border-radius: 0.375rem;
+        background: white;
+        color: #475569;
+        cursor: pointer;
+        transition: all 0.15s ease;
+      }
+
+      .control-button:hover {
+        background: #f8fafc;
+        border-color: #94a3b8;
+      }
+
+      .control-button:active {
+        transform: translateY(1px);
+      }
+
+      .sample-data-table {
+        margin-top: 1.5rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.375rem;
+        overflow: hidden;
+      }
+
+      .sample-data-table table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .sample-data-table th {
+        background: #f8fafc;
+        padding: 0.75rem 1rem;
+        text-align: left;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #475569;
+        border-bottom: 1px solid #e2e8f0;
+      }
+
+      .sample-data-table td {
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        color: #1e293b;
+        border-bottom: 1px solid #f1f5f9;
+      }
+
+      .sample-data-table tr:last-child td {
+        border-bottom: none;
+      }
+
+      .sample-data-table tr.hidden {
+        display: none;
+      }
+
+      .no-results {
+        padding: 2rem;
+        text-align: center;
+        color: #94a3b8;
+        font-size: 0.875rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="demo-container">
+      <div class="demo-header">
+        <h1>SearchInput Component Demo</h1>
+        <p>検索専用の入力フィールドコンポーネント</p>
+      </div>
+
+      <div class="demo-section">
+        <h2>基本的な検索入力</h2>
+        <p>検索アイコン、クリアボタン、プレースホルダーを含む標準的な検索入力フィールド</p>
+        <div class="demo-item">
+          <label class="demo-label">Medium サイズ（デフォルト）</label>
+          <div id="search-basic"></div>
+        </div>
+      </div>
+
+      <div class="demo-section">
+        <h2>サイズバリエーション</h2>
+        <div class="demo-item">
+          <label class="demo-label">Small</label>
+          <div id="search-small"></div>
+        </div>
+        <div class="demo-item">
+          <label class="demo-label">Medium</label>
+          <div id="search-medium"></div>
+        </div>
+        <div class="demo-item">
+          <label class="demo-label">Large</label>
+          <div id="search-large"></div>
+        </div>
+      </div>
+
+      <div class="demo-section">
+        <h2>キーボードショートカット</h2>
+        <p>⌘K (macOS) または Ctrl+K (Windows/Linux) で検索フィールドにフォーカス</p>
+        <div class="demo-item">
+          <label class="demo-label">ショートカット付き検索</label>
+          <div id="search-with-shortcut"></div>
+          <p class="demo-description">キーボードショートカットを試してください</p>
+        </div>
+      </div>
+
+      <div class="demo-section">
+        <h2>デバウンス検索</h2>
+        <p>入力を停止してから300ms後に自動的に検索を実行</p>
+        <div class="demo-item">
+          <label class="demo-label">自動検索（デバウンス）</label>
+          <div id="search-debounce"></div>
+          <p class="demo-description">入力すると300ms後に自動的に検索されます</p>
+        </div>
+      </div>
+
+      <div class="demo-section">
+        <h2>ローディング状態</h2>
+        <div class="demo-item">
+          <label class="demo-label">ローディング中</label>
+          <div id="search-loading"></div>
+          <p class="demo-description">検索中はスピナーが表示されます</p>
+        </div>
+        <div class="control-panel">
+          <h3>コントロール</h3>
+          <div class="control-buttons">
+            <button class="control-button" onclick="window.toggleLoading()">ローディング切替</button>
+            <button class="control-button" onclick="window.simulateSearch()">検索シミュレート</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-section">
+        <h2>無効化状態</h2>
+        <div class="demo-item">
+          <label class="demo-label">無効化された検索入力</label>
+          <div id="search-disabled"></div>
+        </div>
+        <div class="control-panel">
+          <h3>コントロール</h3>
+          <div class="control-buttons">
+            <button class="control-button" onclick="window.toggleDisabled()">有効/無効切替</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-section">
+        <h2>実用例: テーブル検索</h2>
+        <p>リアルタイムでテーブルデータをフィルタリング</p>
+        <div class="demo-item">
+          <label class="demo-label">ユーザーを検索</label>
+          <div id="search-table"></div>
+        </div>
+        <div class="sample-data-table">
+          <table id="user-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>名前</th>
+                <th>メールアドレス</th>
+                <th>部署</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td>山田 太郎</td>
+                <td>taro.yamada@example.com</td>
+                <td>営業部</td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>佐藤 花子</td>
+                <td>hanako.sato@example.com</td>
+                <td>開発部</td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td>鈴木 一郎</td>
+                <td>ichiro.suzuki@example.com</td>
+                <td>人事部</td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td>田中 次郎</td>
+                <td>jiro.tanaka@example.com</td>
+                <td>営業部</td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td>高橋 美咲</td>
+                <td>misaki.takahashi@example.com</td>
+                <td>開発部</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="no-results" id="no-results" style="display: none;">
+            検索結果が見つかりませんでした
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-section">
+        <div class="event-log-section">
+          <h3>イベントログ</h3>
+          <div id="event-log" class="event-log"></div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/demo-search-input.ts"></script>
+  </body>
+</html>
