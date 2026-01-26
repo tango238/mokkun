@@ -1,0 +1,451 @@
+/**
+ * Render Verification Tests
+ * YAMLで定義されたすべてのフィールドがレンダリングされることを検証
+ */
+
+import { describe, it, expect, beforeAll } from 'vitest'
+import fs from 'fs'
+import path from 'path'
+import yaml from 'js-yaml'
+import { JSDOM } from 'jsdom'
+import { renderField, renderFields } from '../renderer/components/form-fields'
+import { VALID_FIELD_TYPES } from '../parser/yaml-parser'
+import type { InputField, InputFieldType, MokkunSchemaRaw } from '../types/schema'
+
+// Setup DOM environment
+beforeAll(() => {
+  const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>')
+  global.document = dom.window.document
+})
+
+// =============================================================================
+// Helper Functions
+// =============================================================================
+
+/**
+ * YAMLファイルからすべてのフィールドを抽出
+ */
+function extractFieldsFromYaml(yamlContent: string): InputField[] {
+  const schema = yaml.load(yamlContent) as MokkunSchemaRaw
+  const fields: InputField[] = []
+
+  if (!schema?.view) {
+    return fields
+  }
+
+  for (const screenName of Object.keys(schema.view)) {
+    const screen = schema.view[screenName]
+
+    // 直接fieldsプロパティ
+    if (screen.fields && Array.isArray(screen.fields)) {
+      fields.push(...(screen.fields as InputField[]))
+    }
+
+    // sectionsの中のinput_fields
+    if (screen.sections && Array.isArray(screen.sections)) {
+      for (const section of screen.sections) {
+        if (section.input_fields && Array.isArray(section.input_fields)) {
+          fields.push(...(section.input_fields as InputField[]))
+        }
+      }
+    }
+
+    // wizardの中のsteps.fields
+    if (screen.wizard?.steps && Array.isArray(screen.wizard.steps)) {
+      for (const step of screen.wizard.steps) {
+        if (step.fields && Array.isArray(step.fields)) {
+          fields.push(...(step.fields as InputField[]))
+        }
+      }
+    }
+  }
+
+  return fields
+}
+
+/**
+ * フィールドタイプごとにグループ化
+ */
+function groupFieldsByType(fields: InputField[]): Map<InputFieldType, InputField[]> {
+  const grouped = new Map<InputFieldType, InputField[]>()
+
+  for (const field of fields) {
+    const type = field.type as InputFieldType
+    if (!grouped.has(type)) {
+      grouped.set(type, [])
+    }
+    grouped.get(type)!.push(field)
+  }
+
+  return grouped
+}
+
+/**
+ * HTMLが有効かどうかを検証
+ */
+function isValidHtml(html: string): { valid: boolean; error?: string } {
+  if (!html || html.trim().length === 0) {
+    return { valid: false, error: 'Empty HTML output' }
+  }
+
+  // HTMLタグが含まれているか
+  if (!/<[^>]+>/.test(html)) {
+    return { valid: false, error: 'No HTML tags found' }
+  }
+
+  // 基本的な構造チェック（divまたはspanまたはinputで始まる）
+  if (!/<(div|span|input|label|select|textarea|button|form|header|section|nav|ul|ol)/i.test(html)) {
+    return { valid: false, error: 'No valid container element found' }
+  }
+
+  return { valid: true }
+}
+
+// =============================================================================
+// Test Suites
+// =============================================================================
+
+describe('Render Verification', () => {
+  describe('All VALID_FIELD_TYPES should be renderable', () => {
+    it.each(VALID_FIELD_TYPES)('should render field type: %s', (fieldType) => {
+      // 各フィールドタイプの最小限の定義
+      const minimalField: InputField = createMinimalField(fieldType)
+
+      // レンダリング実行
+      const html = renderField(minimalField)
+
+      // 検証
+      expect(html).toBeDefined()
+      expect(html.length).toBeGreaterThan(0)
+
+      const validation = isValidHtml(html)
+      expect(validation.valid).toBe(true)
+    })
+  })
+
+  describe('admin-dashboard.yaml fields rendering', () => {
+    let yamlContent: string
+    let fields: InputField[]
+
+    beforeAll(() => {
+      const yamlPath = path.join(__dirname, '../../examples/admin-dashboard.yaml')
+      yamlContent = fs.readFileSync(yamlPath, 'utf-8')
+      fields = extractFieldsFromYaml(yamlContent)
+    })
+
+    it('should extract fields from YAML', () => {
+      expect(fields.length).toBeGreaterThan(0)
+    })
+
+    it('should render all extracted fields without errors', () => {
+      const errors: { field: InputField; error: string }[] = []
+
+      for (const field of fields) {
+        try {
+          const html = renderField(field)
+          const validation = isValidHtml(html)
+
+          if (!validation.valid) {
+            errors.push({
+              field,
+              error: validation.error || 'Invalid HTML',
+            })
+          }
+        } catch (e) {
+          errors.push({
+            field,
+            error: e instanceof Error ? e.message : String(e),
+          })
+        }
+      }
+
+      // エラーがあれば詳細を表示
+      if (errors.length > 0) {
+        const errorSummary = errors.map(
+          (e) => `  - [${e.field.type}] ${e.field.id || 'no-id'}: ${e.error}`
+        ).join('\n')
+        console.error(`Rendering errors:\n${errorSummary}`)
+      }
+
+      expect(errors).toHaveLength(0)
+    })
+
+    it('should cover all field types used in YAML', () => {
+      const groupedFields = groupFieldsByType(fields)
+      const usedTypes = Array.from(groupedFields.keys()).sort()
+
+      // 使用されているタイプを表示
+      console.log(`Field types used in admin-dashboard.yaml (${usedTypes.length} types):`)
+      for (const type of usedTypes) {
+        const count = groupedFields.get(type)?.length || 0
+        console.log(`  - ${type}: ${count} field(s)`)
+      }
+
+      expect(usedTypes.length).toBeGreaterThan(0)
+    })
+  })
+
+  describe('screens.yaml fields rendering', () => {
+    let yamlContent: string
+    let fields: InputField[]
+
+    beforeAll(() => {
+      const yamlPath = path.join(__dirname, '../../examples/screens.yaml')
+      yamlContent = fs.readFileSync(yamlPath, 'utf-8')
+      fields = extractFieldsFromYaml(yamlContent)
+    })
+
+    it('should extract and render all fields', () => {
+      expect(fields.length).toBeGreaterThan(0)
+
+      const errors: string[] = []
+      for (const field of fields) {
+        try {
+          const html = renderField(field)
+          if (!isValidHtml(html).valid) {
+            errors.push(`[${field.type}] ${field.id}: Invalid HTML`)
+          }
+        } catch (e) {
+          errors.push(`[${field.type}] ${field.id}: ${e}`)
+        }
+      }
+
+      expect(errors).toHaveLength(0)
+    })
+  })
+
+  describe('renderFields batch rendering', () => {
+    it('should render multiple fields at once', () => {
+      const fields: InputField[] = [
+        { id: 'text1', type: 'text', label: 'Text 1' },
+        { id: 'num1', type: 'number', label: 'Number 1' },
+        { id: 'sel1', type: 'select', label: 'Select 1', options: [{ value: 'a', label: 'A' }] },
+      ]
+
+      const html = renderFields(fields)
+
+      expect(html).toBeDefined()
+      expect(html.length).toBeGreaterThan(0)
+
+      // 各フィールドがレンダリングされていることを確認
+      expect(html).toContain('text1')
+      expect(html).toContain('num1')
+      expect(html).toContain('sel1')
+    })
+  })
+
+  describe('Field type coverage report', () => {
+    it('should report coverage of VALID_FIELD_TYPES', () => {
+      const yamlPath = path.join(__dirname, '../../examples/admin-dashboard.yaml')
+      const yamlContent = fs.readFileSync(yamlPath, 'utf-8')
+      const fields = extractFieldsFromYaml(yamlContent)
+      const usedTypes = new Set(fields.map((f) => f.type))
+
+      const covered: string[] = []
+      const notCovered: string[] = []
+
+      for (const type of VALID_FIELD_TYPES) {
+        if (usedTypes.has(type)) {
+          covered.push(type)
+        } else {
+          notCovered.push(type)
+        }
+      }
+
+      console.log('\n=== Field Type Coverage Report ===')
+      console.log(`Total VALID_FIELD_TYPES: ${VALID_FIELD_TYPES.length}`)
+      console.log(`Covered in YAML: ${covered.length} (${((covered.length / VALID_FIELD_TYPES.length) * 100).toFixed(1)}%)`)
+      console.log(`Not covered: ${notCovered.length}`)
+
+      if (notCovered.length > 0) {
+        console.log('\nField types not used in admin-dashboard.yaml:')
+        notCovered.forEach((t) => console.log(`  - ${t}`))
+      }
+
+      // 少なくとも70%のカバレッジを期待
+      const coverageRate = covered.length / VALID_FIELD_TYPES.length
+      expect(coverageRate).toBeGreaterThanOrEqual(0.7)
+    })
+  })
+})
+
+// =============================================================================
+// Minimal Field Factory
+// =============================================================================
+
+/**
+ * フィールドタイプごとの最小限の定義を生成
+ */
+function createMinimalField(fieldType: InputFieldType): InputField {
+  const baseField = {
+    id: `test-${fieldType}`,
+    label: `Test ${fieldType}`,
+  }
+
+  switch (fieldType) {
+    case 'text':
+    case 'number':
+    case 'date_picker':
+    case 'time_picker':
+      return { ...baseField, type: fieldType }
+
+    case 'textarea':
+      return { ...baseField, type: 'textarea' }
+
+    case 'select':
+    case 'multi_select':
+      return {
+        ...baseField,
+        type: fieldType,
+        options: [{ value: 'opt1', label: 'Option 1' }],
+      }
+
+    case 'combobox':
+      return {
+        ...baseField,
+        type: 'combobox',
+        options: [{ value: 'opt1', label: 'Option 1' }],
+      }
+
+    case 'radio_group':
+      return {
+        ...baseField,
+        type: 'radio_group',
+        options: [{ value: 'opt1', label: 'Option 1' }],
+      }
+
+    case 'checkbox':
+      return { ...baseField, type: 'checkbox' }
+
+    case 'checkbox_group':
+      return {
+        ...baseField,
+        type: 'checkbox_group',
+        options: [{ value: 'opt1', label: 'Option 1' }],
+      }
+
+    case 'duration_picker':
+      return { ...baseField, type: 'duration_picker' }
+
+    case 'duration_input':
+      return { ...baseField, type: 'duration_input' }
+
+    case 'file_upload':
+      return { ...baseField, type: 'file_upload' }
+
+    case 'image_uploader':
+      return { ...baseField, type: 'image_uploader' }
+
+    case 'repeater':
+      return {
+        ...baseField,
+        type: 'repeater',
+        item_fields: [{ id: 'item', type: 'text', label: 'Item' }],
+      }
+
+    case 'data_table':
+      return {
+        ...baseField,
+        type: 'data_table',
+        columns: [{ id: 'col1', label: 'Column 1' }],
+        data: [],
+      }
+
+    case 'google_map_embed':
+      return { ...baseField, type: 'google_map_embed' }
+
+    case 'photo_manager':
+      return { ...baseField, type: 'photo_manager' }
+
+    case 'toggle':
+      return { ...baseField, type: 'toggle' }
+
+    case 'badge':
+      return { ...baseField, type: 'badge' }
+
+    case 'browser':
+      return {
+        ...baseField,
+        type: 'browser',
+        browser_items: [{ value: 'item1', label: 'Item 1' }],
+      }
+
+    case 'calendar':
+      return { ...baseField, type: 'calendar' }
+
+    case 'heading':
+      return { ...baseField, type: 'heading', level: 2 }
+
+    case 'tooltip':
+      return { ...baseField, type: 'tooltip', content: 'Tooltip content' }
+
+    case 'pagination':
+      return { ...baseField, type: 'pagination', totalItems: 100 }
+
+    case 'float_area':
+      return { ...baseField, type: 'float_area' }
+
+    case 'loader':
+      return { ...baseField, type: 'loader' }
+
+    case 'notification_bar':
+      return { ...baseField, type: 'notification_bar' }
+
+    case 'response_message':
+      return { ...baseField, type: 'response_message' }
+
+    case 'timeline':
+      return { ...baseField, type: 'timeline' }
+
+    case 'chip':
+      return { ...baseField, type: 'chip' }
+
+    case 'status_label':
+      return { ...baseField, type: 'status_label' }
+
+    case 'segmented_control':
+      return {
+        ...baseField,
+        type: 'segmented_control',
+        options: [{ value: 'opt1', label: 'Option 1' }],
+      }
+
+    case 'tabs':
+      return { ...baseField, type: 'tabs' }
+
+    case 'line_clamp':
+      return { ...baseField, type: 'line_clamp' }
+
+    case 'disclosure':
+      return { ...baseField, type: 'disclosure' }
+
+    case 'accordion_panel':
+      return { ...baseField, type: 'accordion_panel' }
+
+    case 'section_nav':
+      return { ...baseField, type: 'section_nav' }
+
+    case 'stepper':
+      return { ...baseField, type: 'stepper' }
+
+    case 'information_panel':
+      return { ...baseField, type: 'information_panel' }
+
+    case 'dropdown':
+      return {
+        ...baseField,
+        type: 'dropdown',
+        options: [{ value: 'opt1', label: 'Option 1' }],
+      }
+
+    case 'delete_confirm_dialog':
+      return { ...baseField, type: 'delete_confirm_dialog' }
+
+    case 'definition_list':
+      return { ...baseField, type: 'definition_list' }
+
+    default:
+      // Unknown type - return as-is
+      return { ...baseField, type: fieldType } as InputField
+  }
+}
