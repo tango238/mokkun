@@ -346,10 +346,21 @@ export class Select {
    * セレクトフィールドをHTMLとしてレンダリング（静的メソッド）
    * SSR/初期レンダリング用
    *
-   * @param field - セレクトフィールド定義
+   * @param field - セレクトフィールド定義（select, multi_select）
    * @returns 生成されたHTML文字列
    */
-  static renderSelectField(field: SelectField): string {
+  static renderField(field: SelectField | MultiSelectField): string {
+    if (field.type === 'multi_select') {
+      return Select.renderMultiSelectField(field)
+    }
+    return Select.renderSelectField(field)
+  }
+
+  /**
+   * 単一セレクトフィールドをHTMLとしてレンダリング
+   * @internal renderFieldから呼び出される内部メソッド
+   */
+  private static renderSelectField(field: SelectField): string {
     const attrs: string[] = [getCommonAttributes(field)]
     const sizeClass = field.size ? `select-${field.size}` : 'select-default'
     const options = getOptions(field.options)
@@ -404,13 +415,10 @@ export class Select {
   }
 
   /**
-   * マルチセレクトフィールドをHTMLとしてレンダリング（静的メソッド）
-   * SSR/初期レンダリング用
-   *
-   * @param field - マルチセレクトフィールド定義
-   * @returns 生成されたHTML文字列
+   * マルチセレクトフィールドをHTMLとしてレンダリング
+   * @internal renderFieldから呼び出される内部メソッド
    */
-  static renderMultiSelectField(field: MultiSelectField): string {
+  private static renderMultiSelectField(field: MultiSelectField): string {
     const attrs: string[] = [getCommonAttributes(field), 'multiple']
     const options = getOptions(field.options)
     const defaultValues = Array.isArray(field.default) ? field.default : []

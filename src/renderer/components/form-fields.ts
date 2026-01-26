@@ -56,18 +56,18 @@ import {
 
 /**
  * text → <input type="text">
- * @deprecated Use Input.renderTextField instead
+ * @deprecated Use Input.renderField instead
  */
 export function renderTextField(field: TextField): string {
-  return Input.renderTextField(field)
+  return Input.renderField(field)
 }
 
 /**
  * number → <input type="number">
- * @deprecated Use Input.renderNumberField instead
+ * @deprecated Use Input.renderField instead
  */
 export function renderNumberField(field: NumberField): string {
-  return Input.renderNumberField(field)
+  return Input.renderField(field)
 }
 
 /**
@@ -80,18 +80,18 @@ export function renderTextareaField(field: TextareaField): string {
 
 /**
  * select → <select>
- * @deprecated Use Select.renderSelectField instead
+ * @deprecated Use Select.renderField instead
  */
 export function renderSelectField(field: SelectField): string {
-  return Select.renderSelectField(field)
+  return Select.renderField(field)
 }
 
 /**
  * multi_select → <select multiple>
- * @deprecated Use Select.renderMultiSelectField instead
+ * @deprecated Use Select.renderField instead
  */
 export function renderMultiSelectField(field: MultiSelectField): string {
-  return Select.renderMultiSelectField(field)
+  return Select.renderField(field)
 }
 
 /**
@@ -104,34 +104,34 @@ export function renderComboboxField(field: ComboboxField): string {
 
 /**
  * radio_group → <input type="radio"> × N
- * @deprecated Use RadioButton.renderRadioGroupField instead
+ * @deprecated Use RadioButton.renderField instead
  */
 export function renderRadioGroupField(field: RadioGroupField): string {
-  return RadioButton.renderRadioGroupField(field)
+  return RadioButton.renderField(field)
 }
 
 /**
  * checkbox_group → <input type="checkbox"> × N
- * @deprecated Use Checkbox.renderCheckboxGroupField instead
+ * @deprecated Use Checkbox.renderField instead
  */
 export function renderCheckboxGroupField(field: CheckboxGroupField): string {
-  return Checkbox.renderCheckboxGroupField(field)
+  return Checkbox.renderField(field)
 }
 
 /**
  * date_picker → <input type="date">
- * @deprecated Use Input.renderDatePickerField instead
+ * @deprecated Use Input.renderField instead
  */
 export function renderDatePickerField(field: DatePickerField): string {
-  return Input.renderDatePickerField(field)
+  return Input.renderField(field)
 }
 
 /**
  * time_picker → <input type="time">
- * @deprecated Use Input.renderTimePickerField instead
+ * @deprecated Use Input.renderField instead
  */
 export function renderTimePickerField(field: TimePickerField): string {
-  return Input.renderTimePickerField(field)
+  return Input.renderField(field)
 }
 
 /**
@@ -925,25 +925,21 @@ function renderDeleteConfirmDialogField(field: InputField): string {
 export function renderField(field: InputField): string {
   switch (field.type) {
     case 'text':
-      return Input.renderTextField(field)
     case 'number':
-      return Input.renderNumberField(field)
+    case 'date_picker':
+    case 'time_picker':
+      return Input.renderField(field)
     case 'textarea':
       return Textarea.renderField(field)
     case 'select':
-      return Select.renderSelectField(field)
     case 'multi_select':
-      return Select.renderMultiSelectField(field)
+      return Select.renderField(field)
     case 'combobox':
       return Combobox.renderField(field)
     case 'radio_group':
-      return RadioButton.renderRadioGroupField(field)
+      return RadioButton.renderField(field)
     case 'checkbox_group':
-      return Checkbox.renderCheckboxGroupField(field)
-    case 'date_picker':
-      return Input.renderDatePickerField(field)
-    case 'time_picker':
-      return Input.renderTimePickerField(field)
+      return Checkbox.renderField(field)
     case 'duration_picker':
       return DurationPicker.renderField(field)
     case 'duration_input':

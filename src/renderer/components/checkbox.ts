@@ -419,7 +419,7 @@ export class Checkbox {
    * @param field - チェックボックスグループフィールド定義
    * @returns 生成されたHTML文字列
    */
-  static renderCheckboxGroupField(field: CheckboxGroupField): string {
+  static renderField(field: CheckboxGroupField): string {
     const options = getOptions(field.options)
     const direction = field.direction ?? 'vertical'
     const defaultValues = Array.isArray(field.default) ? field.default : []

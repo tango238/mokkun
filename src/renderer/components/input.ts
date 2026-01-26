@@ -535,13 +535,32 @@ export class Input {
   // ===========================================================================
 
   /**
-   * テキストフィールドをHTMLとしてレンダリング（静的メソッド）
+   * 入力フィールドをHTMLとしてレンダリング（静的メソッド）
    * SSR/初期レンダリング用
    *
-   * @param field - テキストフィールド定義
+   * @param field - 入力フィールド定義（text, number, date_picker, time_picker）
    * @returns 生成されたHTML文字列
    */
-  static renderTextField(field: TextField): string {
+  static renderField(field: TextField | NumberField | DatePickerField | TimePickerField): string {
+    switch (field.type) {
+      case 'text':
+        return Input.renderTextField(field)
+      case 'number':
+        return Input.renderNumberField(field)
+      case 'date_picker':
+        return Input.renderDatePickerField(field)
+      case 'time_picker':
+        return Input.renderTimePickerField(field)
+      default:
+        return ''
+    }
+  }
+
+  /**
+   * テキストフィールドをHTMLとしてレンダリング（静的メソッド）
+   * @internal renderFieldから呼び出される内部メソッド
+   */
+  private static renderTextField(field: TextField): string {
     const inputType = field.input_type ?? 'text'
     const attrs: string[] = [getCommonAttributes(field)]
 
@@ -564,12 +583,9 @@ export class Input {
 
   /**
    * 数値フィールドをHTMLとしてレンダリング（静的メソッド）
-   * SSR/初期レンダリング用
-   *
-   * @param field - 数値フィールド定義
-   * @returns 生成されたHTML文字列
+   * @internal renderFieldから呼び出される内部メソッド
    */
-  static renderNumberField(field: NumberField): string {
+  private static renderNumberField(field: NumberField): string {
     const attrs: string[] = [getCommonAttributes(field)]
 
     if (field.min !== undefined) {
@@ -601,12 +617,9 @@ export class Input {
 
   /**
    * 日付選択フィールドをHTMLとしてレンダリング（静的メソッド）
-   * SSR/初期レンダリング用
-   *
-   * @param field - 日付選択フィールド定義
-   * @returns 生成されたHTML文字列
+   * @internal renderFieldから呼び出される内部メソッド
    */
-  static renderDatePickerField(field: DatePickerField): string {
+  private static renderDatePickerField(field: DatePickerField): string {
     const inputType = field.include_time ? 'datetime-local' : 'date'
     const attrs: string[] = [getCommonAttributes(field)]
 
@@ -626,12 +639,9 @@ export class Input {
 
   /**
    * 時間選択フィールドをHTMLとしてレンダリング（静的メソッド）
-   * SSR/初期レンダリング用
-   *
-   * @param field - 時間選択フィールド定義
-   * @returns 生成されたHTML文字列
+   * @internal renderFieldから呼び出される内部メソッド
    */
-  static renderTimePickerField(field: TimePickerField): string {
+  private static renderTimePickerField(field: TimePickerField): string {
     const attrs: string[] = [getCommonAttributes(field)]
 
     if (field.minute_step) {

@@ -360,7 +360,7 @@ export class RadioButton {
    * @param field - ラジオグループフィールド定義
    * @returns 生成されたHTML文字列
    */
-  static renderRadioGroupField(field: RadioGroupField): string {
+  static renderField(field: RadioGroupField): string {
     const options = getOptions(field.options)
     const direction = field.direction ?? 'vertical'
 
