@@ -6870,6 +6870,246 @@ body.dialog-open {
 }
 
 /* =============================================================================
+   Calendar Component
+   カレンダーを表示し日付を選択するためのコンポーネント
+   ============================================================================= */
+
+.mokkun-calendar {
+  display: inline-block;
+  font-family: var(--font-family);
+}
+
+.mokkun-calendar[data-disabled] {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.calendar-container {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-md);
+  min-width: 280px;
+  box-shadow: var(--shadow-sm, 0 1px 3px 0 rgba(0, 0, 0, 0.1));
+}
+
+/* Calendar Header
+   ----------------------------------------------------------------------------- */
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.calendar-nav-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.calendar-nav-button:hover:not(:disabled) {
+  background-color: var(--color-bg-subtle);
+  border-color: var(--color-secondary);
+}
+
+.calendar-nav-button:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.calendar-nav-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.calendar-nav-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.calendar-month-label {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* Calendar Grid
+   ----------------------------------------------------------------------------- */
+
+.calendar-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-xs);
+}
+
+.calendar-weekday {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.calendar-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--spacing-xs);
+}
+
+/* Calendar Day Cells
+   ----------------------------------------------------------------------------- */
+
+.calendar-day {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--border-radius-md);
+  background-color: transparent;
+  font-size: var(--font-size-sm);
+  font-weight: 400;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.calendar-day:hover:not(:disabled):not(.calendar-day-selected) {
+  background-color: var(--color-bg-subtle);
+  border-color: var(--color-border);
+}
+
+.calendar-day:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.calendar-day-empty {
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Today */
+.calendar-day-today {
+  font-weight: 600;
+  border-color: var(--color-primary);
+}
+
+/* Selected */
+.calendar-day-selected {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.calendar-day-selected:hover:not(:disabled) {
+  background-color: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+/* Outside current month */
+.calendar-day-outside {
+  color: var(--color-text-muted);
+  opacity: 0.5;
+}
+
+/* Disabled */
+.calendar-day-disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.calendar-day-disabled:hover {
+  background-color: transparent;
+  border-color: transparent;
+}
+
+/* First day of week (Sunday) */
+.calendar-week .calendar-day:first-child {
+  color: var(--color-danger);
+}
+
+.calendar-week .calendar-day:first-child.calendar-day-selected {
+  color: #ffffff;
+}
+
+.calendar-week .calendar-day:first-child.calendar-day-outside {
+  opacity: 0.4;
+}
+
+/* Last day of week (Saturday) */
+.calendar-week .calendar-day:last-child {
+  color: var(--color-primary);
+}
+
+.calendar-week .calendar-day:last-child.calendar-day-selected {
+  color: #ffffff;
+}
+
+.calendar-week .calendar-day:last-child.calendar-day-outside {
+  opacity: 0.4;
+}
+
+/* Calendar Responsive
+   ----------------------------------------------------------------------------- */
+
+@media (max-width: 320px) {
+  .calendar-container {
+    min-width: 240px;
+    padding: var(--spacing-sm);
+  }
+
+  .calendar-day {
+    width: 30px;
+    height: 30px;
+    font-size: 0.75rem;
+  }
+
+  .calendar-weekday {
+    height: 28px;
+    font-size: 0.75rem;
+  }
+
+  .calendar-nav-button {
+    width: 28px;
+    height: 28px;
+  }
+
+  .calendar-month-label {
+    font-size: var(--font-size-sm);
+  }
+}
+
+/* =============================================================================
    Browser Component
    階層構造を持つデータの中から項目を単一選択するコンポーネント
    ============================================================================= */
