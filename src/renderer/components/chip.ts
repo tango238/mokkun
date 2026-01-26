@@ -1,4 +1,6 @@
 import { createElement } from '../utils/dom'
+import { escapeHtml, createFieldWrapper } from '../utils/field-helpers'
+import type { InputField } from '../../types/schema'
 
 /**
  * Chip component state
@@ -301,6 +303,27 @@ export class Chip {
   updateConfig(config: Partial<ChipConfig>): void {
     this.config = { ...this.config, ...config }
     this.render()
+  }
+
+  // ===========================================================================
+  // Static Field Renderer
+  // ===========================================================================
+
+  static renderField(field: InputField): string {
+    const chipField = field as InputField & {
+      variant?: 'default' | 'primary' | 'success' | 'warning' | 'danger'
+      removable?: boolean
+    }
+    const variant = chipField.variant ?? 'default'
+    const removable = chipField.removable ?? false
+
+    const chipHtml = `
+      <span class="mokkun-chip chip-${variant}">
+        <span class="chip-label">${escapeHtml(field.label)}</span>
+        ${removable ? '<button type="button" class="chip-remove" aria-label="削除">×</button>' : ''}
+      </span>
+    `
+    return createFieldWrapper(field, chipHtml)
   }
 }
 

@@ -10,6 +10,8 @@
  */
 
 import { createElement, generateId, escapeHtml } from '../utils/dom'
+import { escapeHtml as escapeHtmlHelper, createFieldWrapper } from '../utils/field-helpers'
+import type { InputField } from '../../types/schema'
 import { Tooltip, type TooltipPosition } from './tooltip'
 
 // =============================================================================
@@ -648,6 +650,24 @@ export class LineClamp {
     })
 
     this.resizeObserver.observe(this.textElement)
+  }
+
+  // ===========================================================================
+  // Static Field Renderer
+  // ===========================================================================
+
+  static renderField(field: InputField): string {
+    const lineClampField = field as InputField & {
+      lines?: number
+    }
+    const lines = lineClampField.lines ?? 3
+
+    const lineClampHtml = `
+      <div class="mokkun-line-clamp" style="-webkit-line-clamp: ${lines}; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden;">
+        ${escapeHtmlHelper(field.description ?? 'テキストコンテンツがここに表示されます。長いテキストは指定行数で切り詰められます。')}
+      </div>
+    `
+    return createFieldWrapper(field, lineClampHtml)
   }
 }
 

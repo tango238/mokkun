@@ -20,6 +20,8 @@
  */
 
 import { createElement, generateId } from '../utils/dom'
+import { escapeHtml, createFieldWrapper } from '../utils/field-helpers'
+import type { InputField } from '../../types/schema'
 
 // =============================================================================
 // Types
@@ -406,6 +408,22 @@ export class Disclosure {
       return this.config.triggerLabelOpen
     }
     return this.config.triggerLabel
+  }
+
+  // ===========================================================================
+  // Static Field Renderer
+  // ===========================================================================
+
+  static renderField(field: InputField): string {
+    const disclosureHtml = `
+      <details class="mokkun-disclosure">
+        <summary class="disclosure-trigger">${escapeHtml(field.label)}</summary>
+        <div class="disclosure-content">
+          <p>${escapeHtml(field.description ?? '詳細コンテンツがここに表示されます')}</p>
+        </div>
+      </details>
+    `
+    return createFieldWrapper(field, disclosureHtml)
   }
 }
 

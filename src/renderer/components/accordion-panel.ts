@@ -12,6 +12,8 @@
  */
 
 import { createElement, generateId } from '../utils/dom'
+import { escapeHtml, createFieldWrapper } from '../utils/field-helpers'
+import type { InputField } from '../../types/schema'
 
 // =============================================================================
 // Types
@@ -625,6 +627,27 @@ export class AccordionPanel {
     if (elements) {
       elements.trigger.focus()
     }
+  }
+
+  // ===========================================================================
+  // Static Field Renderer
+  // ===========================================================================
+
+  static renderField(field: InputField): string {
+    const accordionHtml = `
+      <div class="mokkun-accordion">
+        <div class="accordion-item">
+          <button type="button" class="accordion-trigger" aria-expanded="false">
+            <span>${escapeHtml(field.label)}</span>
+            <span class="accordion-icon">▼</span>
+          </button>
+          <div class="accordion-content" hidden>
+            <p>${escapeHtml(field.description ?? 'アコーディオンコンテンツ')}</p>
+          </div>
+        </div>
+      </div>
+    `
+    return createFieldWrapper(field, accordionHtml)
   }
 }
 

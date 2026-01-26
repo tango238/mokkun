@@ -11,6 +11,8 @@
  */
 
 import { createElement, generateId } from '../utils/dom'
+import { escapeHtml, createFieldWrapper } from '../utils/field-helpers'
+import type { InputField } from '../../types/schema'
 
 // =============================================================================
 // Types
@@ -324,6 +326,45 @@ export class Toggle {
     }
 
     return label
+  }
+
+  // ===========================================================================
+  // Static Field Renderer
+  // ===========================================================================
+
+  /**
+   * ToggleフィールドをHTMLとしてレンダリング（静的メソッド）
+   * SSR/初期レンダリング用
+   */
+  static renderField(field: InputField): string {
+    const toggleField = field as InputField & {
+      defaultChecked?: boolean
+      checkedLabel?: string
+      uncheckedLabel?: string
+      size?: 'small' | 'medium' | 'large'
+    }
+    const checked = toggleField.defaultChecked ?? false
+    const checkedLabel = toggleField.checkedLabel ?? 'ON'
+    const uncheckedLabel = toggleField.uncheckedLabel ?? 'OFF'
+    const size = toggleField.size ?? 'medium'
+    const stateClass = checked ? 'checked' : 'unchecked'
+
+    const toggleHtml = `
+      <div class="mokkun-toggle toggle-${size} toggle-label-right" data-state="${stateClass}">
+        <div class="toggle-wrapper">
+          <div class="toggle-switch-container">
+            <input type="checkbox" class="toggle-checkbox visually-hidden" id="${escapeHtml(field.id)}" role="switch" aria-checked="${checked}" ${checked ? 'checked' : ''}>
+            <label class="toggle-switch ${stateClass}" for="${escapeHtml(field.id)}" data-state="${stateClass}">
+              <span class="toggle-track"></span>
+              <span class="toggle-thumb" data-state="${stateClass}"></span>
+            </label>
+          </div>
+          <span class="toggle-label ${stateClass}" aria-live="polite" data-state="${stateClass}">${escapeHtml(checked ? checkedLabel : uncheckedLabel)}</span>
+        </div>
+      </div>
+    `
+
+    return createFieldWrapper(field, toggleHtml)
   }
 }
 

@@ -5,6 +5,7 @@
 
 import type { InputField } from '../../types'
 import { createElement, clearElement, generateId } from '../utils/dom'
+import { createFieldWrapper } from '../utils/field-helpers'
 
 // =============================================================================
 // Types
@@ -699,5 +700,25 @@ export class Tabs {
 
     // 再読み込み
     this.loadLazyContent(tabId)
+  }
+
+  // ===========================================================================
+  // Static Field Renderer
+  // ===========================================================================
+
+  static renderField(field: InputField): string {
+    const tabsHtml = `
+      <div class="mokkun-tabs">
+        <div class="tabs-list" role="tablist">
+          <button type="button" class="tab-button active" role="tab" aria-selected="true">タブ1</button>
+          <button type="button" class="tab-button" role="tab" aria-selected="false">タブ2</button>
+          <button type="button" class="tab-button" role="tab" aria-selected="false">タブ3</button>
+        </div>
+        <div class="tab-panel" role="tabpanel">
+          <p>タブコンテンツがここに表示されます</p>
+        </div>
+      </div>
+    `
+    return createFieldWrapper(field, tabsHtml)
   }
 }

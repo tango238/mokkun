@@ -18,6 +18,8 @@
  */
 
 import { createElement, generateId } from '../utils/dom'
+import { createFieldWrapper } from '../utils/field-helpers'
+import type { InputField } from '../../types/schema'
 
 // =============================================================================
 // Types
@@ -549,6 +551,31 @@ export class Browser {
     const selector = `.browser-item[data-column="${this.state.focusedColumnIndex}"][data-index="${this.state.focusedItemIndexes[this.state.focusedColumnIndex]}"] .browser-item-radio`
     const input = this.container.querySelector<HTMLInputElement>(selector)
     input?.focus()
+  }
+
+  // ===========================================================================
+  // Static Field Renderer
+  // ===========================================================================
+
+  static renderField(field: InputField): string {
+    const browserHtml = `
+      <div class="mokkun-browser browser-placeholder">
+        <div class="browser-toolbar">
+          <div class="browser-controls">
+            <span class="browser-dot browser-dot-red"></span>
+            <span class="browser-dot browser-dot-yellow"></span>
+            <span class="browser-dot browser-dot-green"></span>
+          </div>
+          <div class="browser-url-bar">
+            <span class="browser-url">https://example.com</span>
+          </div>
+        </div>
+        <div class="browser-content">
+          <p class="browser-placeholder-text">ブラウザコンテンツ</p>
+        </div>
+      </div>
+    `
+    return createFieldWrapper(field, browserHtml)
   }
 }
 

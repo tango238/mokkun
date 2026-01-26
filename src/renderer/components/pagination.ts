@@ -12,6 +12,8 @@
  */
 
 import { createElement, generateId } from '../utils/dom'
+import { createFieldWrapper } from '../utils/field-helpers'
+import type { InputField } from '../../types/schema'
 
 // =============================================================================
 // Types
@@ -510,6 +512,60 @@ export class Pagination {
     container.appendChild(span)
 
     return container
+  }
+
+  // ===========================================================================
+  // Static Field Renderer
+  // ===========================================================================
+
+  /**
+   * PaginationフィールドをHTMLとしてレンダリング（静的メソッド）
+   * SSR/初期レンダリング用
+   */
+  static renderField(field: InputField): string {
+    const paginationField = field as InputField & {
+      totalItems?: number
+      pageSize?: number
+      currentPage?: number
+    }
+    const totalItems = paginationField.totalItems ?? 0
+    const pageSize = paginationField.pageSize ?? 10
+    const currentPage = paginationField.currentPage ?? 1
+    const totalPages = Math.ceil(totalItems / pageSize)
+
+    const startItem = totalItems > 0 ? (currentPage - 1) * pageSize + 1 : 0
+    const endItem = Math.min(currentPage * pageSize, totalItems)
+
+    const paginationHtml = `
+      <div class="mokkun-pagination pagination-align-center">
+        <div class="pagination-wrapper">
+          <div class="pagination-page-size-selector">
+            <label class="page-size-label">表示件数:</label>
+            <select class="page-size-select" aria-label="ページサイズ選択">
+              <option value="10" ${pageSize === 10 ? 'selected' : ''}>10件</option>
+              <option value="25" ${pageSize === 25 ? 'selected' : ''}>25件</option>
+              <option value="50" ${pageSize === 50 ? 'selected' : ''}>50件</option>
+              <option value="100" ${pageSize === 100 ? 'selected' : ''}>100件</option>
+            </select>
+          </div>
+          <div class="pagination-navigation">
+            <button type="button" class="pagination-button pagination-button-first" ${currentPage === 1 ? 'disabled' : ''} aria-label="最初">最初</button>
+            <button type="button" class="pagination-button pagination-button-prev" ${currentPage === 1 ? 'disabled' : ''} aria-label="前へ">前へ</button>
+            ${Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+              const page = i + 1
+              return `<button type="button" class="pagination-button pagination-page-button ${page === currentPage ? 'active' : ''}" aria-label="ページ ${page}" ${page === currentPage ? 'aria-current="page"' : ''}>${page}</button>`
+            }).join('')}
+            <button type="button" class="pagination-button pagination-button-next" ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''} aria-label="次へ">次へ</button>
+            <button type="button" class="pagination-button pagination-button-last" ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''} aria-label="最後">最後</button>
+          </div>
+          <div class="pagination-item-count">
+            <span class="item-count-text" aria-live="polite">${totalItems > 0 ? `${totalItems}件中 ${startItem}-${endItem}件を表示` : '0件'}</span>
+          </div>
+        </div>
+      </div>
+    `
+
+    return createFieldWrapper(field, paginationHtml)
   }
 }
 

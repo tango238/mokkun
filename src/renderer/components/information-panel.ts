@@ -14,6 +14,8 @@
  */
 
 import { createElement, generateId } from '../utils/dom'
+import { escapeHtml, createFieldWrapper } from '../utils/field-helpers'
+import type { InputField } from '../../types/schema'
 
 // =============================================================================
 // Types
@@ -573,6 +575,28 @@ export class InformationPanel {
         }, 200)
       }
     }
+  }
+
+  // ===========================================================================
+  // Static Field Renderer
+  // ===========================================================================
+
+  static renderField(field: InputField): string {
+    const infoField = field as InputField & {
+      variant?: 'info' | 'success' | 'warning' | 'error'
+    }
+    const variant = infoField.variant ?? 'info'
+
+    const infoHtml = `
+      <div class="mokkun-information-panel panel-${variant}">
+        <div class="panel-icon">ℹ️</div>
+        <div class="panel-content">
+          <div class="panel-title">${escapeHtml(field.label)}</div>
+          ${field.description ? `<div class="panel-description">${escapeHtml(field.description)}</div>` : ''}
+        </div>
+      </div>
+    `
+    return createFieldWrapper(field, infoHtml)
   }
 }
 

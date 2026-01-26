@@ -11,6 +11,8 @@
  */
 
 import { createElement, generateId } from '../utils/dom'
+import { escapeHtml, createFieldWrapper } from '../utils/field-helpers'
+import type { InputField } from '../../types/schema'
 
 // =============================================================================
 // Types
@@ -493,6 +495,27 @@ export class Tooltip {
       this.tooltipElement.parentNode.removeChild(this.tooltipElement)
       this.tooltipElement = null
     }
+  }
+
+  // ===========================================================================
+  // Static Field Renderer
+  // ===========================================================================
+
+  static renderField(field: InputField): string {
+    const tooltipField = field as InputField & {
+      text?: string
+      content?: string
+    }
+    const text = tooltipField.text ?? 'ヘルプ'
+    const content = tooltipField.content ?? 'ツールチップの内容'
+
+    const tooltipHtml = `
+      <div class="mokkun-tooltip-container">
+        <span class="tooltip-trigger" tabindex="0" aria-describedby="${escapeHtml(field.id)}-tooltip">${escapeHtml(text)}</span>
+        <div class="tooltip-content" id="${escapeHtml(field.id)}-tooltip" role="tooltip">${escapeHtml(content)}</div>
+      </div>
+    `
+    return createFieldWrapper(field, tooltipHtml)
   }
 }
 

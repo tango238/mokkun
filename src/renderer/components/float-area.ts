@@ -19,6 +19,8 @@
  */
 
 import { createElement, generateId } from '../utils/dom'
+import { createFieldWrapper } from '../utils/field-helpers'
+import type { InputField } from '../../types/schema'
 
 // =============================================================================
 // Types
@@ -471,6 +473,21 @@ export class FloatArea {
       this.floatAreaElement.parentNode.removeChild(this.floatAreaElement)
     }
     this.floatAreaElement = null
+  }
+
+  // ===========================================================================
+  // Static Field Renderer
+  // ===========================================================================
+
+  static renderField(field: InputField): string {
+    const floatAreaHtml = `
+      <div class="mokkun-float-area">
+        <div class="float-area-content">
+          <span class="float-area-placeholder">[フロートエリア]</span>
+        </div>
+      </div>
+    `
+    return createFieldWrapper(field, floatAreaHtml)
   }
 }
 

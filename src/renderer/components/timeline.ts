@@ -14,6 +14,8 @@
  */
 
 import { createElement, clearElement } from '../utils/dom'
+import { createFieldWrapper } from '../utils/field-helpers'
+import type { InputField } from '../../types/schema'
 
 // =============================================================================
 // Types
@@ -612,6 +614,39 @@ export class Timeline {
 
     const sanitized = sanitizeSvgIcon(icon)
     return sanitized ?? BUILTIN_ICONS.dot
+  }
+
+  // ===========================================================================
+  // Static Field Renderer
+  // ===========================================================================
+
+  static renderField(field: InputField): string {
+    const timelineHtml = `
+      <div class="mokkun-timeline">
+        <div class="timeline-item">
+          <div class="timeline-marker"></div>
+          <div class="timeline-content">
+            <div class="timeline-time">10:30</div>
+            <div class="timeline-title">アクティビティ1</div>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-marker"></div>
+          <div class="timeline-content">
+            <div class="timeline-time">09:15</div>
+            <div class="timeline-title">アクティビティ2</div>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-marker"></div>
+          <div class="timeline-content">
+            <div class="timeline-time">08:00</div>
+            <div class="timeline-title">アクティビティ3</div>
+          </div>
+        </div>
+      </div>
+    `
+    return createFieldWrapper(field, timelineHtml)
   }
 }
 

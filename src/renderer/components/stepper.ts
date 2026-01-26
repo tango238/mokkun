@@ -7,6 +7,8 @@
  */
 
 import { createElement, clearElement } from '../utils/dom'
+import { createFieldWrapper } from '../utils/field-helpers'
+import type { InputField } from '../../types/schema'
 
 // =============================================================================
 // Types
@@ -440,6 +442,32 @@ export class Stepper {
    */
   destroy(): void {
     clearElement(this.container)
+  }
+
+  // ===========================================================================
+  // Static Field Renderer
+  // ===========================================================================
+
+  static renderField(field: InputField): string {
+    const stepperHtml = `
+      <div class="mokkun-stepper">
+        <div class="stepper-step completed">
+          <div class="step-indicator">1</div>
+          <div class="step-label">ステップ1</div>
+        </div>
+        <div class="stepper-connector"></div>
+        <div class="stepper-step active">
+          <div class="step-indicator">2</div>
+          <div class="step-label">ステップ2</div>
+        </div>
+        <div class="stepper-connector"></div>
+        <div class="stepper-step">
+          <div class="step-indicator">3</div>
+          <div class="step-label">ステップ3</div>
+        </div>
+      </div>
+    `
+    return createFieldWrapper(field, stepperHtml)
   }
 }
 

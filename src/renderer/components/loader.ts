@@ -11,10 +11,12 @@
  */
 
 import { createElement, generateId } from '../utils/dom'
+import { escapeHtml, createFieldWrapper } from '../utils/field-helpers'
 import type {
   LoaderConfig,
   LoaderState,
   LoaderCallbacks,
+  InputField,
 } from '../../types/schema'
 
 // Re-export types for convenience
@@ -369,6 +371,32 @@ export class Loader {
     this.textElement = null
     this.progressBarContainer = null
     this.progressBarFill = null
+  }
+
+  // ===========================================================================
+  // Static Field Renderer
+  // ===========================================================================
+
+  /**
+   * LoaderフィールドをHTMLとしてレンダリング（静的メソッド）
+   * SSR/初期レンダリング用
+   */
+  static renderField(field: InputField): string {
+    const loaderField = field as InputField & {
+      size?: 'small' | 'medium' | 'large'
+      text?: string
+    }
+    const size = loaderField.size ?? 'medium'
+    const text = loaderField.text
+
+    const loaderHtml = `
+      <div class="mokkun-loader loader-${size}">
+        <div class="loader-spinner"></div>
+        ${text ? `<span class="loader-text">${escapeHtml(text)}</span>` : ''}
+      </div>
+    `
+
+    return createFieldWrapper(field, loaderHtml)
   }
 }
 

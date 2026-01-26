@@ -12,6 +12,8 @@
  */
 
 import { createElement } from '../utils/dom'
+import { escapeHtml, createFieldWrapper } from '../utils/field-helpers'
+import type { InputField } from '../../types/schema'
 
 // =============================================================================
 // Types
@@ -368,6 +370,29 @@ export class Badge {
    */
   private handleClick(event: MouseEvent): void {
     this.callbacks.onClick?.(event)
+  }
+
+  // ===========================================================================
+  // Static Field Renderer
+  // ===========================================================================
+
+  /**
+   * BadgeフィールドをHTMLとしてレンダリング（静的メソッド）
+   * SSR/初期レンダリング用
+   */
+  static renderField(field: InputField): string {
+    const badgeField = field as InputField & {
+      text?: string
+      variant?: 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'info'
+    }
+    const text = badgeField.text ?? field.label
+    const variant = badgeField.variant ?? 'default'
+
+    const badgeHtml = `
+      <span class="mokkun-badge badge-${variant}">${escapeHtml(text)}</span>
+    `
+
+    return createFieldWrapper(field, badgeHtml)
   }
 }
 

@@ -14,6 +14,8 @@
  */
 
 import { createElement } from '../utils/dom'
+import { escapeHtml, createFieldWrapper } from '../utils/field-helpers'
+import type { InputField } from '../../types/schema'
 
 // =============================================================================
 // Types
@@ -436,6 +438,25 @@ export class StatusLabel {
    */
   private handleClick(event: MouseEvent): void {
     this.callbacks.onClick?.(event)
+  }
+
+  // ===========================================================================
+  // Static Field Renderer
+  // ===========================================================================
+
+  static renderField(field: InputField): string {
+    const statusField = field as InputField & {
+      variant?: 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'info'
+    }
+    const variant = statusField.variant ?? 'default'
+
+    const statusHtml = `
+      <span class="mokkun-status-label status-${variant}">
+        <span class="status-dot"></span>
+        <span class="status-text">${escapeHtml(field.label)}</span>
+      </span>
+    `
+    return createFieldWrapper(field, statusHtml)
   }
 }
 

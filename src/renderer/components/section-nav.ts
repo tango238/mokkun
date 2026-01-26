@@ -4,6 +4,8 @@
  */
 
 import { createElement, clearElement } from '../utils/dom'
+import { escapeHtml, createFieldWrapper } from '../utils/field-helpers'
+import type { InputField } from '../../types/schema'
 
 // =============================================================================
 // Constants
@@ -656,5 +658,28 @@ export class SectionNav {
         item.setAttribute('aria-selected', 'false')
       }
     })
+  }
+
+  // ===========================================================================
+  // Static Field Renderer
+  // ===========================================================================
+
+  static renderField(field: InputField): string {
+    const sectionNavHtml = `
+      <nav class="mokkun-section-nav" aria-label="${escapeHtml(field.label)}">
+        <ul class="section-nav-list">
+          <li class="section-nav-item active">
+            <a href="#section1" class="section-nav-link">セクション1</a>
+          </li>
+          <li class="section-nav-item">
+            <a href="#section2" class="section-nav-link">セクション2</a>
+          </li>
+          <li class="section-nav-item">
+            <a href="#section3" class="section-nav-link">セクション3</a>
+          </li>
+        </ul>
+      </nav>
+    `
+    return createFieldWrapper(field, sectionNavHtml)
   }
 }

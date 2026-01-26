@@ -4,6 +4,8 @@
  */
 
 import { createElement, generateId } from '../utils/dom'
+import { escapeHtml, createFieldWrapper } from '../utils/field-helpers'
+import type { InputField } from '../../types/schema'
 
 // =============================================================================
 // Types
@@ -515,5 +517,41 @@ export class DeleteConfirmDialog {
     const div = document.createElement('div')
     div.textContent = text
     return div.innerHTML
+  }
+
+  // ===========================================================================
+  // Static Field Renderer
+  // ===========================================================================
+
+  static renderField(field: InputField): string {
+    const dialogField = field as InputField & {
+      title?: string
+      message?: string
+      cancelLabel?: string
+      confirmLabel?: string
+      targetName?: string
+    }
+    const title = dialogField.title ?? field.label ?? '削除確認'
+    const message = dialogField.message ?? field.description ?? 'この操作は取り消せません。本当に削除しますか？'
+    const cancelLabel = dialogField.cancelLabel ?? 'キャンセル'
+    const confirmLabel = dialogField.confirmLabel ?? '削除する'
+    const targetName = dialogField.targetName ?? ''
+
+    const dialogHtml = `
+      <div class="delete-confirm-dialog-preview">
+        <div class="dialog-header">
+          <h3>${escapeHtml(title)}</h3>
+        </div>
+        <div class="dialog-body">
+          ${targetName ? `<p class="dialog-target"><strong>対象:</strong> ${escapeHtml(targetName)}</p>` : ''}
+          <p class="dialog-message">${escapeHtml(message)}</p>
+        </div>
+        <div class="dialog-footer">
+          <button type="button" class="dialog-button dialog-cancel">${escapeHtml(cancelLabel)}</button>
+          <button type="button" class="dialog-button dialog-confirm dialog-danger">${escapeHtml(confirmLabel)}</button>
+        </div>
+      </div>
+    `
+    return createFieldWrapper(field, dialogHtml)
   }
 }

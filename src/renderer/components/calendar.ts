@@ -12,6 +12,8 @@
  */
 
 import { createElement } from '../utils/dom'
+import { createFieldWrapper } from '../utils/field-helpers'
+import type { InputField } from '../../types/schema'
 
 // =============================================================================
 // Types
@@ -676,6 +678,35 @@ export class Calendar {
     return `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>`
+  }
+
+  // ===========================================================================
+  // Static Field Renderer
+  // ===========================================================================
+
+  static renderField(field: InputField): string {
+    const calendarHtml = `
+      <div class="mokkun-calendar calendar-placeholder">
+        <div class="calendar-header">
+          <button type="button" class="calendar-nav-btn" aria-label="前月">←</button>
+          <span class="calendar-month-year">2024年12月</span>
+          <button type="button" class="calendar-nav-btn" aria-label="次月">→</button>
+        </div>
+        <div class="calendar-grid">
+          <div class="calendar-weekdays">
+            <span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span>
+          </div>
+          <div class="calendar-days">
+            ${Array.from({ length: 35 }, (_, i) => {
+              const day = i - 5
+              if (day < 1 || day > 31) return '<span class="calendar-day calendar-day-empty"></span>'
+              return `<span class="calendar-day ${day === 15 ? 'calendar-day-selected' : ''}">${day}</span>`
+            }).join('')}
+          </div>
+        </div>
+      </div>
+    `
+    return createFieldWrapper(field, calendarHtml)
   }
 }
 

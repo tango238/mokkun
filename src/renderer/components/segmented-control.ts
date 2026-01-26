@@ -16,6 +16,8 @@
  */
 
 import { createElement } from '../utils/dom'
+import { escapeHtml, createFieldWrapper } from '../utils/field-helpers'
+import type { InputField } from '../../types/schema'
 
 // =============================================================================
 // Types
@@ -460,6 +462,32 @@ export class SegmentedControl {
       })
       this.optionElements[index].focus()
     }
+  }
+
+  // ===========================================================================
+  // Static Field Renderer
+  // ===========================================================================
+
+  static renderField(field: InputField): string {
+    const segmentedField = field as InputField & {
+      options?: Array<{ value: string; label: string }>
+      default?: string
+    }
+    const options = segmentedField.options ?? []
+    const defaultValue = segmentedField.default ?? options[0]?.value
+
+    const segmentedHtml = `
+      <div class="mokkun-segmented-control" role="radiogroup" aria-label="${escapeHtml(field.label)}">
+        ${options.map(opt => `
+          <button type="button" class="segment-button ${opt.value === defaultValue ? 'active' : ''}"
+                  role="radio" aria-checked="${opt.value === defaultValue}"
+                  data-value="${escapeHtml(opt.value)}">
+            ${escapeHtml(opt.label)}
+          </button>
+        `).join('')}
+      </div>
+    `
+    return createFieldWrapper(field, segmentedHtml)
   }
 }
 

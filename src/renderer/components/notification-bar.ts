@@ -15,6 +15,8 @@
  */
 
 import { createElement, generateId } from '../utils/dom'
+import { escapeHtml, createFieldWrapper } from '../utils/field-helpers'
+import type { InputField } from '../../types/schema'
 
 // =============================================================================
 // Types
@@ -390,6 +392,37 @@ export class NotificationBar {
       actionButton?.removeEventListener('click', this.actionHandler)
       this.actionHandler = null
     }
+  }
+
+  // ===========================================================================
+  // Static Field Renderer
+  // ===========================================================================
+
+  static renderField(field: InputField): string {
+    const notificationField = field as InputField & {
+      variant?: 'info' | 'success' | 'warning' | 'error'
+      dismissible?: boolean
+    }
+    const variant = notificationField.variant ?? 'info'
+    const dismissible = notificationField.dismissible ?? true
+
+    const iconMap: Record<string, string> = {
+      info: 'ℹ️',
+      success: '✓',
+      warning: '⚠️',
+      error: '✕',
+    }
+
+    const notificationHtml = `
+      <div class="mokkun-notification-bar notification-${variant}" role="alert">
+        <span class="notification-icon">${iconMap[variant]}</span>
+        <div class="notification-content">
+          <span class="notification-message">${escapeHtml(field.description ?? field.label)}</span>
+        </div>
+        ${dismissible ? '<button type="button" class="notification-dismiss" aria-label="閉じる">×</button>' : ''}
+      </div>
+    `
+    return createFieldWrapper(field, notificationHtml)
   }
 }
 

@@ -9,6 +9,8 @@
  */
 
 import { createElement, generateId } from '../utils/dom'
+import { escapeHtml, createFieldWrapper } from '../utils/field-helpers'
+import type { InputField } from '../../types/schema'
 
 // =============================================================================
 // Types
@@ -802,6 +804,34 @@ export class Dropdown {
       document.removeEventListener('keydown', this.keyboardHandler)
       this.keyboardHandler = null
     }
+  }
+
+  // ===========================================================================
+  // Static Field Renderer
+  // ===========================================================================
+
+  static renderField(field: InputField): string {
+    const dropdownField = field as InputField & {
+      options?: Array<{ value: string; label: string }>
+    }
+    const options = dropdownField.options ?? []
+
+    const dropdownHtml = `
+      <div class="mokkun-dropdown">
+        <button type="button" class="dropdown-trigger" aria-haspopup="listbox" aria-expanded="false">
+          <span>${escapeHtml(field.label)}</span>
+          <span class="dropdown-arrow">▼</span>
+        </button>
+        <ul class="dropdown-menu" role="listbox" hidden>
+          ${options.map(opt => `
+            <li class="dropdown-item" role="option" data-value="${escapeHtml(opt.value)}">
+              ${escapeHtml(opt.label)}
+            </li>
+          `).join('')}
+        </ul>
+      </div>
+    `
+    return createFieldWrapper(field, dropdownHtml)
   }
 }
 

@@ -18,6 +18,8 @@
  */
 
 import { createElement, generateId } from '../utils/dom'
+import { escapeHtml, createFieldWrapper } from '../utils/field-helpers'
+import type { InputField } from '../../types/schema'
 
 // =============================================================================
 // Types
@@ -744,6 +746,32 @@ export class ResponseMessage {
     })
 
     return svg.outerHTML
+  }
+
+  // ===========================================================================
+  // Static Field Renderer
+  // ===========================================================================
+
+  static renderField(field: InputField): string {
+    const messageField = field as InputField & {
+      variant?: 'success' | 'error' | 'warning' | 'info'
+    }
+    const variant = messageField.variant ?? 'success'
+
+    const iconMap: Record<string, string> = {
+      success: '✓',
+      error: '✕',
+      warning: '⚠',
+      info: 'ℹ',
+    }
+
+    const messageHtml = `
+      <div class="mokkun-response-message response-${variant}" role="status">
+        <span class="response-icon">${iconMap[variant]}</span>
+        <span class="response-text">${escapeHtml(field.description ?? field.label)}</span>
+      </div>
+    `
+    return createFieldWrapper(field, messageHtml)
   }
 }
 

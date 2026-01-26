@@ -12,6 +12,8 @@
  */
 
 import { createElement } from '../utils/dom'
+import { escapeHtml, createFieldWrapper } from '../utils/field-helpers'
+import type { InputField } from '../../types/schema'
 
 // =============================================================================
 // Types
@@ -474,6 +476,31 @@ export class DefinitionList {
     elements.push(itemWrapper)
 
     return elements
+  }
+
+  // ===========================================================================
+  // Static Field Renderer
+  // ===========================================================================
+
+  static renderField(field: InputField): string {
+    const label = escapeHtml(field.label)
+    const definitionHtml = `
+      <dl class="mokkun-definition-list" aria-label="${label}">
+        <div class="definition-item">
+          <dt class="definition-term">項目1</dt>
+          <dd class="definition-description">値1</dd>
+        </div>
+        <div class="definition-item">
+          <dt class="definition-term">項目2</dt>
+          <dd class="definition-description">値2</dd>
+        </div>
+        <div class="definition-item">
+          <dt class="definition-term">項目3</dt>
+          <dd class="definition-description">値3</dd>
+        </div>
+      </dl>
+    `
+    return createFieldWrapper(field, definitionHtml)
   }
 }
 
