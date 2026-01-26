@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calendar Component Demo - Mokkun</title>
+  <style>
+    /* =============================================================================
+       Demo Page Styles
+       ============================================================================= */
+
+    :root {
+      --primary-color: #3b82f6;
+      --primary-color-hover: #2563eb;
+      --primary-color-light: #dbeafe;
+      --secondary-color: #64748b;
+      --secondary-color-hover: #475569;
+      --error-color: #ef4444;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --background-color: #f8fafc;
+      --background-color-subtle: #f1f5f9;
+      --surface-color: #ffffff;
+      --text-color: #1e293b;
+      --text-color-muted: #64748b;
+      --border-color: #e2e8f0;
+      --border-color-focus: #3b82f6;
+      --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    }
+
+    [data-theme="dark"] {
+      --primary-color: #60a5fa;
+      --primary-color-hover: #3b82f6;
+      --primary-color-light: #1e3a5f;
+      --secondary-color: #94a3b8;
+      --secondary-color-hover: #cbd5e1;
+      --error-color: #f87171;
+      --success-color: #4ade80;
+      --warning-color: #fbbf24;
+      --background-color: #0f172a;
+      --background-color-subtle: #1e293b;
+      --surface-color: #1e293b;
+      --text-color: #f1f5f9;
+      --text-color-muted: #94a3b8;
+      --border-color: #334155;
+      --border-color-focus: #60a5fa;
+      --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Inter, system-ui, -apple-system, sans-serif;
+      background-color: var(--background-color);
+      color: var(--text-color);
+      line-height: 1.5;
+    }
+
+    .demo-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .demo-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .demo-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .demo-subtitle {
+      font-size: 1rem;
+      color: var(--text-color-muted);
+      margin: 0.5rem 0 0;
+    }
+
+    .theme-toggle {
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      background-color: var(--surface-color);
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      color: var(--text-color);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .theme-toggle:hover {
+      background-color: var(--background-color-subtle);
+    }
+
+    .demo-sections {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 2rem;
+    }
+
+    .demo-section {
+      background-color: var(--surface-color);
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .demo-section-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin: 0 0 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .demo-section-description {
+      font-size: 0.875rem;
+      color: var(--text-color-muted);
+      margin-bottom: 1rem;
+    }
+
+    .calendar-wrapper {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 1rem;
+    }
+
+    .selected-date-display {
+      padding: 0.75rem;
+      background-color: var(--background-color-subtle);
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+      text-align: center;
+    }
+
+    .selected-date-label {
+      font-weight: 500;
+      margin-right: 0.5rem;
+    }
+
+    .selected-date-value {
+      color: var(--primary-color);
+      font-weight: 600;
+    }
+
+    .demo-controls {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .demo-button {
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      background-color: var(--primary-color);
+      border: none;
+      border-radius: 0.375rem;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+    }
+
+    .demo-button:hover {
+      background-color: var(--primary-color-hover);
+    }
+
+    .demo-button-secondary {
+      background-color: var(--surface-color);
+      border: 1px solid var(--border-color);
+      color: var(--text-color);
+    }
+
+    .demo-button-secondary:hover {
+      background-color: var(--background-color-subtle);
+    }
+
+    .demo-code {
+      margin-top: 1rem;
+      padding: 1rem;
+      background-color: #1e293b;
+      border-radius: 0.375rem;
+      font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+      font-size: 0.8125rem;
+      color: #e2e8f0;
+      overflow-x: auto;
+    }
+
+    .demo-code code {
+      white-space: pre;
+    }
+
+    .props-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+      margin-top: 1rem;
+    }
+
+    .props-table th,
+    .props-table td {
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .props-table th {
+      font-weight: 600;
+      background-color: var(--background-color-subtle);
+    }
+
+    .props-table code {
+      background-color: var(--background-color-subtle);
+      padding: 0.125rem 0.375rem;
+      border-radius: 0.25rem;
+      font-size: 0.8125rem;
+    }
+
+    /* Calendar Component Inline Styles (同じスタイルをインライン) */
+    .mokkun-calendar {
+      display: inline-block;
+      font-family: Inter, system-ui, -apple-system, sans-serif;
+    }
+
+    .mokkun-calendar[data-disabled] {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    .calendar-container {
+      background-color: var(--surface-color);
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      padding: 1rem;
+      min-width: 280px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .calendar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .calendar-nav-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      background-color: var(--surface-color);
+      color: var(--text-color);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .calendar-nav-button:hover:not(:disabled) {
+      background-color: var(--background-color-subtle);
+      border-color: var(--secondary-color);
+    }
+
+    .calendar-nav-button:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    }
+
+    .calendar-nav-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .calendar-nav-button svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .calendar-month-label {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-color);
+    }
+
+    .calendar-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .calendar-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 0.25rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .calendar-weekday {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 32px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-color-muted);
+      text-align: center;
+    }
+
+    .calendar-week {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 0.25rem;
+    }
+
+    .calendar-day {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      border: 1px solid transparent;
+      border-radius: 0.375rem;
+      background-color: transparent;
+      font-size: 0.875rem;
+      font-weight: 400;
+      color: var(--text-color);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .calendar-day:hover:not(:disabled):not(.calendar-day-selected) {
+      background-color: var(--background-color-subtle);
+      border-color: var(--border-color);
+    }
+
+    .calendar-day:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    }
+
+    .calendar-day-empty {
+      cursor: default;
+      pointer-events: none;
+    }
+
+    .calendar-day-today {
+      font-weight: 600;
+      border-color: var(--primary-color);
+    }
+
+    .calendar-day-selected {
+      background-color: var(--primary-color);
+      border-color: var(--primary-color);
+      color: #ffffff;
+      font-weight: 500;
+    }
+
+    .calendar-day-selected:hover:not(:disabled) {
+      background-color: var(--primary-color-hover);
+      border-color: var(--primary-color-hover);
+    }
+
+    .calendar-day-outside {
+      color: var(--text-color-muted);
+      opacity: 0.5;
+    }
+
+    .calendar-day-disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .calendar-week .calendar-day:first-child {
+      color: var(--error-color);
+    }
+
+    .calendar-week .calendar-day:first-child.calendar-day-selected {
+      color: #ffffff;
+    }
+
+    .calendar-week .calendar-day:first-child.calendar-day-outside {
+      opacity: 0.4;
+    }
+
+    .calendar-week .calendar-day:last-child {
+      color: var(--primary-color);
+    }
+
+    .calendar-week .calendar-day:last-child.calendar-day-selected {
+      color: #ffffff;
+    }
+
+    .calendar-week .calendar-day:last-child.calendar-day-outside {
+      opacity: 0.4;
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-container">
+    <header class="demo-header">
+      <div>
+        <h1 class="demo-title">Calendar Component Demo</h1>
+        <p class="demo-subtitle">カレンダーを表示し日付を選択するためのコンポーネント</p>
+      </div>
+      <button class="theme-toggle" onclick="toggleTheme()">
+        🌓 テーマ切替
+      </button>
+    </header>
+
+    <div class="demo-sections">
+      <!-- Basic Calendar -->
+      <section class="demo-section">
+        <h2 class="demo-section-title">基本的な使い方</h2>
+        <p class="demo-section-description">
+          日付を選択すると、選択された日付が表示されます。
+        </p>
+        <div class="calendar-wrapper">
+          <div id="calendar-basic"></div>
+        </div>
+        <div class="selected-date-display">
+          <span class="selected-date-label">選択された日付:</span>
+          <span id="selected-date-basic" class="selected-date-value">未選択</span>
+        </div>
+      </section>
+
+      <!-- Calendar with Initial Value -->
+      <section class="demo-section">
+        <h2 class="demo-section-title">初期値の設定</h2>
+        <p class="demo-section-description">
+          <code>value</code> プロパティで初期選択日付を設定できます。
+        </p>
+        <div class="calendar-wrapper">
+          <div id="calendar-initial"></div>
+        </div>
+        <div class="selected-date-display">
+          <span class="selected-date-label">選択された日付:</span>
+          <span id="selected-date-initial" class="selected-date-value">--</span>
+        </div>
+      </section>
+
+      <!-- Calendar with Date Range -->
+      <section class="demo-section">
+        <h2 class="demo-section-title">日付範囲の制限</h2>
+        <p class="demo-section-description">
+          <code>from</code> と <code>to</code> プロパティで選択可能な日付範囲を制限できます。
+          この例では今日から30日後までの日付のみ選択可能です。
+        </p>
+        <div class="calendar-wrapper">
+          <div id="calendar-range"></div>
+        </div>
+        <div class="selected-date-display">
+          <span class="selected-date-label">選択された日付:</span>
+          <span id="selected-date-range" class="selected-date-value">未選択</span>
+        </div>
+      </section>
+
+      <!-- Disabled Calendar -->
+      <section class="demo-section">
+        <h2 class="demo-section-title">無効化状態</h2>
+        <p class="demo-section-description">
+          <code>disabled</code> プロパティでカレンダー全体を無効化できます。
+        </p>
+        <div class="calendar-wrapper">
+          <div id="calendar-disabled"></div>
+        </div>
+        <div class="demo-controls">
+          <button class="demo-button" onclick="toggleDisabled()">無効化を切替</button>
+        </div>
+      </section>
+
+      <!-- Monday Start Calendar -->
+      <section class="demo-section">
+        <h2 class="demo-section-title">週の開始曜日</h2>
+        <p class="demo-section-description">
+          <code>weekStartsOn</code> プロパティで週の開始曜日を変更できます。
+          この例では月曜日始まりに設定しています。
+        </p>
+        <div class="calendar-wrapper">
+          <div id="calendar-monday"></div>
+        </div>
+        <div class="selected-date-display">
+          <span class="selected-date-label">選択された日付:</span>
+          <span id="selected-date-monday" class="selected-date-value">未選択</span>
+        </div>
+      </section>
+
+      <!-- Props Reference -->
+      <section class="demo-section" style="grid-column: 1 / -1;">
+        <h2 class="demo-section-title">Props リファレンス</h2>
+        <table class="props-table">
+          <thead>
+            <tr>
+              <th>プロパティ</th>
+              <th>型</th>
+              <th>説明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>value</code></td>
+              <td><code>Date</code></td>
+              <td>現在選択されている日付</td>
+            </tr>
+            <tr>
+              <td><code>from</code></td>
+              <td><code>Date</code></td>
+              <td>選択可能な日付範囲の開始日</td>
+            </tr>
+            <tr>
+              <td><code>to</code></td>
+              <td><code>Date</code></td>
+              <td>選択可能な日付範囲の終了日</td>
+            </tr>
+            <tr>
+              <td><code>onSelectDate</code></td>
+              <td><code>(event: MouseEvent, date: Date, state: CalendarState) => void</code></td>
+              <td>日付選択時のコールバック（必須）</td>
+            </tr>
+            <tr>
+              <td><code>onMonthChange</code></td>
+              <td><code>(date: Date, state: CalendarState) => void</code></td>
+              <td>月変更時のコールバック</td>
+            </tr>
+            <tr>
+              <td><code>disabled</code></td>
+              <td><code>boolean</code></td>
+              <td>カレンダーを無効化するかどうか</td>
+            </tr>
+            <tr>
+              <td><code>weekStartsOn</code></td>
+              <td><code>0 | 1</code></td>
+              <td>週の開始曜日（0: 日曜, 1: 月曜）</td>
+            </tr>
+            <tr>
+              <td><code>locale</code></td>
+              <td><code>string</code></td>
+              <td>ロケール（デフォルト: "ja-JP"）</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="demo-code">
+          <code>import { createCalendar } from 'mokkun'
+
+const calendar = createCalendar(
+  document.getElementById('calendar'),
+  {
+    value: new Date(),
+    from: new Date(),
+    to: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    weekStartsOn: 0,
+    locale: 'ja-JP',
+  },
+  {
+    onSelectDate: (event, date, state) => {
+      console.log('Selected:', date)
+    },
+    onMonthChange: (date, state) => {
+      console.log('Month changed:', date)
+    },
+  }
+)</code>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script type="module">
+    // Calendar Component - Inline Implementation for Demo
+    function createElement(tag, options = {}) {
+      const element = document.createElement(tag)
+      if (options.className) element.className = options.className
+      if (options.attributes) {
+        for (const [key, value] of Object.entries(options.attributes)) {
+          element.setAttribute(key, value)
+        }
+      }
+      if (options.textContent) element.textContent = options.textContent
+      if (options.children) {
+        for (const child of options.children) {
+          if (typeof child === 'string') {
+            element.appendChild(document.createTextNode(child))
+          } else {
+            element.appendChild(child)
+          }
+        }
+      }
+      return element
+    }
+
+    function generateId(prefix = 'mokkun') {
+      return `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
+    }
+
+    class Calendar {
+      constructor(container, config = {}, callbacks) {
+        this.config = config
+        this.container = container
+        this.callbacks = callbacks
+        this.instanceId = generateId('calendar')
+        this.state = this.createInitialState()
+        this.calendarElement = null
+      }
+
+      render() {
+        this.container.innerHTML = ''
+        this.container.className = 'mokkun-calendar'
+
+        if (this.state.disabled) {
+          this.container.setAttribute('data-disabled', '')
+        } else {
+          this.container.removeAttribute('data-disabled')
+        }
+
+        const calendar = createElement('div', {
+          className: 'calendar-container',
+          attributes: {
+            role: 'application',
+            'aria-label': this.config.ariaLabel ?? 'カレンダー',
+          },
+        })
+
+        const header = this.renderHeader()
+        calendar.appendChild(header)
+
+        const grid = this.renderGrid()
+        calendar.appendChild(grid)
+
+        this.container.appendChild(calendar)
+        this.calendarElement = calendar
+
+        this.setupKeyboardNavigation()
+      }
+
+      setValue(value) {
+        this.state = {
+          ...this.state,
+          value: value ? this.normalizeDate(value) : null,
+        }
+        if (value) {
+          this.state.displayedMonth = this.getFirstDayOfMonth(value)
+        }
+        this.render()
+      }
+
+      getValue() {
+        return this.state.value
+      }
+
+      setDisabled(disabled) {
+        if (this.state.disabled === disabled) return
+        this.state = { ...this.state, disabled }
+        this.render()
+      }
+
+      getState() {
+        return { ...this.state }
+      }
+
+      destroy() {
+        this.container.innerHTML = ''
+        this.calendarElement = null
+      }
+
+      createInitialState() {
+        const value = this.config.value ? this.normalizeDate(this.config.value) : null
+        const displayedMonth = value
+          ? this.getFirstDayOfMonth(value)
+          : this.getFirstDayOfMonth(new Date())
+
+        return {
+          value,
+          displayedMonth,
+          focusedDate: null,
+          disabled: this.config.disabled ?? false,
+        }
+      }
+
+      renderHeader() {
+        const header = createElement('div', { className: 'calendar-header' })
+
+        const prevButton = createElement('button', {
+          className: 'calendar-nav-button calendar-prev',
+          attributes: {
+            type: 'button',
+            'aria-label': '前の月',
+            ...(this.state.disabled && { disabled: 'disabled' }),
+          },
+        })
+        prevButton.innerHTML = this.getChevronLeftIcon()
+        prevButton.addEventListener('click', this.handlePrevMonth.bind(this))
+
+        const monthLabel = createElement('div', {
+          className: 'calendar-month-label',
+          attributes: { 'aria-live': 'polite' },
+        })
+        monthLabel.textContent = this.formatMonthYear(this.state.displayedMonth)
+
+        const nextButton = createElement('button', {
+          className: 'calendar-nav-button calendar-next',
+          attributes: {
+            type: 'button',
+            'aria-label': '次の月',
+            ...(this.state.disabled && { disabled: 'disabled' }),
+          },
+        })
+        nextButton.innerHTML = this.getChevronRightIcon()
+        nextButton.addEventListener('click', this.handleNextMonth.bind(this))
+
+        header.appendChild(prevButton)
+        header.appendChild(monthLabel)
+        header.appendChild(nextButton)
+
+        return header
+      }
+
+      renderGrid() {
+        const grid = createElement('div', {
+          className: 'calendar-grid',
+          attributes: {
+            role: 'grid',
+            'aria-label': this.formatMonthYear(this.state.displayedMonth),
+          },
+        })
+
+        const weekdayRow = this.renderWeekdayHeader()
+        grid.appendChild(weekdayRow)
+
+        const weeks = this.getCalendarWeeks()
+        for (const week of weeks) {
+          const weekRow = this.renderWeekRow(week)
+          grid.appendChild(weekRow)
+        }
+
+        return grid
+      }
+
+      renderWeekdayHeader() {
+        const row = createElement('div', {
+          className: 'calendar-weekdays',
+          attributes: { role: 'row' },
+        })
+
+        const weekdays = this.getWeekdayLabels()
+        for (const weekday of weekdays) {
+          const cell = createElement('div', {
+            className: 'calendar-weekday',
+            attributes: {
+              role: 'columnheader',
+              'aria-label': weekday.full,
+            },
+            textContent: weekday.short,
+          })
+          row.appendChild(cell)
+        }
+
+        return row
+      }
+
+      renderWeekRow(week) {
+        const row = createElement('div', {
+          className: 'calendar-week',
+          attributes: { role: 'row' },
+        })
+
+        for (const date of week) {
+          const cell = this.renderDateCell(date)
+          row.appendChild(cell)
+        }
+
+        return row
+      }
+
+      renderDateCell(date) {
+        if (!date) {
+          return createElement('div', {
+            className: 'calendar-day calendar-day-empty',
+            attributes: { role: 'gridcell' },
+          })
+        }
+
+        const isToday = this.isToday(date)
+        const isSelected = this.isSelected(date)
+        const isDisabled = this.isDateDisabled(date)
+        const isOutOfRange = !this.isDateInRange(date)
+        const isCurrentMonth = date.getMonth() === this.state.displayedMonth.getMonth()
+
+        const classNames = ['calendar-day']
+        if (isToday) classNames.push('calendar-day-today')
+        if (isSelected) classNames.push('calendar-day-selected')
+        if (isDisabled || isOutOfRange) classNames.push('calendar-day-disabled')
+        if (!isCurrentMonth) classNames.push('calendar-day-outside')
+
+        const cell = createElement('button', {
+          className: classNames.join(' '),
+          attributes: {
+            type: 'button',
+            role: 'gridcell',
+            tabindex: isSelected ? '0' : '-1',
+            'aria-label': this.formatDateFull(date),
+            'aria-selected': isSelected ? 'true' : 'false',
+            'aria-disabled': (isDisabled || isOutOfRange) ? 'true' : 'false',
+            'data-date': date.toISOString().split('T')[0],
+            ...(isToday && { 'data-today': '' }),
+            ...((isDisabled || isOutOfRange || this.state.disabled) && { disabled: 'disabled' }),
+          },
+          textContent: date.getDate().toString(),
+        })
+
+        if (!isDisabled && !isOutOfRange && !this.state.disabled) {
+          cell.addEventListener('click', (e) => this.handleDateClick(e, date))
+        }
+
+        return cell
+      }
+
+      setupKeyboardNavigation() {
+        if (!this.calendarElement) return
+
+        this.calendarElement.addEventListener('keydown', (e) => {
+          if (this.state.disabled) return
+
+          const key = e.key
+          let newDate = null
+          const baseDate = this.state.focusedDate || this.state.value || new Date()
+
+          switch (key) {
+            case 'ArrowLeft':
+              e.preventDefault()
+              newDate = this.addDays(baseDate, -1)
+              break
+            case 'ArrowRight':
+              e.preventDefault()
+              newDate = this.addDays(baseDate, 1)
+              break
+            case 'ArrowUp':
+              e.preventDefault()
+              newDate = this.addDays(baseDate, -7)
+              break
+            case 'ArrowDown':
+              e.preventDefault()
+              newDate = this.addDays(baseDate, 7)
+              break
+            case 'Enter':
+            case ' ':
+              e.preventDefault()
+              if (this.state.focusedDate && this.isDateInRange(this.state.focusedDate)) {
+                const button = this.calendarElement?.querySelector(
+                  `[data-date="${this.state.focusedDate.toISOString().split('T')[0]}"]`
+                )
+                if (button) button.click()
+              }
+              break
+          }
+
+          if (newDate) this.focusDate(newDate)
+        })
+      }
+
+      focusDate(date) {
+        if (date.getMonth() !== this.state.displayedMonth.getMonth() ||
+            date.getFullYear() !== this.state.displayedMonth.getFullYear()) {
+          this.state.displayedMonth = this.getFirstDayOfMonth(date)
+          this.state.focusedDate = date
+          this.render()
+        } else {
+          this.state.focusedDate = date
+        }
+
+        const button = this.container.querySelector(
+          `[data-date="${date.toISOString().split('T')[0]}"]`
+        )
+        if (button) {
+          button.focus()
+          button.setAttribute('tabindex', '0')
+          this.container.querySelectorAll('.calendar-day:not([data-date="' + date.toISOString().split('T')[0] + '"])').forEach((el) => {
+            el.setAttribute('tabindex', '-1')
+          })
+        }
+      }
+
+      handlePrevMonth() {
+        if (this.state.disabled) return
+        const newMonth = new Date(this.state.displayedMonth)
+        newMonth.setMonth(newMonth.getMonth() - 1)
+        this.state.displayedMonth = newMonth
+        this.render()
+        this.callbacks.onMonthChange?.(newMonth, this.state)
+      }
+
+      handleNextMonth() {
+        if (this.state.disabled) return
+        const newMonth = new Date(this.state.displayedMonth)
+        newMonth.setMonth(newMonth.getMonth() + 1)
+        this.state.displayedMonth = newMonth
+        this.render()
+        this.callbacks.onMonthChange?.(newMonth, this.state)
+      }
+
+      handleDateClick(event, date) {
+        if (this.state.disabled) return
+        if (!this.isDateInRange(date)) return
+
+        this.state = {
+          ...this.state,
+          value: date,
+          focusedDate: date,
+        }
+        this.render()
+        this.callbacks.onSelectDate(event, date, this.state)
+      }
+
+      normalizeDate(date) {
+        const normalized = new Date(date)
+        normalized.setHours(0, 0, 0, 0)
+        return normalized
+      }
+
+      getFirstDayOfMonth(date) {
+        return new Date(date.getFullYear(), date.getMonth(), 1)
+      }
+
+      getCalendarWeeks() {
+        const weeks = []
+        const firstDay = this.getFirstDayOfMonth(this.state.displayedMonth)
+        const lastDay = new Date(firstDay.getFullYear(), firstDay.getMonth() + 1, 0)
+        const weekStartsOn = this.config.weekStartsOn ?? 0
+
+        let startDate = new Date(firstDay)
+        const dayOfWeek = startDate.getDay()
+        const diff = (dayOfWeek - weekStartsOn + 7) % 7
+        startDate.setDate(startDate.getDate() - diff)
+
+        for (let week = 0; week < 6; week++) {
+          const weekDays = []
+          for (let day = 0; day < 7; day++) {
+            const currentDate = new Date(startDate)
+            currentDate.setDate(startDate.getDate() + (week * 7) + day)
+            weekDays.push(currentDate)
+          }
+          weeks.push(weekDays)
+
+          const lastDayOfWeek = new Date(startDate)
+          lastDayOfWeek.setDate(startDate.getDate() + (week * 7) + 6)
+          if (lastDayOfWeek > lastDay && week >= 3) {
+            const firstDayOfNextWeek = new Date(startDate)
+            firstDayOfNextWeek.setDate(startDate.getDate() + ((week + 1) * 7))
+            if (firstDayOfNextWeek.getMonth() !== firstDay.getMonth()) {
+              break
+            }
+          }
+        }
+
+        return weeks
+      }
+
+      getWeekdayLabels() {
+        const locale = this.config.locale ?? 'ja-JP'
+        const weekStartsOn = this.config.weekStartsOn ?? 0
+        const labels = []
+
+        for (let i = 0; i < 7; i++) {
+          const dayIndex = (i + weekStartsOn) % 7
+          const date = new Date(2024, 0, 7 + dayIndex)
+          labels.push({
+            short: date.toLocaleDateString(locale, { weekday: 'short' }),
+            full: date.toLocaleDateString(locale, { weekday: 'long' }),
+          })
+        }
+
+        return labels
+      }
+
+      formatMonthYear(date) {
+        const locale = this.config.locale ?? 'ja-JP'
+        return date.toLocaleDateString(locale, { year: 'numeric', month: 'long' })
+      }
+
+      formatDateFull(date) {
+        const locale = this.config.locale ?? 'ja-JP'
+        return date.toLocaleDateString(locale, {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          weekday: 'long',
+        })
+      }
+
+      isToday(date) {
+        const today = this.normalizeDate(new Date())
+        return date.getTime() === today.getTime()
+      }
+
+      isSelected(date) {
+        if (!this.state.value) return false
+        return date.getTime() === this.state.value.getTime()
+      }
+
+      isDateDisabled(date) {
+        return this.state.disabled
+      }
+
+      isDateInRange(date) {
+        const normalizedDate = this.normalizeDate(date)
+
+        if (this.config.from) {
+          const from = this.normalizeDate(this.config.from)
+          if (normalizedDate < from) return false
+        }
+
+        if (this.config.to) {
+          const to = this.normalizeDate(this.config.to)
+          if (normalizedDate > to) return false
+        }
+
+        return true
+      }
+
+      addDays(date, days) {
+        const result = new Date(date)
+        result.setDate(result.getDate() + days)
+        return this.normalizeDate(result)
+      }
+
+      getChevronLeftIcon() {
+        return `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>`
+      }
+
+      getChevronRightIcon() {
+        return `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>`
+      }
+    }
+
+    function createCalendar(container, config = {}, callbacks) {
+      const calendar = new Calendar(container, config, callbacks)
+      calendar.render()
+      return calendar
+    }
+
+    // Format date helper
+    function formatDate(date) {
+      const locale = 'ja-JP'
+      return date.toLocaleDateString(locale, {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        weekday: 'short',
+      })
+    }
+
+    // Create demo calendars
+    const calendars = {}
+
+    // Basic Calendar
+    calendars.basic = createCalendar(
+      document.getElementById('calendar-basic'),
+      {},
+      {
+        onSelectDate: (event, date, state) => {
+          document.getElementById('selected-date-basic').textContent = formatDate(date)
+        },
+      }
+    )
+
+    // Calendar with Initial Value
+    const today = new Date()
+    calendars.initial = createCalendar(
+      document.getElementById('calendar-initial'),
+      {
+        value: today,
+      },
+      {
+        onSelectDate: (event, date, state) => {
+          document.getElementById('selected-date-initial').textContent = formatDate(date)
+        },
+      }
+    )
+    document.getElementById('selected-date-initial').textContent = formatDate(today)
+
+    // Calendar with Date Range
+    const fromDate = new Date()
+    const toDate = new Date()
+    toDate.setDate(toDate.getDate() + 30)
+
+    calendars.range = createCalendar(
+      document.getElementById('calendar-range'),
+      {
+        from: fromDate,
+        to: toDate,
+      },
+      {
+        onSelectDate: (event, date, state) => {
+          document.getElementById('selected-date-range').textContent = formatDate(date)
+        },
+      }
+    )
+
+    // Disabled Calendar
+    calendars.disabled = createCalendar(
+      document.getElementById('calendar-disabled'),
+      {
+        disabled: true,
+        value: new Date(),
+      },
+      {
+        onSelectDate: (event, date, state) => {
+          console.log('Selected:', date)
+        },
+      }
+    )
+
+    // Monday Start Calendar
+    calendars.monday = createCalendar(
+      document.getElementById('calendar-monday'),
+      {
+        weekStartsOn: 1,
+      },
+      {
+        onSelectDate: (event, date, state) => {
+          document.getElementById('selected-date-monday').textContent = formatDate(date)
+        },
+      }
+    )
+
+    // Toggle disabled state
+    window.toggleDisabled = function() {
+      const currentState = calendars.disabled.getState()
+      calendars.disabled.setDisabled(!currentState.disabled)
+    }
+
+    // Theme toggle
+    window.toggleTheme = function() {
+      const body = document.body
+      const currentTheme = body.getAttribute('data-theme')
+      body.setAttribute('data-theme', currentTheme === 'dark' ? 'light' : 'dark')
+    }
+  </script>
+</body>
+</html>
