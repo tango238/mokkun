@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DateRangePicker Demo - Mokkun</title>
+  <link rel="stylesheet" href="demo-date-range-picker.css">
+</head>
+<body>
+  <div class="demo-container">
+    <header class="demo-header">
+      <h1>DateRangePicker Demo</h1>
+      <p>日付範囲を選択するコンポーネントのデモ</p>
+    </header>
+
+    <main class="demo-main">
+      <section class="demo-section">
+        <h2>基本的な使い方</h2>
+        <div class="demo-example">
+          <div id="date-range-picker-1"></div>
+        </div>
+        <div class="demo-output">
+          <h3>選択された範囲:</h3>
+          <pre id="output-1" class="output-code">{ from: null, to: null }</pre>
+        </div>
+      </section>
+
+      <section class="demo-section">
+        <h2>プリセットなし</h2>
+        <div class="demo-example">
+          <div id="date-range-picker-2"></div>
+        </div>
+        <div class="demo-output">
+          <h3>選択された範囲:</h3>
+          <pre id="output-2" class="output-code">{ from: null, to: null }</pre>
+        </div>
+      </section>
+
+      <section class="demo-section">
+        <h2>日付範囲制限付き（過去30日間のみ選択可能）</h2>
+        <div class="demo-example">
+          <div id="date-range-picker-3"></div>
+        </div>
+        <div class="demo-output">
+          <h3>選択された範囲:</h3>
+          <pre id="output-3" class="output-code">{ from: null, to: null }</pre>
+        </div>
+      </section>
+
+      <section class="demo-section">
+        <h2>初期値設定済み（過去7日間）</h2>
+        <div class="demo-example">
+          <div id="date-range-picker-4"></div>
+        </div>
+        <div class="demo-output">
+          <h3>選択された範囲:</h3>
+          <pre id="output-4" class="output-code"></pre>
+        </div>
+      </section>
+
+      <section class="demo-section">
+        <h2>カスタムプリセット</h2>
+        <div class="demo-example">
+          <div id="date-range-picker-5"></div>
+        </div>
+        <div class="demo-output">
+          <h3>選択された範囲:</h3>
+          <pre id="output-5" class="output-code">{ from: null, to: null }</pre>
+        </div>
+      </section>
+
+      <section class="demo-section">
+        <h2>適用/キャンセルボタンなし（即時反映）</h2>
+        <div class="demo-example">
+          <div id="date-range-picker-6"></div>
+        </div>
+        <div class="demo-output">
+          <h3>選択された範囲:</h3>
+          <pre id="output-6" class="output-code">{ from: null, to: null }</pre>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="demo-date-range-picker.js"></script>
+</body>
+</html>

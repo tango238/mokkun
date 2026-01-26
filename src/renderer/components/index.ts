@@ -331,3 +331,13 @@ export {
   type CalendarCallbacks,
   type CalendarConfig,
 } from './calendar'
+export {
+  DateRangePicker,
+  createDateRangePicker,
+  getDefaultPresets,
+  type DateRange,
+  type DateRangePreset,
+  type DateRangePickerState,
+  type DateRangePickerCallbacks,
+  type DateRangePickerConfig,
+} from './date-range-picker'
