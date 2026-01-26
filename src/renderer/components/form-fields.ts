@@ -334,6 +334,7 @@ export function renderField(field: InputField): string {
       return Combobox.renderField(field)
     case 'radio_group':
       return RadioButton.renderField(field)
+    case 'checkbox':
     case 'checkbox_group':
       return Checkbox.renderField(field)
     case 'duration_picker':

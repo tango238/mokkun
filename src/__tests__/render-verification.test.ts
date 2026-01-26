@@ -1,6 +1,12 @@
 /**
  * Render Verification Tests
  * YAMLで定義されたすべてのフィールドがレンダリングされることを検証
+ *
+ * このテストは以下を保証します:
+ * 1. VALID_FIELD_TYPES に定義された全タイプがレンダリング可能
+ * 2. form-fields.ts の switch 文が VALID_FIELD_TYPES を全てカバー
+ * 3. YAMLファイルの全フィールドが正常にレンダリングされる
+ * 4. 新しいコンポーネント追加時の漏れを検出
  */
 
 import { describe, it, expect, beforeAll } from 'vitest'
@@ -102,10 +108,167 @@ function isValidHtml(html: string): { valid: boolean; error?: string } {
 }
 
 // =============================================================================
+// Static Analysis Helpers
+// =============================================================================
+
+/**
+ * form-fields.ts から switch 文の case を抽出
+ */
+function extractCaseStatementsFromFormFields(): string[] {
+  const formFieldsPath = path.join(__dirname, '../renderer/components/form-fields.ts')
+  const content = fs.readFileSync(formFieldsPath, 'utf-8')
+
+  // case 'xxx': または case 'xxx': case 'yyy': のパターンを抽出
+  const casePattern = /case\s+['"]([^'"]+)['"]\s*:/g
+  const cases: string[] = []
+  let match
+
+  while ((match = casePattern.exec(content)) !== null) {
+    cases.push(match[1])
+  }
+
+  return [...new Set(cases)] // 重複を除去
+}
+
+/**
+ * schema.ts から InputField union の型を抽出
+ */
+function extractInputFieldTypesFromSchema(): string[] {
+  const schemaPath = path.join(__dirname, '../types/schema.ts')
+  const content = fs.readFileSync(schemaPath, 'utf-8')
+
+  // InputField = の後から ; までを抽出
+  const unionMatch = content.match(/export type InputField\s*=\s*([\s\S]*?)(?=\n\n|\/\*\*|export type InputFieldType)/)
+  if (!unionMatch) {
+    return []
+  }
+
+  // | XxxField パターンを抽出
+  const fieldPattern = /\|\s*(\w+Field(?:Type)?)/g
+  const fieldTypes: string[] = []
+  let match
+
+  while ((match = fieldPattern.exec(unionMatch[1])) !== null) {
+    fieldTypes.push(match[1])
+  }
+
+  return fieldTypes
+}
+
+/**
+ * FieldType インターフェースから type を抽出
+ */
+function extractTypeFromFieldInterface(interfaceName: string): string | null {
+  const schemaPath = path.join(__dirname, '../types/schema.ts')
+  const content = fs.readFileSync(schemaPath, 'utf-8')
+
+  // interface XxxField { ... type: 'xxx' ... } を探す
+  const interfacePattern = new RegExp(
+    `export interface ${interfaceName}[^{]*\\{[^}]*type:\\s*['"]([^'"]+)['"]`,
+    's'
+  )
+  const match = content.match(interfacePattern)
+
+  return match ? match[1] : null
+}
+
+// =============================================================================
 // Test Suites
 // =============================================================================
 
 describe('Render Verification', () => {
+  describe('Component Registration Integrity', () => {
+    it('should have all VALID_FIELD_TYPES handled in form-fields.ts switch', () => {
+      const casesInSwitch = extractCaseStatementsFromFormFields()
+      const missingInSwitch: string[] = []
+
+      for (const type of VALID_FIELD_TYPES) {
+        if (!casesInSwitch.includes(type)) {
+          missingInSwitch.push(type)
+        }
+      }
+
+      if (missingInSwitch.length > 0) {
+        console.error('Types in VALID_FIELD_TYPES but missing in form-fields.ts switch:')
+        missingInSwitch.forEach((t) => console.error(`  - ${t}`))
+      }
+
+      expect(missingInSwitch).toHaveLength(0)
+    })
+
+    it('should have all switch cases registered in VALID_FIELD_TYPES', () => {
+      const casesInSwitch = extractCaseStatementsFromFormFields()
+      const missingInValidTypes: string[] = []
+
+      for (const caseType of casesInSwitch) {
+        if (!VALID_FIELD_TYPES.includes(caseType as InputFieldType)) {
+          missingInValidTypes.push(caseType)
+        }
+      }
+
+      if (missingInValidTypes.length > 0) {
+        console.error('Types in form-fields.ts switch but missing in VALID_FIELD_TYPES:')
+        missingInValidTypes.forEach((t) => console.error(`  - ${t}`))
+      }
+
+      expect(missingInValidTypes).toHaveLength(0)
+    })
+
+    it('should have InputField union types matching VALID_FIELD_TYPES count', () => {
+      const fieldInterfaces = extractInputFieldTypesFromSchema()
+      const schemaTypes: string[] = []
+
+      for (const interfaceName of fieldInterfaces) {
+        const type = extractTypeFromFieldInterface(interfaceName)
+        if (type) {
+          schemaTypes.push(type)
+        }
+      }
+
+      const schemaTypesSet = new Set(schemaTypes)
+      const validTypesSet = new Set(VALID_FIELD_TYPES)
+
+      // schema.ts にあって VALID_FIELD_TYPES にない
+      const missingInValidTypes = [...schemaTypesSet].filter((t) => !validTypesSet.has(t as InputFieldType))
+
+      // VALID_FIELD_TYPES にあって schema.ts にない
+      const missingInSchema = [...validTypesSet].filter((t) => !schemaTypesSet.has(t))
+
+      if (missingInValidTypes.length > 0) {
+        console.error('Types in schema.ts but missing in VALID_FIELD_TYPES:')
+        missingInValidTypes.forEach((t) => console.error(`  - ${t}`))
+      }
+
+      if (missingInSchema.length > 0) {
+        console.error('Types in VALID_FIELD_TYPES but missing in schema.ts:')
+        missingInSchema.forEach((t) => console.error(`  - ${t}`))
+      }
+
+      expect(missingInValidTypes).toHaveLength(0)
+      expect(missingInSchema).toHaveLength(0)
+    })
+
+    it('should not render "unknown-field" for any VALID_FIELD_TYPE', () => {
+      const unknownRendered: string[] = []
+
+      for (const fieldType of VALID_FIELD_TYPES) {
+        const minimalField = createMinimalField(fieldType)
+        const html = renderField(minimalField)
+
+        if (html.includes('unknown-field') || html.includes('不明なフィールドタイプ')) {
+          unknownRendered.push(fieldType)
+        }
+      }
+
+      if (unknownRendered.length > 0) {
+        console.error('Field types rendering as "unknown-field":')
+        unknownRendered.forEach((t) => console.error(`  - ${t}`))
+      }
+
+      expect(unknownRendered).toHaveLength(0)
+    })
+  })
+
   describe('All VALID_FIELD_TYPES should be renderable', () => {
     it.each(VALID_FIELD_TYPES)('should render field type: %s', (fieldType) => {
       // 各フィールドタイプの最小限の定義

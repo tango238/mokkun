@@ -16,7 +16,7 @@ import {
   createFieldWrapper,
   getOptions,
 } from '../utils/field-helpers'
-import type { CheckboxGroupField } from '../../types/schema'
+import type { CheckboxField, CheckboxGroupField, InputField } from '../../types/schema'
 
 // =============================================================================
 // Types
@@ -419,7 +419,45 @@ export class Checkbox {
    * @param field - チェックボックスグループフィールド定義
    * @returns 生成されたHTML文字列
    */
-  static renderField(field: CheckboxGroupField): string {
+  static renderField(field: InputField): string {
+    if (field.type === 'checkbox') {
+      return Checkbox.renderSingleCheckbox(field as CheckboxField)
+    }
+    return Checkbox.renderCheckboxGroup(field as CheckboxGroupField)
+  }
+
+  /**
+   * 単一チェックボックスをレンダリング
+   */
+  private static renderSingleCheckbox(field: CheckboxField): string {
+    const labelPosition = field.label_position ?? 'right'
+    const size = field.size ?? 'medium'
+    const disabled = field.disabled ? 'disabled' : ''
+
+    const checkboxInput = `
+      <input
+        type="checkbox"
+        id="${escapeHtml(field.id)}"
+        name="${escapeHtml(field.name ?? field.id)}"
+        class="checkbox-input checkbox-${size}"
+        ${field.required ? 'required' : ''}
+        ${disabled}
+      />
+    `
+
+    const labelText = field.label ? `<span class="checkbox-label-text">${escapeHtml(field.label)}</span>` : ''
+
+    const content = labelPosition === 'left'
+      ? `<label class="checkbox-single label-left">${labelText}${checkboxInput}</label>`
+      : `<label class="checkbox-single label-right">${checkboxInput}${labelText}</label>`
+
+    return createFieldWrapper({ ...field, label: '' }, content)
+  }
+
+  /**
+   * チェックボックスグループをレンダリング
+   */
+  private static renderCheckboxGroup(field: CheckboxGroupField): string {
     const options = getOptions(field.options)
     const direction = field.direction ?? 'vertical'
     const defaultValues = Array.isArray(field.default) ? field.default : []
