@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Browser コンポーネント デモ</title>
+  <style>
+    :root {
+      --color-primary: #3b82f6;
+      --color-primary-hover: #2563eb;
+      --color-primary-light: #dbeafe;
+      --color-bg: #f8fafc;
+      --color-bg-subtle: #f1f5f9;
+      --color-surface: #ffffff;
+      --color-text: #1e293b;
+      --color-text-muted: #64748b;
+      --color-border: #e2e8f0;
+      --spacing-xs: 0.25rem;
+      --spacing-sm: 0.5rem;
+      --spacing-md: 1rem;
+      --spacing-lg: 1.5rem;
+      --spacing-xl: 2rem;
+      --font-size-sm: 0.875rem;
+      --border-radius-sm: 0.25rem;
+      --border-radius-md: 0.375rem;
+      --transition-fast: 150ms ease;
+    }
+
+    [data-theme="dark"] {
+      --color-bg: #0f172a;
+      --color-bg-subtle: #1e293b;
+      --color-surface: #1e293b;
+      --color-text: #f1f5f9;
+      --color-text-muted: #94a3b8;
+      --color-border: #334155;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: var(--spacing-xl);
+      font-family: Inter, system-ui, -apple-system, sans-serif;
+      font-size: 1rem;
+      line-height: 1.5;
+      color: var(--color-text);
+      background-color: var(--color-bg);
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .demo-container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .demo-header {
+      margin-bottom: var(--spacing-xl);
+      padding-bottom: var(--spacing-lg);
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .demo-header h1 {
+      margin: 0 0 var(--spacing-sm);
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+
+    .demo-header p {
+      margin: 0;
+      color: var(--color-text-muted);
+    }
+
+    .theme-buttons {
+      margin-top: var(--spacing-md);
+      display: flex;
+      gap: var(--spacing-sm);
+    }
+
+    .theme-buttons button {
+      padding: 6px 16px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--border-radius-md);
+      background: var(--color-surface);
+      color: var(--color-text);
+      font-size: var(--font-size-sm);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .theme-buttons button:hover {
+      background: var(--color-bg-subtle);
+      border-color: var(--color-primary);
+    }
+
+    .theme-buttons button.active {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+      color: white;
+    }
+
+    .demo-section {
+      margin-bottom: var(--spacing-xl);
+      padding: var(--spacing-lg);
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--border-radius-md);
+    }
+
+    .demo-section h2 {
+      margin: 0 0 var(--spacing-sm);
+      font-size: 1.125rem;
+      font-weight: 600;
+    }
+
+    .demo-section p {
+      margin: 0 0 var(--spacing-md);
+      color: var(--color-text-muted);
+      font-size: var(--font-size-sm);
+    }
+
+    .browser-container {
+      height: 300px;
+    }
+
+    .browser-container-large {
+      height: 400px;
+    }
+
+    .selection-info {
+      margin-top: var(--spacing-md);
+      padding: var(--spacing-md);
+      background: var(--color-bg-subtle);
+      border-radius: var(--border-radius-sm);
+      font-size: var(--font-size-sm);
+    }
+
+    .selection-info strong {
+      color: var(--color-primary);
+    }
+
+    /* Browser component styles */
+    .mokkun-browser {
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--color-border);
+      border-radius: var(--border-radius-md);
+      background-color: var(--color-surface);
+      overflow: hidden;
+    }
+
+    .browser-columns {
+      display: flex;
+      flex-direction: row;
+      overflow-x: auto;
+      min-height: 200px;
+    }
+
+    .browser-column {
+      flex: 0 0 auto;
+      width: 200px;
+      min-width: 200px;
+      border-right: 1px solid var(--color-border);
+      overflow-y: auto;
+      background-color: var(--color-surface);
+    }
+
+    .browser-column:last-child {
+      border-right: none;
+    }
+
+    .browser-item {
+      display: flex;
+      align-items: center;
+      padding: var(--spacing-xs) var(--spacing-sm);
+      margin: 2px 4px;
+      cursor: pointer;
+      border-radius: var(--border-radius-sm);
+      transition: background-color var(--transition-fast), color var(--transition-fast);
+      user-select: none;
+    }
+
+    .browser-item:hover:not(.is-disabled) {
+      background-color: var(--color-bg-subtle);
+    }
+
+    .browser-item.is-selected {
+      background-color: var(--color-primary-light);
+      color: var(--color-primary);
+    }
+
+    .browser-item.is-leaf-selected {
+      background-color: var(--color-primary);
+      color: white;
+    }
+
+    .browser-item.is-leaf-selected .browser-item-arrow {
+      color: white;
+    }
+
+    .browser-item.is-focused:not(.is-leaf-selected) {
+      outline: 2px solid var(--color-primary);
+      outline-offset: -2px;
+    }
+
+    .browser-item.is-disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .browser-item-radio {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+      pointer-events: none;
+    }
+
+    .browser-item-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      gap: var(--spacing-sm);
+    }
+
+    .browser-item-label {
+      flex: 1;
+      font-size: var(--font-size-sm);
+      line-height: 1.5;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .browser-item-arrow {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      color: var(--color-text-muted);
+    }
+
+    .browser-item-arrow svg {
+      width: 12px;
+      height: 12px;
+    }
+
+    [data-theme="dark"] .browser-item:hover:not(.is-disabled) {
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    [data-theme="dark"] .browser-item.is-selected {
+      background-color: rgba(59, 130, 246, 0.2);
+      color: var(--color-primary);
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-container">
+    <div class="demo-header">
+      <h1>Browser コンポーネント</h1>
+      <p>階層構造を持つデータの中から項目を単一選択するコンポーネント</p>
+      <div class="theme-buttons">
+        <button id="theme-light" class="active" onclick="setTheme('light')">Light</button>
+        <button id="theme-dark" onclick="setTheme('dark')">Dark</button>
+      </div>
+    </div>
+
+    <div class="demo-section">
+      <h2>基本的な使用例</h2>
+      <p>カテゴリを選択すると、サブカテゴリが次のカラムに表示されます。キーボード操作（矢印キー、Enter）にも対応しています。</p>
+      <div id="browser-basic" class="browser-container"></div>
+      <div id="selection-basic" class="selection-info">選択: なし</div>
+    </div>
+
+    <div class="demo-section">
+      <h2>組織階層の例</h2>
+      <p>会社の組織構造をブラウジングできます。</p>
+      <div id="browser-org" class="browser-container-large"></div>
+      <div id="selection-org" class="selection-info">選択: なし</div>
+    </div>
+
+    <div class="demo-section">
+      <h2>初期値を設定した例</h2>
+      <p>「東京」が初期選択されています。</p>
+      <div id="browser-default" class="browser-container"></div>
+      <div id="selection-default" class="selection-info">選択: なし</div>
+    </div>
+  </div>
+
+  <script type="module">
+    // Browser component implementation (inline for demo)
+    function createElement(tag, options) {
+      const element = document.createElement(tag);
+      if (options?.className) element.className = options.className;
+      if (options?.attributes) {
+        for (const [key, value] of Object.entries(options.attributes)) {
+          element.setAttribute(key, value);
+        }
+      }
+      if (options?.textContent) element.textContent = options.textContent;
+      if (options?.children) {
+        for (const child of options.children) {
+          if (typeof child === 'string') {
+            element.appendChild(document.createTextNode(child));
+          } else {
+            element.appendChild(child);
+          }
+        }
+      }
+      return element;
+    }
+
+    function generateId(prefix = 'mokkun') {
+      return `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    }
+
+    class Browser {
+      constructor(container, config, callbacks = {}) {
+        this.config = config;
+        this.container = container;
+        this.callbacks = callbacks;
+        this.instanceId = config.id ?? generateId('browser');
+        this.columnsWrapper = null;
+        this.itemsMap = new Map();
+        this.parentMap = new Map();
+
+        this.buildItemsMap(config.items, null);
+
+        const initialPath = config.defaultValue
+          ? this.getPathToValue(config.defaultValue)
+          : [];
+
+        this.state = {
+          selectedValue: config.defaultValue ?? null,
+          selectedPath: initialPath,
+          focusedColumnIndex: 0,
+          focusedItemIndexes: new Array(config.maxColumns ?? 3).fill(0),
+        };
+      }
+
+      render() {
+        this.container.innerHTML = '';
+        this.container.className = ['mokkun-browser', this.config.className ?? ''].filter(Boolean).join(' ');
+        this.container.id = this.instanceId;
+        this.container.setAttribute('role', 'application');
+        this.container.setAttribute('aria-label', '階層ブラウザ');
+
+        if (this.config.height && this.config.height !== 'auto') {
+          this.container.style.height = this.config.height;
+        }
+
+        this.columnsWrapper = createElement('div', { className: 'browser-columns' });
+        this.container.addEventListener('keydown', this.handleKeyDown.bind(this));
+        this.container.appendChild(this.columnsWrapper);
+        this.renderColumns();
+      }
+
+      buildItemsMap(items, parentValue) {
+        for (const item of items) {
+          this.itemsMap.set(item.value, item);
+          this.parentMap.set(item.value, parentValue);
+          if (item.children && item.children.length > 0) {
+            this.buildItemsMap(item.children, item.value);
+          }
+        }
+      }
+
+      getPathToValue(value) {
+        const path = [];
+        let currentValue = value;
+        while (currentValue !== null) {
+          path.unshift(currentValue);
+          currentValue = this.parentMap.get(currentValue) ?? null;
+        }
+        return path;
+      }
+
+      getColumnsData() {
+        const columns = [];
+        const maxColumns = this.config.maxColumns ?? 3;
+        columns.push({ items: this.config.items, parentValue: null });
+
+        for (let i = 0; i < this.state.selectedPath.length && columns.length < maxColumns; i++) {
+          const selectedValue = this.state.selectedPath[i];
+          const item = this.itemsMap.get(selectedValue);
+          if (item?.children && item.children.length > 0) {
+            columns.push({ items: item.children, parentValue: selectedValue });
+          }
+        }
+        return columns;
+      }
+
+      renderColumns() {
+        if (!this.columnsWrapper) return;
+        this.columnsWrapper.innerHTML = '';
+        const columnsData = this.getColumnsData();
+
+        columnsData.forEach((columnData, columnIndex) => {
+          const column = this.renderColumn(columnData, columnIndex);
+          this.columnsWrapper.appendChild(column);
+        });
+      }
+
+      renderColumn(columnData, columnIndex) {
+        const column = createElement('div', {
+          className: 'browser-column',
+          attributes: {
+            role: 'listbox',
+            'aria-label': `カラム ${columnIndex + 1}`,
+            'data-column-index': String(columnIndex),
+          },
+        });
+
+        columnData.items.forEach((item, itemIndex) => {
+          const itemElement = this.renderItem(item, columnIndex, itemIndex);
+          column.appendChild(itemElement);
+        });
+
+        return column;
+      }
+
+      renderItem(item, columnIndex, itemIndex) {
+        const isSelected = this.state.selectedPath.includes(item.value);
+        const isLeafSelected = this.state.selectedValue === item.value;
+        const hasChildren = item.children && item.children.length > 0;
+        const isFocused = this.state.focusedColumnIndex === columnIndex &&
+                          this.state.focusedItemIndexes[columnIndex] === itemIndex;
+
+        const itemWrapper = createElement('label', {
+          className: [
+            'browser-item',
+            isSelected ? 'is-selected' : '',
+            isLeafSelected ? 'is-leaf-selected' : '',
+            item.disabled ? 'is-disabled' : '',
+            isFocused ? 'is-focused' : '',
+          ].filter(Boolean).join(' '),
+          attributes: {
+            'data-value': item.value,
+            'data-column': String(columnIndex),
+            'data-index': String(itemIndex),
+          },
+        });
+
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = `${this.instanceId}-column-${columnIndex}`;
+        radio.value = item.value;
+        radio.checked = isSelected;
+        radio.disabled = item.disabled ?? false;
+        radio.tabIndex = isFocused ? 0 : -1;
+        radio.className = 'browser-item-radio';
+        radio.setAttribute('aria-label', item.label);
+
+        radio.addEventListener('change', () => {
+          if (!item.disabled) {
+            this.handleItemSelect(item, columnIndex, itemIndex);
+          }
+        });
+
+        radio.addEventListener('focus', () => {
+          this.state = {
+            ...this.state,
+            focusedColumnIndex: columnIndex,
+            focusedItemIndexes: this.state.focusedItemIndexes.map((idx, i) =>
+              i === columnIndex ? itemIndex : idx
+            ),
+          };
+        });
+
+        itemWrapper.appendChild(radio);
+
+        const labelContainer = createElement('span', { className: 'browser-item-content' });
+        const labelText = createElement('span', { className: 'browser-item-label', textContent: item.label });
+        labelContainer.appendChild(labelText);
+
+        if (hasChildren) {
+          const arrow = this.renderArrowIcon();
+          labelContainer.appendChild(arrow);
+        }
+
+        itemWrapper.appendChild(labelContainer);
+
+        itemWrapper.addEventListener('click', (e) => {
+          if (item.disabled) {
+            e.preventDefault();
+            return;
+          }
+          this.handleItemSelect(item, columnIndex, itemIndex);
+        });
+
+        return itemWrapper;
+      }
+
+      renderArrowIcon() {
+        const icon = createElement('span', {
+          className: 'browser-item-arrow',
+          attributes: { 'aria-hidden': 'true' },
+        });
+
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('width', '16');
+        svg.setAttribute('height', '16');
+        svg.setAttribute('viewBox', '0 0 16 16');
+        svg.setAttribute('fill', 'currentColor');
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', 'M6 3l5 5-5 5V3z');
+
+        svg.appendChild(path);
+        icon.appendChild(svg);
+
+        return icon;
+      }
+
+      handleItemSelect(item, columnIndex, itemIndex) {
+        const newPath = [...this.state.selectedPath.slice(0, columnIndex), item.value];
+        const hasChildren = item.children && item.children.length > 0;
+
+        this.state = {
+          ...this.state,
+          selectedValue: item.value,
+          selectedPath: newPath,
+          focusedColumnIndex: hasChildren ? columnIndex + 1 : columnIndex,
+          focusedItemIndexes: this.state.focusedItemIndexes.map((idx, i) => {
+            if (i === columnIndex) return itemIndex;
+            if (i === columnIndex + 1) return 0;
+            return idx;
+          }),
+        };
+
+        this.renderColumns();
+        this.callbacks.onSelect?.(item.value, newPath, item);
+        this.callbacks.onChange?.(item.value, newPath);
+
+        if (hasChildren) {
+          setTimeout(() => this.focusCurrentItem(), 0);
+        }
+      }
+
+      handleKeyDown(event) {
+        const columnsData = this.getColumnsData();
+        const currentColumn = columnsData[this.state.focusedColumnIndex];
+        if (!currentColumn) return;
+
+        switch (event.key) {
+          case 'ArrowUp':
+            event.preventDefault();
+            this.moveFocus(-1, 0);
+            break;
+          case 'ArrowDown':
+            event.preventDefault();
+            this.moveFocus(1, 0);
+            break;
+          case 'ArrowLeft':
+            event.preventDefault();
+            this.moveFocus(0, -1);
+            break;
+          case 'ArrowRight':
+          case 'Enter':
+          case ' ':
+            event.preventDefault();
+            this.selectFocusedOrMoveRight();
+            break;
+        }
+      }
+
+      moveFocus(rowDelta, colDelta) {
+        const columnsData = this.getColumnsData();
+        let newColumnIndex = this.state.focusedColumnIndex + colDelta;
+        newColumnIndex = Math.max(0, Math.min(newColumnIndex, columnsData.length - 1));
+
+        const column = columnsData[newColumnIndex];
+        if (!column) return;
+
+        let newItemIndex = this.state.focusedItemIndexes[newColumnIndex] + rowDelta;
+        newItemIndex = Math.max(0, Math.min(newItemIndex, column.items.length - 1));
+
+        this.state = {
+          ...this.state,
+          focusedColumnIndex: newColumnIndex,
+          focusedItemIndexes: this.state.focusedItemIndexes.map((idx, i) =>
+            i === newColumnIndex ? newItemIndex : idx
+          ),
+        };
+
+        this.renderColumns();
+        this.focusCurrentItem();
+      }
+
+      selectFocusedOrMoveRight() {
+        const columnsData = this.getColumnsData();
+        const currentColumn = columnsData[this.state.focusedColumnIndex];
+        if (!currentColumn) return;
+
+        const itemIndex = this.state.focusedItemIndexes[this.state.focusedColumnIndex];
+        const item = currentColumn.items[itemIndex];
+        if (!item || item.disabled) return;
+
+        this.handleItemSelect(item, this.state.focusedColumnIndex, itemIndex);
+      }
+
+      focusCurrentItem() {
+        const selector = `.browser-item[data-column="${this.state.focusedColumnIndex}"][data-index="${this.state.focusedItemIndexes[this.state.focusedColumnIndex]}"] .browser-item-radio`;
+        const input = this.container.querySelector(selector);
+        input?.focus();
+      }
+
+      getValue() {
+        return this.state.selectedValue;
+      }
+
+      getPath() {
+        return [...this.state.selectedPath];
+      }
+    }
+
+    function createBrowser(container, config, callbacks) {
+      const browser = new Browser(container, config, callbacks);
+      browser.render();
+      return browser;
+    }
+
+    // Demo data
+    const categoryData = [
+      {
+        value: 'electronics',
+        label: '電子機器',
+        children: [
+          {
+            value: 'smartphones',
+            label: 'スマートフォン',
+            children: [
+              { value: 'iphone', label: 'iPhone' },
+              { value: 'android', label: 'Android' },
+            ],
+          },
+          {
+            value: 'computers',
+            label: 'コンピュータ',
+            children: [
+              { value: 'laptop', label: 'ノートPC' },
+              { value: 'desktop', label: 'デスクトップ' },
+              { value: 'tablet', label: 'タブレット' },
+            ],
+          },
+          { value: 'accessories', label: 'アクセサリー' },
+        ],
+      },
+      {
+        value: 'clothing',
+        label: '衣料品',
+        children: [
+          {
+            value: 'mens',
+            label: 'メンズ',
+            children: [
+              { value: 'mens-shirts', label: 'シャツ' },
+              { value: 'mens-pants', label: 'パンツ' },
+              { value: 'mens-shoes', label: '靴' },
+            ],
+          },
+          {
+            value: 'womens',
+            label: 'レディース',
+            children: [
+              { value: 'womens-dresses', label: 'ドレス' },
+              { value: 'womens-tops', label: 'トップス' },
+              { value: 'womens-shoes', label: '靴' },
+            ],
+          },
+        ],
+      },
+      {
+        value: 'home',
+        label: 'ホーム&キッチン',
+        children: [
+          { value: 'furniture', label: '家具' },
+          { value: 'kitchen', label: 'キッチン用品' },
+          { value: 'bedding', label: '寝具' },
+        ],
+      },
+      { value: 'books', label: '書籍' },
+      { value: 'sports', label: 'スポーツ', disabled: true },
+    ];
+
+    const orgData = [
+      {
+        value: 'ceo',
+        label: '代表取締役',
+        children: [
+          {
+            value: 'cto',
+            label: '技術本部',
+            children: [
+              {
+                value: 'dev',
+                label: '開発部',
+                children: [
+                  { value: 'frontend', label: 'フロントエンドチーム' },
+                  { value: 'backend', label: 'バックエンドチーム' },
+                  { value: 'infra', label: 'インフラチーム' },
+                ],
+              },
+              {
+                value: 'qa',
+                label: '品質管理部',
+                children: [
+                  { value: 'qa-web', label: 'Webテストチーム' },
+                  { value: 'qa-mobile', label: 'モバイルテストチーム' },
+                ],
+              },
+            ],
+          },
+          {
+            value: 'cfo',
+            label: '管理本部',
+            children: [
+              { value: 'hr', label: '人事部' },
+              { value: 'accounting', label: '経理部' },
+              { value: 'legal', label: '法務部' },
+            ],
+          },
+          {
+            value: 'cmo',
+            label: '営業本部',
+            children: [
+              { value: 'sales', label: '営業部' },
+              { value: 'marketing', label: 'マーケティング部' },
+              { value: 'cs', label: 'カスタマーサクセス部' },
+            ],
+          },
+        ],
+      },
+    ];
+
+    const locationData = [
+      {
+        value: 'japan',
+        label: '日本',
+        children: [
+          {
+            value: 'kanto',
+            label: '関東',
+            children: [
+              { value: 'tokyo', label: '東京' },
+              { value: 'kanagawa', label: '神奈川' },
+              { value: 'chiba', label: '千葉' },
+              { value: 'saitama', label: '埼玉' },
+            ],
+          },
+          {
+            value: 'kansai',
+            label: '関西',
+            children: [
+              { value: 'osaka', label: '大阪' },
+              { value: 'kyoto', label: '京都' },
+              { value: 'hyogo', label: '兵庫' },
+            ],
+          },
+          {
+            value: 'chubu',
+            label: '中部',
+            children: [
+              { value: 'aichi', label: '愛知' },
+              { value: 'shizuoka', label: '静岡' },
+            ],
+          },
+        ],
+      },
+      {
+        value: 'usa',
+        label: 'アメリカ',
+        children: [
+          { value: 'california', label: 'カリフォルニア' },
+          { value: 'newyork', label: 'ニューヨーク' },
+          { value: 'texas', label: 'テキサス' },
+        ],
+      },
+    ];
+
+    // Initialize browsers
+    const browser1 = createBrowser(
+      document.getElementById('browser-basic'),
+      { items: categoryData, maxColumns: 3 },
+      {
+        onSelect: (value, path, item) => {
+          document.getElementById('selection-basic').innerHTML =
+            `<strong>選択:</strong> ${item.label}<br><strong>パス:</strong> ${path.join(' > ')}`;
+        },
+      }
+    );
+
+    const browser2 = createBrowser(
+      document.getElementById('browser-org'),
+      { items: orgData, maxColumns: 4 },
+      {
+        onSelect: (value, path, item) => {
+          document.getElementById('selection-org').innerHTML =
+            `<strong>選択:</strong> ${item.label}<br><strong>パス:</strong> ${path.join(' > ')}`;
+        },
+      }
+    );
+
+    const browser3 = createBrowser(
+      document.getElementById('browser-default'),
+      { items: locationData, defaultValue: 'tokyo', maxColumns: 3 },
+      {
+        onSelect: (value, path, item) => {
+          document.getElementById('selection-default').innerHTML =
+            `<strong>選択:</strong> ${item.label}<br><strong>パス:</strong> ${path.join(' > ')}`;
+        },
+      }
+    );
+
+    // Initial display for default value
+    document.getElementById('selection-default').innerHTML =
+      `<strong>選択:</strong> 東京<br><strong>パス:</strong> japan > kanto > tokyo`;
+
+    // Theme switching
+    window.setTheme = (theme) => {
+      document.body.setAttribute('data-theme', theme);
+      document.querySelectorAll('.theme-buttons button').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.getElementById(`theme-${theme}`).classList.add('active');
+    };
+  </script>
+</body>
+</html>

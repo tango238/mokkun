@@ -6870,6 +6870,942 @@ body.dialog-open {
 }
 
 /* =============================================================================
+   Calendar Component
+   カレンダーを表示し日付を選択するためのコンポーネント
+   ============================================================================= */
+
+.mokkun-calendar {
+  display: inline-block;
+  font-family: var(--font-family);
+}
+
+.mokkun-calendar[data-disabled] {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.calendar-container {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-md);
+  min-width: 280px;
+  box-shadow: var(--shadow-sm, 0 1px 3px 0 rgba(0, 0, 0, 0.1));
+}
+
+/* Calendar Header
+   ----------------------------------------------------------------------------- */
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.calendar-nav-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.calendar-nav-button:hover:not(:disabled) {
+  background-color: var(--color-bg-subtle);
+  border-color: var(--color-secondary);
+}
+
+.calendar-nav-button:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.calendar-nav-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.calendar-nav-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.calendar-month-label {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* Calendar Grid
+   ----------------------------------------------------------------------------- */
+
+.calendar-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-xs);
+}
+
+.calendar-weekday {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.calendar-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--spacing-xs);
+}
+
+/* Calendar Day Cells
+   ----------------------------------------------------------------------------- */
+
+.calendar-day {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--border-radius-md);
+  background-color: transparent;
+  font-size: var(--font-size-sm);
+  font-weight: 400;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.calendar-day:hover:not(:disabled):not(.calendar-day-selected) {
+  background-color: var(--color-bg-subtle);
+  border-color: var(--color-border);
+}
+
+.calendar-day:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.calendar-day-empty {
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Today */
+.calendar-day-today {
+  font-weight: 600;
+  border-color: var(--color-primary);
+}
+
+/* Selected */
+.calendar-day-selected {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.calendar-day-selected:hover:not(:disabled) {
+  background-color: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+/* Outside current month */
+.calendar-day-outside {
+  color: var(--color-text-muted);
+  opacity: 0.5;
+}
+
+/* Disabled */
+.calendar-day-disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.calendar-day-disabled:hover {
+  background-color: transparent;
+  border-color: transparent;
+}
+
+/* First day of week (Sunday) */
+.calendar-week .calendar-day:first-child {
+  color: var(--color-danger);
+}
+
+.calendar-week .calendar-day:first-child.calendar-day-selected {
+  color: #ffffff;
+}
+
+.calendar-week .calendar-day:first-child.calendar-day-outside {
+  opacity: 0.4;
+}
+
+/* Last day of week (Saturday) */
+.calendar-week .calendar-day:last-child {
+  color: var(--color-primary);
+}
+
+.calendar-week .calendar-day:last-child.calendar-day-selected {
+  color: #ffffff;
+}
+
+.calendar-week .calendar-day:last-child.calendar-day-outside {
+  opacity: 0.4;
+}
+
+/* Calendar Responsive
+   ----------------------------------------------------------------------------- */
+
+@media (max-width: 320px) {
+  .calendar-container {
+    min-width: 240px;
+    padding: var(--spacing-sm);
+  }
+
+  .calendar-day {
+    width: 30px;
+    height: 30px;
+    font-size: 0.75rem;
+  }
+
+  .calendar-weekday {
+    height: 28px;
+    font-size: 0.75rem;
+  }
+
+  .calendar-nav-button {
+    width: 28px;
+    height: 28px;
+  }
+
+  .calendar-month-label {
+    font-size: var(--font-size-sm);
+  }
+}
+
+/* =============================================================================
+   Browser Component
+   階層構造を持つデータの中から項目を単一選択するコンポーネント
+   ============================================================================= */
+
+.mokkun-browser {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  background-color: var(--color-surface);
+  overflow: hidden;
+}
+
+.browser-columns {
+  display: flex;
+  flex-direction: row;
+  overflow-x: auto;
+  min-height: 200px;
+}
+
+.browser-column {
+  flex: 0 0 auto;
+  width: 200px;
+  min-width: 200px;
+  border-right: 1px solid var(--color-border);
+  overflow-y: auto;
+  background-color: var(--color-surface);
+}
+
+.browser-column:last-child {
+  border-right: none;
+}
+
+/* Browser Item */
+.browser-item {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  margin: 2px 4px;
+  cursor: pointer;
+  border-radius: var(--border-radius-sm);
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+  user-select: none;
+}
+
+.browser-item:hover:not(.is-disabled) {
+  background-color: var(--color-bg-subtle);
+}
+
+.browser-item.is-selected {
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.browser-item.is-leaf-selected {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.browser-item.is-leaf-selected .browser-item-arrow {
+  color: white;
+}
+
+.browser-item.is-focused:not(.is-leaf-selected) {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+.browser-item.is-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Hidden radio button */
+.browser-item-radio {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Item content */
+.browser-item-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: var(--spacing-sm);
+}
+
+.browser-item-label {
+  flex: 1;
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Arrow icon for items with children */
+.browser-item-arrow {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  color: var(--color-text-muted);
+}
+
+.browser-item-arrow svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* =============================================================================
+   Browser - Dark Theme Support
+   ============================================================================= */
+
+[data-theme="dark"] .mokkun-browser {
+  border-color: var(--color-border);
+  background-color: var(--color-surface);
+}
+
+[data-theme="dark"] .browser-column {
+  border-color: var(--color-border);
+  background-color: var(--color-surface);
+}
+
+[data-theme="dark"] .browser-item:hover:not(.is-disabled) {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .browser-item.is-selected {
+  background-color: rgba(59, 130, 246, 0.2);
+  color: var(--color-primary);
+}
+
+[data-theme="dark"] .browser-item.is-leaf-selected {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+/* =============================================================================
+   Browser - Responsive
+   ============================================================================= */
+
+@media (max-width: 640px) {
+  .browser-column {
+    width: 160px;
+    min-width: 160px;
+  }
+  
+  .browser-item {
+    padding: var(--spacing-xs);
+  }
+  
+  .browser-item-label {
+    font-size: 0.8125rem;
+  }
+}
+
+/* =============================================================================
+   AppHeader Component
+   ============================================================================= */
+
+.mokkun-app-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  width: 100%;
+  font-family: var(--font-family);
+}
+
+/* -----------------------------------------------------------------------------
+   Header Bar (Top)
+   ----------------------------------------------------------------------------- */
+
+.app-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  padding: 0 var(--spacing-lg);
+  background-color: #23221e;
+  color: #ffffff;
+}
+
+.app-header-left,
+.app-header-center,
+.app-header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.app-header-left {
+  flex: 0 0 auto;
+}
+
+.app-header-center {
+  flex: 1;
+  justify-content: flex-start;
+  padding-left: var(--spacing-xl);
+}
+
+.app-header-right {
+  flex: 0 0 auto;
+  gap: var(--spacing-sm);
+}
+
+/* Logo */
+.app-header-logo {
+  display: flex;
+  align-items: center;
+}
+
+.app-header-logo-link,
+.app-header-logo-text {
+  display: flex;
+  align-items: center;
+  color: #ffffff;
+  text-decoration: none;
+  transition: opacity var(--transition-fast);
+}
+
+.app-header-logo-link:hover {
+  opacity: 0.8;
+}
+
+.app-header-logo svg {
+  height: 24px;
+  width: auto;
+}
+
+/* Tenant Switcher */
+.app-header-tenant {
+  position: relative;
+}
+
+.app-header-tenant-button {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-md);
+  color: #ffffff;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.app-header-tenant-button:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.app-header-tenant-button.is-open {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.app-header-tenant-label {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-header-dropdown-icon {
+  display: flex;
+  align-items: center;
+  transition: transform var(--transition-fast);
+}
+
+.app-header-tenant-button.is-open .app-header-dropdown-icon {
+  transform: rotate(180deg);
+}
+
+/* Icon Buttons */
+.app-header-icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-decoration: none;
+}
+
+.app-header-icon-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.app-header-icon-button.is-open {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+/* User Menu */
+.app-header-user {
+  position: relative;
+}
+
+.app-header-user-button {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  color: #ffffff;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.app-header-user-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.app-header-user-button.is-open {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.app-header-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: var(--color-primary);
+  border-radius: 50%;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: #ffffff;
+  overflow: hidden;
+}
+
+.app-header-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.app-header-user-name {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Dropdown Menus */
+.app-header-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 200px;
+  padding: var(--spacing-xs);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1001;
+}
+
+.app-header-dropdown-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.app-header-dropdown-item:hover {
+  background: var(--color-bg-subtle);
+}
+
+.app-header-dropdown-item.is-selected {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.app-header-dropdown-item.is-danger {
+  color: var(--color-danger);
+}
+
+.app-header-dropdown-item.is-danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.app-header-dropdown-divider {
+  height: 1px;
+  margin: var(--spacing-xs) 0;
+  background: var(--color-border);
+}
+
+/* User Info in Dropdown */
+.app-header-user-info {
+  padding: var(--spacing-sm) var(--spacing-md);
+}
+
+.app-header-user-info-name {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.app-header-user-info-email {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+/* App Launcher */
+.app-header-launcher {
+  position: relative;
+}
+
+.app-header-launcher-menu {
+  width: 280px;
+  padding: var(--spacing-sm);
+}
+
+.app-header-launcher-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  text-decoration: none;
+  transition: background-color var(--transition-fast);
+}
+
+.app-header-launcher-item:hover {
+  background: var(--color-bg-subtle);
+}
+
+.app-header-launcher-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: var(--color-bg-subtle);
+  border-radius: var(--radius-sm);
+}
+
+.app-header-launcher-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.app-header-launcher-name {
+  font-size: var(--font-size-sm);
+}
+
+/* -----------------------------------------------------------------------------
+   AppNavi (Bottom)
+   ----------------------------------------------------------------------------- */
+
+.app-header-navi {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 48px;
+  padding: 0 var(--spacing-lg);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.app-header-navi-left,
+.app-header-navi-center,
+.app-header-navi-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.app-header-navi-left {
+  flex: 0 0 auto;
+}
+
+.app-header-navi-center {
+  flex: 1;
+  justify-content: center;
+}
+
+.app-header-navi-right {
+  flex: 0 0 auto;
+}
+
+/* App Name */
+.app-header-app-name {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* Navigation */
+.app-header-nav-list {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.app-header-nav-item {
+  position: relative;
+}
+
+.app-header-nav-link,
+.app-header-nav-button {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.app-header-nav-link:hover,
+.app-header-nav-button:hover {
+  background: var(--color-bg-subtle);
+  color: var(--color-text);
+}
+
+.app-header-nav-link.is-active,
+.app-header-nav-button.is-active {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.app-header-nav-link.is-disabled,
+.app-header-nav-button.is-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.app-header-nav-dropdown-icon {
+  display: flex;
+  align-items: center;
+}
+
+.app-header-nav-dropdown {
+  left: 0;
+  right: auto;
+}
+
+/* Navi Buttons */
+.app-header-navi-button {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.app-header-navi-button:hover {
+  background: var(--color-bg-subtle);
+  color: var(--color-text);
+}
+
+.app-header-navi-button.is-syncing svg {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Release Note Button */
+.app-header-release-note {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.app-header-release-note:hover {
+  background: var(--color-primary-light);
+}
+
+.app-header-release-icon {
+  display: flex;
+  align-items: center;
+}
+
+/* Mobile Menu Button */
+.app-header-mobile-menu-button {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.app-header-mobile-menu-button:hover {
+  background: var(--color-bg-subtle);
+}
+
+/* -----------------------------------------------------------------------------
+   Responsive
+   ----------------------------------------------------------------------------- */
+
+@media (max-width: 768px) {
+  .app-header-bar {
+    padding: 0 var(--spacing-md);
+  }
+
+  .app-header-center {
+    display: none;
+  }
+
+  .app-header-user-name {
+    display: none;
+  }
+
+  .app-header-navi {
+    padding: 0 var(--spacing-md);
+  }
+
+  .app-header-navi-center {
+    display: none;
+  }
+
+  .app-header-navi-right {
+    display: none;
+  }
+
+  .app-header-mobile-menu-button {
+    display: flex;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-header-bar {
+    height: 48px;
+    padding: 0 var(--spacing-sm);
+  }
+
+  .app-header-tenant-button {
+    max-width: 150px;
+  }
+
+  .app-header-tenant-label {
+    max-width: 100px;
+  }
+
+  .app-header-navi {
+    height: 44px;
+    padding: 0 var(--spacing-sm);
+  }
+
+  .app-header-app-name {
+    font-size: var(--font-size-base);
+  }
+}
+
+/* =============================================================================
    AppNavi Component
    プロダクト内の主要な機能を切り替えるためのナビゲーション
    ============================================================================= */
