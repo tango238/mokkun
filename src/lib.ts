@@ -9,6 +9,11 @@ import './style.css'
 // Import core modules
 import { parseYaml, getScreen, getScreenNames, findFieldById } from './parser'
 import {
+  designSystemRegistry,
+  type DesignSystem,
+  type PartialDesignSystem,
+} from './design-system'
+import {
   renderScreen,
   initializeSectionNav,
   mountWizardScreen,
@@ -41,6 +46,8 @@ export interface MokkunInitOptions {
   yamlContent?: string
   /** Initial theme ('light' | 'dark') */
   theme?: BuiltInThemeId | string
+  /** Design system to use (name or instance) */
+  designSystem?: string | DesignSystem
   /** Initial screen to display */
   initialScreen?: string
   /** Callback when ready */
@@ -69,6 +76,10 @@ export interface MokkunInstance {
   setTheme: (themeId: string) => void
   /** Get current theme */
   getTheme: () => string | null
+  /** Switch design system */
+  setDesignSystem: (nameOrSystem: string | DesignSystem) => void
+  /** Get current design system name */
+  getDesignSystem: () => string
   /** Get current form data */
   getFormData: () => Record<string, unknown> | null
   /** Destroy instance and cleanup */
@@ -183,6 +194,21 @@ function createInstance(state: InternalState): MokkunInstance {
       return getCurrentTheme()
     },
 
+    setDesignSystem(nameOrSystem: string | DesignSystem) {
+      if (typeof nameOrSystem === 'string') {
+        designSystemRegistry.setActive(nameOrSystem)
+      } else {
+        designSystemRegistry.register(nameOrSystem)
+        designSystemRegistry.setActive(nameOrSystem.name)
+      }
+      // Re-render current screen with new design system
+      renderCurrentScreen()
+    },
+
+    getDesignSystem() {
+      return designSystemRegistry.getActiveName()
+    },
+
     getFormData() {
       const form = state.container.querySelector('form')
       if (!form) return null
@@ -239,6 +265,16 @@ async function init(options: MokkunInitOptions): Promise<MokkunInstance> {
     const error = new Error(`[Mokkun] Container not found: ${options.container}`)
     options.onError?.(error)
     throw error
+  }
+
+  // Initialize design system
+  if (options.designSystem) {
+    if (typeof options.designSystem === 'string') {
+      designSystemRegistry.setActive(options.designSystem)
+    } else {
+      designSystemRegistry.register(options.designSystem)
+      designSystemRegistry.setActive(options.designSystem.name)
+    }
   }
 
   // Initialize theme
@@ -333,6 +369,22 @@ export const Mokkun = {
     getCurrent: getCurrentTheme,
     getAvailable: getAvailableThemes,
   },
+  /** Design system management */
+  designSystem: {
+    /** Register a design system */
+    register: (system: DesignSystem) => designSystemRegistry.register(system),
+    /** Register a partial design system (overrides specific field types) */
+    registerPartial: (partial: PartialDesignSystem, baseName?: string) =>
+      designSystemRegistry.registerPartial(partial, baseName),
+    /** Set the active design system by name */
+    setActive: (name: string) => designSystemRegistry.setActive(name),
+    /** Get the active design system name */
+    getActive: () => designSystemRegistry.getActiveName(),
+    /** Get all registered design system names */
+    getAvailable: () => designSystemRegistry.getAvailable(),
+    /** Unregister a design system */
+    unregister: (name: string) => designSystemRegistry.unregister(name),
+  },
 }
 
 // UMD global export
@@ -341,6 +393,8 @@ if (typeof window !== 'undefined') {
 }
 
 export type { MokkunSchema, ScreenDefinition, BuiltInThemeId }
+export type { DesignSystem, PartialDesignSystem, FieldRenderer } from './design-system'
+export { designSystemRegistry, defaultDesignSystem } from './design-system'
 
 // Export components
 export {

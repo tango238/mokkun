@@ -112,11 +112,13 @@ function isValidHtml(html: string): { valid: boolean; error?: string } {
 // =============================================================================
 
 /**
- * form-fields.ts から switch 文の case を抽出
+ * デザインシステムのデフォルト実装から switch 文の case を抽出
+ * （form-fields.ts はデザインシステムレジストリに委譲するため、
+ *   実際の switch 文は design-system/default.ts にある）
  */
 function extractCaseStatementsFromFormFields(): string[] {
-  const formFieldsPath = path.join(__dirname, '../renderer/components/form-fields.ts')
-  const content = fs.readFileSync(formFieldsPath, 'utf-8')
+  const defaultDesignSystemPath = path.join(__dirname, '../design-system/default.ts')
+  const content = fs.readFileSync(defaultDesignSystemPath, 'utf-8')
 
   // case 'xxx': または case 'xxx': case 'yyy': のパターンを抽出
   const casePattern = /case\s+['"]([^'"]+)['"]\s*:/g

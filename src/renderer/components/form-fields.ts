@@ -2,8 +2,9 @@
  * Form Field Renderers (Facade)
  * 各フォームフィールドタイプのHTML生成
  *
- * このモジュールはファサードとして機能し、実際のレンダリングロジックは
- * 各コンポーネントの静的renderFieldメソッドに委譲されます。
+ * このモジュールはファサードとして機能し、アクティブなデザインシステムの
+ * renderFieldメソッドに委譲します。デザインシステムが未設定の場合は
+ * デフォルトデザインシステム（既存コンポーネント）が使用されます。
  */
 
 import type {
@@ -21,14 +22,15 @@ import type {
   DurationPickerField,
   DurationInputField,
   FileUploadField,
-  DataTableField,
   GoogleMapEmbedField,
-  PhotoManagerField,
   ImageUploaderField,
   HeadingField,
 } from '../../types/schema'
 
-// コンポーネントインポート
+// デザインシステムレジストリ（デフォルトが自動登録される）
+import { designSystemRegistry } from '../../design-system'
+
+// コンポーネントインポート（deprecated関数用）
 import { Input } from './input'
 import { Textarea } from './textarea'
 import { Select } from './select'
@@ -38,34 +40,8 @@ import { Combobox } from './combobox'
 import { Heading } from './heading'
 import { DurationPicker } from './duration-picker'
 import { DurationInput } from './duration-input'
-import { Pagination } from './pagination'
-import { Toggle } from './toggle'
-import { Badge } from './badge'
-import { Browser } from './browser'
-import { Calendar } from './calendar'
-import { Tooltip } from './tooltip'
-import { FloatArea } from './float-area'
-import { Loader } from './loader'
-import { NotificationBar } from './notification-bar'
-import { ResponseMessage } from './response-message'
-import { Timeline } from './timeline'
-import { Chip } from './chip'
-import { StatusLabel } from './status-label'
-import { SegmentedControl } from './segmented-control'
-import { Tabs } from './tabs'
-import { LineClamp } from './line-clamp'
-import { Disclosure } from './disclosure'
-import { AccordionPanel } from './accordion-panel'
-import { SectionNav } from './section-nav'
-import { DefinitionList } from './definition-list'
-import { Stepper } from './stepper'
-import { InformationPanel } from './information-panel'
-import { Dropdown } from './dropdown'
-import { DeleteConfirmDialog } from './delete-confirm-dialog'
-import { renderDataTableField } from './data-table'
-import { renderPhotoManagerField } from './photo-manager-renderer'
 
-// ヘルパー関数のインポート（まだ移行していないrender関数用）
+// ヘルパー関数のインポート（deprecated関数用）
 import {
   escapeHtml,
   createFieldWrapper,
@@ -312,106 +288,21 @@ export function renderImageUploaderField(field: ImageUploaderField): string {
 }
 
 // =============================================================================
-// Main Render Function
+// Main Render Function (Design System対応)
 // =============================================================================
 
 /**
  * フィールドタイプに応じてレンダリング
+ * アクティブなデザインシステムに委譲する
  */
 export function renderField(field: InputField): string {
-  switch (field.type) {
-    case 'text':
-    case 'number':
-    case 'date_picker':
-    case 'time_picker':
-      return Input.renderField(field)
-    case 'textarea':
-      return Textarea.renderField(field)
-    case 'select':
-    case 'multi_select':
-      return Select.renderField(field)
-    case 'combobox':
-      return Combobox.renderField(field)
-    case 'radio_group':
-      return RadioButton.renderField(field)
-    case 'checkbox':
-    case 'checkbox_group':
-      return Checkbox.renderField(field)
-    case 'duration_picker':
-      return DurationPicker.renderField(field)
-    case 'duration_input':
-      return DurationInput.renderField(field)
-    case 'file_upload':
-      return renderFileUploadField(field)
-    case 'image_uploader':
-      return renderImageUploaderField(field)
-    case 'repeater':
-      // Repeaterは別途実装（Phase 3以降）
-      return createFieldWrapper(field, '<div class="repeater-placeholder">[リピーターフィールド - 未実装]</div>')
-    case 'data_table':
-      return renderDataTableField(field as DataTableField)
-    case 'google_map_embed':
-      return renderGoogleMapEmbedFieldHtml(field)
-    case 'photo_manager':
-      return renderPhotoManagerField(field as PhotoManagerField)
-    case 'heading':
-      return Heading.renderField(field)
-    case 'pagination':
-      return Pagination.renderField(field)
-    case 'toggle':
-      return Toggle.renderField(field)
-    case 'badge':
-      return Badge.renderField(field)
-    case 'browser':
-      return Browser.renderField(field)
-    case 'calendar':
-      return Calendar.renderField(field)
-    case 'tooltip':
-      return Tooltip.renderField(field)
-    case 'float_area':
-      return FloatArea.renderField(field)
-    case 'loader':
-      return Loader.renderField(field)
-    case 'notification_bar':
-      return NotificationBar.renderField(field)
-    case 'response_message':
-      return ResponseMessage.renderField(field)
-    case 'timeline':
-      return Timeline.renderField(field)
-    case 'chip':
-      return Chip.renderField(field)
-    case 'status_label':
-      return StatusLabel.renderField(field)
-    case 'segmented_control':
-      return SegmentedControl.renderField(field)
-    case 'tabs':
-      return Tabs.renderField(field)
-    case 'line_clamp':
-      return LineClamp.renderField(field)
-    case 'disclosure':
-      return Disclosure.renderField(field)
-    case 'accordion_panel':
-      return AccordionPanel.renderField(field)
-    case 'section_nav':
-      return SectionNav.renderField(field)
-    case 'definition_list':
-      return DefinitionList.renderField(field)
-    case 'stepper':
-      return Stepper.renderField(field)
-    case 'information_panel':
-      return InformationPanel.renderField(field)
-    case 'dropdown':
-      return Dropdown.renderField(field)
-    case 'delete_confirm_dialog':
-      return DeleteConfirmDialog.renderField(field)
-    default:
-      return createFieldWrapper(field, `<div class="unknown-field">不明なフィールドタイプ: ${(field as InputField).type}</div>`)
-  }
+  return designSystemRegistry.renderField(field)
 }
 
 /**
  * 複数のフィールドをレンダリング
+ * アクティブなデザインシステムに委譲する
  */
 export function renderFields(fields: InputField[]): string {
-  return fields.map(renderField).join('')
+  return designSystemRegistry.renderFields(fields)
 }
