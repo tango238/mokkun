@@ -34,7 +34,7 @@ export interface MokkunSchemaRaw {
 /**
  * 画面定義（配列形式用、nameプロパティを持つ）
  */
-export interface ScreenDefinitionRaw extends Omit<ScreenDefinition, 'fields' | 'app_header' | 'app_navi'> {
+export interface ScreenDefinitionRaw extends Omit<ScreenDefinition, 'fields' | 'app_header' | 'app_navi' | 'states'> {
   /** 画面名（配列形式の場合のキー） */
   name?: string
   /** アクター（この画面を使用するユーザー種別） */
@@ -67,6 +67,8 @@ export interface ScreenDefinitionRaw extends Omit<ScreenDefinition, 'fields' | '
   related_usecases?: string[]
   /** バリデーション（画面固有） */
   validations?: ScreenValidation[]
+  /** 状態設定（空状態・エラー状態・ローディング状態） */
+  states?: ScreenStatesConfig
 }
 
 /**
@@ -183,6 +185,8 @@ export interface ScreenDefinition {
   actions?: Action[]
   /** レイアウト設定 */
   layout?: LayoutConfig
+  /** 状態設定（空状態・エラー状態・ローディング状態） */
+  states?: ScreenStatesConfig
 }
 
 // =============================================================================
@@ -835,6 +839,97 @@ export interface DataTableEmptyState {
     label: string
     handler: string
   }
+}
+
+// =============================================================================
+// Content States / コンテンツ状態（空状態・エラー状態・ローディング状態）
+// =============================================================================
+
+/**
+ * 状態アクションの設定
+ */
+export interface StateAction {
+  /** ボタンラベル */
+  label: string
+  /** ハンドラー名（カスタムアクション用） */
+  handler?: string
+  /** リンク先URL */
+  href?: string
+  /** スタイル */
+  style?: 'primary' | 'secondary' | 'link'
+}
+
+/**
+ * 空状態（データ0件）の設定
+ */
+export interface EmptyStateConfig {
+  /** タイトル */
+  title?: string
+  /** 説明文 */
+  description?: string
+  /** アイコン（絵文字またはSVG/HTML） */
+  icon?: string
+  /** 画像URL */
+  image?: string
+  /** プライマリアクション */
+  action?: StateAction
+  /** セカンダリアクション */
+  secondary_action?: StateAction
+}
+
+/**
+ * エラー状態の設定
+ */
+export interface ErrorStateConfig {
+  /** タイトル */
+  title?: string
+  /** 説明文（エラーメッセージ） */
+  description?: string
+  /** アイコン（絵文字またはSVG/HTML） */
+  icon?: string
+  /** 画像URL */
+  image?: string
+  /** エラーコード */
+  code?: string | number
+  /** リトライアクション */
+  retry_action?: StateAction
+  /** ホームに戻るなどのナビゲーションアクション */
+  navigation_action?: StateAction
+  /** 詳細情報（開発者向け） */
+  details?: string
+  /** 詳細を表示するか（デフォルト: false） */
+  show_details?: boolean
+}
+
+/**
+ * ローディング状態の設定
+ */
+export interface LoadingStateConfig {
+  /** タイトル */
+  title?: string
+  /** 説明文 */
+  description?: string
+  /** スピナーのサイズ */
+  size?: 'small' | 'medium' | 'large'
+  /** オーバーレイ表示 */
+  overlay?: boolean
+}
+
+/**
+ * 画面の表示状態
+ */
+export type ScreenContentState = 'default' | 'empty' | 'error' | 'loading'
+
+/**
+ * 画面状態の設定
+ */
+export interface ScreenStatesConfig {
+  /** 空状態の設定 */
+  empty?: EmptyStateConfig
+  /** エラー状態の設定 */
+  error?: ErrorStateConfig
+  /** ローディング状態の設定 */
+  loading?: LoadingStateConfig
 }
 
 /**

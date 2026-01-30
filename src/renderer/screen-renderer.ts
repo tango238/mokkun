@@ -3,12 +3,22 @@
  * 画面全体のレンダリングを担当
  */
 
-import type { ScreenDefinition, LayoutConfig, InputField } from '../types/schema'
+import type {
+  ScreenDefinition,
+  LayoutConfig,
+  InputField,
+  ScreenContentState,
+  EmptyStateConfig,
+  ErrorStateConfig,
+  LoadingStateConfig,
+} from '../types/schema'
 import { renderFields } from './components/form-fields'
 import { renderActions } from './components/layout'
 import { SectionNav, type SectionDefinition } from './components/section-nav'
 import { AppHeader, type AppHeaderConfig, type NavItem, type NavDropdownItem } from './components/app-header'
 import { AppNavi, type AppNaviItem, type AppNaviButtonItem, type AppNaviAnchorItem, type AppNaviDropdownItem } from './components/app-navi'
+import { EmptyState } from './components/empty-state'
+import { ErrorState } from './components/error-state'
 
 /**
  * HTML特殊文字をエスケープ
@@ -88,6 +98,105 @@ function renderActionsSection(screen: ScreenDefinition): string {
       ${renderActions(screen.actions)}
     </div>
   `
+}
+
+// =============================================================================
+// Content State Rendering / コンテンツ状態レンダリング
+// =============================================================================
+
+/**
+ * 空状態をレンダリング
+ */
+function renderEmptyState(config: EmptyStateConfig): string {
+  return EmptyState.renderStatic(config)
+}
+
+/**
+ * エラー状態をレンダリング
+ */
+function renderErrorState(config: ErrorStateConfig): string {
+  return ErrorState.renderStatic(config, config.show_details ?? false)
+}
+
+/**
+ * ローディング状態をレンダリング
+ */
+function renderLoadingState(config: LoadingStateConfig): string {
+  const {
+    title = '読み込み中...',
+    description,
+    size = 'medium',
+    overlay = false,
+  } = config
+
+  const sizeClass = `loading-state-${size}`
+  const overlayClass = overlay ? 'loading-state-overlay' : ''
+
+  const titleHtml = title
+    ? `<p class="loading-state-title">${escapeHtml(title)}</p>`
+    : ''
+
+  const descriptionHtml = description
+    ? `<p class="loading-state-description">${escapeHtml(description)}</p>`
+    : ''
+
+  return `
+    <div class="loading-state ${sizeClass} ${overlayClass}" role="status" aria-live="polite" aria-busy="true">
+      <div class="loading-state-spinner" aria-hidden="true">
+        <svg class="loading-spinner" viewBox="0 0 24 24">
+          <circle class="loading-spinner-track" cx="12" cy="12" r="10" fill="none" stroke-width="2"/>
+          <circle class="loading-spinner-progress" cx="12" cy="12" r="10" fill="none" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="loading-state-content">
+        ${titleHtml}
+        ${descriptionHtml}
+      </div>
+    </div>
+  `
+}
+
+/**
+ * 状態に応じたコンテンツをレンダリング
+ */
+function renderStateContent(
+  screen: ScreenDefinition,
+  state: ScreenContentState
+): string {
+  const states = screen.states
+
+  switch (state) {
+    case 'empty':
+      if (states?.empty) {
+        return renderEmptyState(states.empty)
+      }
+      // デフォルトの空状態
+      return renderEmptyState({
+        title: 'データがありません',
+        icon: '📭',
+      })
+
+    case 'error':
+      if (states?.error) {
+        return renderErrorState(states.error)
+      }
+      // デフォルトのエラー状態
+      return renderErrorState({
+        title: 'エラーが発生しました',
+        icon: '⚠️',
+      })
+
+    case 'loading':
+      if (states?.loading) {
+        return renderLoadingState(states.loading)
+      }
+      // デフォルトのローディング状態
+      return renderLoadingState({})
+
+    case 'default':
+    default:
+      return ''
+  }
 }
 
 /**
@@ -289,9 +398,39 @@ function renderAppLayoutContainers(screen: ScreenDefinition): string {
 }
 
 /**
+ * 画面レンダリングオプション
+ */
+export interface RenderScreenOptions {
+  /** 画面の表示状態 */
+  state?: ScreenContentState
+}
+
+/**
  * 通常画面をレンダリング
  */
-export function renderScreen(screen: ScreenDefinition): string {
+export function renderScreen(
+  screen: ScreenDefinition,
+  options: RenderScreenOptions = {}
+): string {
+  const { state = 'default' } = options
+
+  // 状態に応じたコンテンツをレンダリング（default以外）
+  if (state !== 'default') {
+    const appLayoutHtml = renderAppLayoutContainers(screen)
+    const headerHtml = renderScreenHeader(screen)
+    const stateContentHtml = renderStateContent(screen, state)
+
+    return `
+      <div class="screen screen-state-${state}">
+        ${appLayoutHtml}
+        ${headerHtml}
+        <div class="screen-state-container">
+          ${stateContentHtml}
+        </div>
+      </div>
+    `
+  }
+
   // ウィザード画面の場合は専用レンダラーを使用
   if (screen.wizard) {
     return renderWizardScreen(screen, 0)
@@ -320,6 +459,20 @@ export function renderScreen(screen: ScreenDefinition): string {
 }
 
 /**
+ * 状態コールバック
+ */
+export interface ScreenStateCallbacks {
+  /** 空状態のアクション */
+  onEmptyAction?: (handler: string) => void
+  /** 空状態のセカンダリアクション */
+  onEmptySecondaryAction?: (handler: string) => void
+  /** エラー状態のリトライ */
+  onErrorRetry?: (handler: string) => void
+  /** エラー状態のナビゲーション */
+  onErrorNavigate?: (handler: string) => void
+}
+
+/**
  * 画面コントローラーインターフェース
  */
 export interface ScreenController {
@@ -329,8 +482,24 @@ export interface ScreenController {
   appNavi?: AppNavi
   /** SectionNavコントローラー（存在する場合） */
   sectionNav?: SectionNavController
+  /** EmptyStateインスタンス（存在する場合） */
+  emptyState?: EmptyState
+  /** ErrorStateインスタンス（存在する場合） */
+  errorState?: ErrorState
+  /** 現在の画面状態 */
+  currentState: ScreenContentState
+  /** 状態を変更 */
+  setState: (state: ScreenContentState) => void
   /** 全コンポーネントを破棄 */
   destroy: () => void
+}
+
+/**
+ * マウントオプション
+ */
+export interface MountScreenOptions extends RenderScreenOptions {
+  /** 状態コールバック */
+  stateCallbacks?: ScreenStateCallbacks
 }
 
 /**
@@ -338,16 +507,104 @@ export interface ScreenController {
  */
 export function mountScreen(
   container: HTMLElement,
-  screen: ScreenDefinition
+  screen: ScreenDefinition,
+  options: MountScreenOptions = {}
 ): ScreenController {
-  container.innerHTML = renderScreen(screen)
+  const { state = 'default', stateCallbacks } = options
 
   const controller: ScreenController = {
+    currentState: state,
+    setState: (newState: ScreenContentState) => {
+      controller.currentState = newState
+      // 再レンダリング
+      controller.emptyState?.destroy()
+      controller.errorState?.destroy()
+      controller.emptyState = undefined
+      controller.errorState = undefined
+
+      container.innerHTML = renderScreen(screen, { state: newState })
+
+      // 状態コンポーネントの初期化
+      if (newState === 'empty' && screen.states?.empty) {
+        const stateContainer = container.querySelector<HTMLElement>('.screen-state-container')
+        if (stateContainer) {
+          controller.emptyState = new EmptyState(
+            stateContainer,
+            screen.states.empty,
+            {
+              onAction: stateCallbacks?.onEmptyAction,
+              onSecondaryAction: stateCallbacks?.onEmptySecondaryAction,
+            }
+          )
+          controller.emptyState.render()
+        }
+      } else if (newState === 'error' && screen.states?.error) {
+        const stateContainer = container.querySelector<HTMLElement>('.screen-state-container')
+        if (stateContainer) {
+          controller.errorState = new ErrorState(
+            stateContainer,
+            screen.states.error,
+            {
+              onRetry: stateCallbacks?.onErrorRetry,
+              onNavigate: stateCallbacks?.onErrorNavigate,
+            }
+          )
+          controller.errorState.render()
+        }
+      }
+
+      // AppHeader/AppNaviの再初期化
+      if (screen.app_header) {
+        const appHeaderContainer = container.querySelector<HTMLElement>('#app-header-container')
+        if (appHeaderContainer) {
+          controller.appHeader = initializeAppHeader(appHeaderContainer, screen)
+        }
+      }
+      if (screen.app_navi) {
+        const appNaviContainer = container.querySelector<HTMLElement>('#app-navi-container')
+        if (appNaviContainer) {
+          controller.appNavi = initializeAppNavi(appNaviContainer, screen)
+        }
+      }
+    },
     destroy: () => {
       controller.appHeader?.destroy()
       controller.appNavi?.destroy()
       controller.sectionNav?.destroy()
+      controller.emptyState?.destroy()
+      controller.errorState?.destroy()
     },
+  }
+
+  container.innerHTML = renderScreen(screen, { state })
+
+  // 状態に応じたコンポーネント初期化
+  if (state === 'empty' && screen.states?.empty) {
+    const stateContainer = container.querySelector<HTMLElement>('.screen-state-container')
+    if (stateContainer) {
+      controller.emptyState = new EmptyState(
+        stateContainer,
+        screen.states.empty,
+        {
+          onAction: stateCallbacks?.onEmptyAction,
+          onSecondaryAction: stateCallbacks?.onEmptySecondaryAction,
+        }
+      )
+      controller.emptyState.render()
+    }
+  } else if (state === 'error' && screen.states?.error) {
+    const stateContainer = container.querySelector<HTMLElement>('.screen-state-container')
+    if (stateContainer) {
+      controller.errorState = new ErrorState(
+        stateContainer,
+        screen.states.error,
+        {
+          onRetry: stateCallbacks?.onErrorRetry,
+          onNavigate: stateCallbacks?.onErrorNavigate,
+        }
+      )
+      controller.errorState.render()
+    }
   }
 
   // AppHeaderの初期化
@@ -367,7 +624,7 @@ export function mountScreen(
   }
 
   // セクション付き画面の場合はSectionNavを初期化
-  if (screen.sections && screen.sections.length > 0) {
+  if (screen.sections && screen.sections.length > 0 && state === 'default') {
     controller.sectionNav = initializeSectionNav(container, screen) ?? undefined
   }
 
