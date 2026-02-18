@@ -370,6 +370,10 @@ export class RadioButton {
         const disabled = opt.disabled || field.disabled ? 'disabled' : ''
         const optionId = `${field.id}-${opt.value}`
 
+        const descriptionHtml = opt.description
+          ? `<span class="radio-option-description">${escapeHtml(opt.description)}</span>`
+          : ''
+
         return `
           <label class="radio-option" for="${escapeHtml(optionId)}">
             <input
@@ -381,7 +385,10 @@ export class RadioButton {
               ${disabled}
               ${field.required ? 'required' : ''}
             />
-            <span class="radio-label">${escapeHtml(opt.label)}</span>
+            <span class="radio-label-group">
+              <span class="radio-label">${escapeHtml(opt.label)}</span>
+              ${descriptionHtml}
+            </span>
           </label>
         `
       })

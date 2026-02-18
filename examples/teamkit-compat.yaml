@@ -1,0 +1,231 @@
+# teamkit ui.yml 互換性テスト
+# teamkit の generate-ui コマンドが出力する形式を再現
+# mokkun でのレンダリング動作を検証する
+
+view:
+  order_list:
+    title: "受注一覧"
+    description: "受注を一覧表示・管理する"
+    actor: "営業担当"
+    purpose: "受注を一覧表示・管理する"
+    sections:
+      - section_name: "検索・フィルター"
+        input_fields:
+          - id: "search_keyword"
+            type: "text"
+            label: "キーワード検索"
+            placeholder: "受注ID、顧客名で検索"
+          - id: "status_filter"
+            type: "select"
+            label: "ステータス"
+            options:
+              - value: ""
+                label: "すべて"
+              - value: "pending"
+                label: "処理中"
+              - value: "shipped"
+                label: "出荷済み"
+            clearable: true
+      - section_name: "受注一覧"
+        input_fields:
+          - id: "order_table"
+            type: "data_table"
+            label: "受注一覧"
+            columns:
+              - id: "order_id"
+                label: "受注ID"
+                sortable: true
+              - id: "customer_name"
+                label: "顧客名"
+                sortable: true
+              - id: "total_amount"
+                label: "合計金額"
+                sortable: true
+              - id: "status"
+                label: "ステータス"
+                format: "status"
+                status_map:
+                  pending:
+                    label: "処理中"
+                    color: "warning"
+                  shipped:
+                    label: "出荷済み"
+                    color: "success"
+            data:
+              - order_id: "ORD-001"
+                customer_name: "物流株式会社"
+                total_amount: "¥150,000"
+                status: "shipped"
+              - order_id: "ORD-002"
+                customer_name: "配送サービス"
+                total_amount: "¥89,000"
+                status: "pending"
+            row_actions:
+              - id: "edit"
+                label: "編集"
+              - id: "delete"
+                label: "削除"
+                style: "danger"
+                confirm:
+                  title: "受注削除"
+                  message: "この受注を削除してもよろしいですか？"
+            pagination:
+              enabled: true
+              page_size: 10
+            striped: true
+            hoverable: true
+    actions:
+      - id: "add_order"
+        type: "navigate"
+        label: "新規受注"
+        style: "primary"
+        to: "order_form"
+    related_usecases:
+      - "受注を登録する"
+      - "受注を一覧表示する"
+
+  order_form:
+    title: "受注登録"
+    description: "新規受注を登録する"
+    actor: "営業担当"
+    purpose: "新規受注を登録する"
+    sections:
+      - section_name: "基本情報"
+        input_fields:
+          - id: "customer_name"
+            type: "combobox"
+            label: "顧客名"
+            required: true
+            searchable: true
+            options:
+              - value: "customer_001"
+                label: "物流株式会社"
+              - value: "customer_002"
+                label: "配送サービス"
+          - id: "order_date"
+            type: "date_picker"
+            label: "受注日"
+            required: true
+            format: "YYYY-MM-DD"
+      - section_name: "明細"
+        input_fields:
+          - id: "order_items"
+            type: "repeater"
+            label: "受注明細"
+            min_items: 1
+            max_items: 20
+            add_button_label: "明細を追加"
+            sortable: true
+            item_fields:
+              - id: "product_name"
+                type: "text"
+                label: "商品名"
+                required: true
+              - id: "quantity"
+                type: "number"
+                label: "数量"
+                required: true
+                min: 1
+              - id: "unit_price"
+                type: "number"
+                label: "単価"
+                required: true
+                unit: "円"
+      - section_name: "配送"
+        input_fields:
+          - id: "shipping_method"
+            type: "radio_group"
+            label: "配送方法"
+            required: true
+            direction: "vertical"
+            options:
+              - value: "standard"
+                label: "通常配送"
+                description: "3-5営業日"
+              - value: "express"
+                label: "速達"
+                description: "翌営業日"
+          - id: "delivery_date"
+            type: "date_picker"
+            label: "希望納品日"
+          - id: "notes"
+            type: "textarea"
+            label: "備考"
+            rows: 4
+            placeholder: "特記事項があれば入力してください"
+    actions:
+      - id: "save"
+        type: "submit"
+        label: "登録"
+        style: "primary"
+      - id: "cancel"
+        type: "navigate"
+        label: "キャンセル"
+        style: "secondary"
+        to: "order_list"
+    related_usecases:
+      - "受注を登録する"
+
+  notification_settings:
+    title: "通知設定"
+    description: "通知の有効/無効と頻度を設定する"
+    actor: "管理者"
+    purpose: "通知の有効/無効と頻度を設定する"
+    sections:
+      - section_name: "メール通知"
+        input_fields:
+          - id: "email_enabled"
+            type: "toggle"
+            label: "メール通知"
+            checked_label: "有効"
+            unchecked_label: "無効"
+            default: true
+          - id: "email_frequency"
+            type: "select"
+            label: "メール通知頻度"
+            visible_when:
+              field: "email_enabled"
+              operator: "eq"
+              value: true
+            options:
+              - value: "realtime"
+                label: "リアルタイム"
+              - value: "daily"
+                label: "1日1回"
+              - value: "weekly"
+                label: "週1回"
+      - section_name: "プッシュ通知"
+        input_fields:
+          - id: "push_enabled"
+            type: "toggle"
+            label: "プッシュ通知"
+            checked_label: "有効"
+            unchecked_label: "無効"
+          - id: "push_sound"
+            type: "checkbox"
+            label: "通知音"
+            label_position: "right"
+    actions:
+      - id: "save_settings"
+        type: "submit"
+        label: "保存"
+        style: "primary"
+        confirm:
+          title: "設定を保存"
+          message: "変更を保存してもよろしいですか？"
+      - id: "reset"
+        type: "reset"
+        label: "リセット"
+        style: "link"
+
+common_components:
+  - component_name: "ステータスバッジ"
+    description: "受注ステータス表示用"
+    type: "field_group"
+    used_in: ["order_list", "order_form"]
+
+validations:
+  - field: "customer_name"
+    rule: "required"
+  - field: "order_date"
+    rule: "required|date"

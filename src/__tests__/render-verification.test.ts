@@ -15,8 +15,8 @@ import path from 'path'
 import yaml from 'js-yaml'
 import { JSDOM } from 'jsdom'
 import { renderField, renderFields } from '../renderer/components/form-fields'
-import { VALID_FIELD_TYPES } from '../parser/yaml-parser'
-import type { InputField, InputFieldType, MokkunSchemaRaw } from '../types/schema'
+import { VALID_FIELD_TYPES, parseYaml } from '../parser/yaml-parser'
+import type { InputField, InputFieldType, MokkunSchemaRaw, DataTableField, RepeaterField, Action } from '../types/schema'
 
 // Setup DOM environment
 beforeAll(() => {
@@ -394,6 +394,137 @@ describe('Render Verification', () => {
       expect(html).toContain('text1')
       expect(html).toContain('num1')
       expect(html).toContain('sel1')
+    })
+  })
+
+  describe('teamkit-compat.yaml fields rendering', () => {
+    let yamlContent: string
+    let fields: InputField[]
+
+    beforeAll(() => {
+      const yamlPath = path.join(__dirname, '../../examples/teamkit-compat.yaml')
+      yamlContent = fs.readFileSync(yamlPath, 'utf-8')
+      fields = extractFieldsFromYaml(yamlContent)
+    })
+
+    it('should extract fields from teamkit-compat YAML', () => {
+      expect(fields.length).toBeGreaterThan(0)
+    })
+
+    it('should render all extracted fields without errors', () => {
+      const errors: { field: InputField; error: string }[] = []
+
+      for (const field of fields) {
+        try {
+          const html = renderField(field)
+          const validation = isValidHtml(html)
+
+          if (!validation.valid) {
+            errors.push({
+              field,
+              error: validation.error || 'Invalid HTML',
+            })
+          }
+        } catch (e) {
+          errors.push({
+            field,
+            error: e instanceof Error ? e.message : String(e),
+          })
+        }
+      }
+
+      if (errors.length > 0) {
+        const errorSummary = errors.map(
+          (e) => `  - [${e.field.type}] ${e.field.id || 'no-id'}: ${e.error}`
+        ).join('\n')
+        console.error(`Rendering errors:\n${errorSummary}`)
+      }
+
+      expect(errors).toHaveLength(0)
+    })
+
+    it('should cover teamkit field types', () => {
+      const groupedFields = groupFieldsByType(fields)
+      const usedTypes = Array.from(groupedFields.keys()).sort()
+
+      console.log(`Field types used in teamkit-compat.yaml (${usedTypes.length} types):`)
+      for (const type of usedTypes) {
+        const count = groupedFields.get(type)?.length || 0
+        console.log(`  - ${type}: ${count} field(s)`)
+      }
+
+      // teamkit の主要フィールドタイプが含まれていることを確認
+      const expectedTypes: InputFieldType[] = [
+        'text', 'select', 'data_table', 'combobox', 'date_picker',
+        'repeater', 'radio_group', 'textarea', 'toggle', 'checkbox',
+      ]
+
+      for (const expected of expectedTypes) {
+        expect(usedTypes).toContain(expected)
+      }
+    })
+  })
+
+  describe('teamkit-compat.yaml parser integration', () => {
+    it('should parse teamkit YAML without validation errors', () => {
+      const yamlPath = path.join(__dirname, '../../examples/teamkit-compat.yaml')
+      const yamlContent = fs.readFileSync(yamlPath, 'utf-8')
+
+      // parseYaml を使って正規化テスト
+      const result = parseYaml(yamlContent)
+
+      expect(result.success).toBe(true)
+
+      if (result.success) {
+        const schema = result.data
+        // 3画面が定義されている
+        const screenNames = Object.keys(schema.view)
+        expect(screenNames).toContain('order_list')
+        expect(screenNames).toContain('order_form')
+        expect(screenNames).toContain('notification_settings')
+
+        // order_list の data_table にauto-IDが付与されている
+        const orderListFields = schema.view.order_list.fields ?? []
+        const dataTable = orderListFields.find((f: InputField) => f.type === 'data_table')
+        if (dataTable && dataTable.type === 'data_table') {
+          const data = (dataTable as DataTableField).data
+          if (data && data.length > 0) {
+            // teamkit の data 行にはIDがないので自動生成されるはず
+            for (const row of data) {
+              expect(row.id).toBeDefined()
+            }
+          }
+        }
+
+        // order_form の repeater の item_fields が正規化されている
+        const orderFormFields = schema.view.order_form.fields ?? []
+        const repeater = orderFormFields.find((f: InputField) => f.type === 'repeater')
+        if (repeater && repeater.type === 'repeater') {
+          expect((repeater as RepeaterField).item_fields.length).toBe(3)
+        }
+
+        // notification_settings の visible_when が保持されている
+        const notifFields = schema.view.notification_settings.fields ?? []
+        const emailFreq = notifFields.find((f: InputField) => f.id === 'email_frequency')
+        expect(emailFreq).toBeDefined()
+        if (emailFreq) {
+          expect(emailFreq.visible_when).toBeDefined()
+        }
+
+        // navigate アクションの to が保持されている
+        const orderListActions = schema.view.order_list.actions ?? []
+        const addOrderAction = orderListActions.find((a: Action) => a.id === 'add_order')
+        expect(addOrderAction).toBeDefined()
+        if (addOrderAction && addOrderAction.type === 'navigate') {
+          expect(addOrderAction.to).toBe('order_form')
+        }
+
+        // common_components が正規化されている
+        expect(schema.common_components).toBeDefined()
+
+        // validations が正規化されている
+        expect(schema.validations).toBeDefined()
+      }
     })
   })
 

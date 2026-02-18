@@ -543,6 +543,8 @@ export interface ComboboxField extends BaseInputField {
   mode?: 'single' | 'multi'
   /** 静的選択肢 */
   options?: SelectOption[] | string
+  /** 検索可能か（デフォルトtrue、teamkit互換） */
+  searchable?: boolean
   /** 非同期ローダーエンドポイント */
   async_loader?: string
   /** 最小検索文字数 */
