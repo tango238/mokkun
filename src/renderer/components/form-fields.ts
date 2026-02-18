@@ -21,6 +21,7 @@ import type {
   DurationPickerField,
   DurationInputField,
   FileUploadField,
+  RepeaterField,
   DataTableField,
   GoogleMapEmbedField,
   PhotoManagerField,
@@ -311,6 +312,50 @@ export function renderImageUploaderField(field: ImageUploaderField): string {
   return createFieldWrapper(field, content)
 }
 
+/**
+ * repeater → 静的なリピーターフィールド表示
+ */
+export function renderRepeaterFieldStatic(field: RepeaterField): string {
+  const itemFields = field.item_fields ?? []
+  const maxItems = field.max_items
+  const addLabel = escapeHtml(field.add_button_label ?? 'Add Item')
+
+  // item_fields の各フィールドをレンダリング
+  const itemFieldsHtml = itemFields.map(f => renderField(f)).join('')
+
+  const counterText = maxItems
+    ? `1 / ${maxItems}`
+    : '1 items'
+
+  const sortableClass = field.sortable ? 'sortable' : ''
+
+  const content = `
+    <div class="mokkun-repeater ${sortableClass}">
+      <div class="repeater-wrapper">
+        <div class="repeater-header">
+          <span class="repeater-counter">${escapeHtml(counterText)}</span>
+        </div>
+        <div class="repeater-items">
+          <div class="repeater-item expanded">
+            <div class="repeater-item-header">
+              ${field.sortable ? '<div class="repeater-item-handle"></div>' : ''}
+              <span class="repeater-item-number">#1</span>
+              <div class="repeater-item-spacer"></div>
+            </div>
+            <div class="repeater-item-content">
+              ${itemFieldsHtml}
+            </div>
+          </div>
+        </div>
+        <div class="repeater-footer">
+          <button type="button" class="repeater-add-btn">${addLabel}</button>
+        </div>
+      </div>
+    </div>
+  `
+  return createFieldWrapper(field, content)
+}
+
 // =============================================================================
 // Main Render Function
 // =============================================================================
@@ -346,8 +391,7 @@ export function renderField(field: InputField): string {
     case 'image_uploader':
       return renderImageUploaderField(field)
     case 'repeater':
-      // Repeaterは別途実装（Phase 3以降）
-      return createFieldWrapper(field, '<div class="repeater-placeholder">[リピーターフィールド - 未実装]</div>')
+      return renderRepeaterFieldStatic(field as RepeaterField)
     case 'data_table':
       return renderDataTableField(field as DataTableField)
     case 'google_map_embed':

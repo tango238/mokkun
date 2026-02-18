@@ -54,8 +54,13 @@ export function createFieldWrapper(field: InputField, content: string): string {
     classes.push(field.class)
   }
 
+  // visible_when 条件をdata属性に埋め込む
+  const visibleWhenAttr = field.visible_when
+    ? ` data-visible-when="${escapeHtml(JSON.stringify(field.visible_when))}"`
+    : ''
+
   return `
-    <div class="${classes.join(' ')}" data-field-id="${escapeHtml(field.id)}">
+    <div class="${classes.join(' ')}" data-field-id="${escapeHtml(field.id)}"${visibleWhenAttr}>
       <label class="field-label" for="${escapeHtml(field.id)}">
         ${escapeHtml(field.label)}${requiredMark}
       </label>

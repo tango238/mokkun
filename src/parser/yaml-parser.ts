@@ -189,6 +189,7 @@ function normalizeInputField(raw: InputFieldRaw): InputField {
     description: raw.description,
     required: raw.required,
     placeholder: raw.placeholder,
+    ...(raw.visible_when ? { visible_when: raw.visible_when as import('../types/schema').Condition } : {}),
   }
 
   // フィールドタイプに応じて変換
@@ -274,12 +275,20 @@ function normalizeInputField(raw: InputFieldRaw): InputField {
         type: 'repeater',
         item_fields: (raw.item_fields as InputFieldRaw[] | undefined)?.map(normalizeInputField) ?? [],
       }
-    case 'data_table':
+    case 'data_table': {
+      // data行にidがない場合は自動生成
+      const rawData = raw.data as import('../types/schema').DataTableRow[] | undefined
+      const normalizedData = rawData?.map((row, index) => {
+        if (row.id === undefined && row.id !== 0) {
+          return { ...row, id: `row-${index}` }
+        }
+        return row
+      })
       return {
         ...base,
         type: 'data_table',
         columns: (raw.columns ?? []) as import('../types/schema').DataTableColumn[],
-        data: raw.data as import('../types/schema').DataTableRow[] | undefined,
+        data: normalizedData,
         selection: raw.selection as 'none' | 'single' | 'multiple' | undefined,
         row_actions: raw.row_actions as import('../types/schema').DataTableRowAction[] | undefined,
         default_sort: raw.default_sort as import('../types/schema').DataTableSortConfig | undefined,
@@ -293,6 +302,7 @@ function normalizeInputField(raw: InputFieldRaw): InputField {
         compact: raw.compact as boolean | undefined,
         responsive: raw.responsive as boolean | undefined,
       }
+    }
     case 'google_map_embed':
       return {
         ...base,
@@ -346,6 +356,7 @@ function normalizeInputField(raw: InputFieldRaw): InputField {
         type: 'combobox',
         mode: raw.mode as 'single' | 'multi' | undefined,
         options: options,
+        searchable: raw.searchable as boolean | undefined,
         async_loader: raw.async_loader as string | undefined,
         min_search_length: raw.min_search_length as number | undefined,
         debounce_ms: raw.debounce_ms as number | undefined,
