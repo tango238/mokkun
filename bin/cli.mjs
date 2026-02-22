@@ -80,7 +80,7 @@ function generateViewerHtml() {
   const viewerHtmlPath = resolve(__dirname, 'viewer.html')
   let html = readFileSync(viewerHtmlPath, 'utf-8')
   if (yamlParam) {
-    html = html.replace('/* __YAML_URL__ */', JSON.stringify('/__yaml__/' + basename(yamlFile)))
+    html = html.replace('/* __YAML_URL__ */ null', JSON.stringify('/__yaml__/' + basename(yamlFile)))
   }
   return html
 }
