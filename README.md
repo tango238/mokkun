@@ -37,6 +37,31 @@ pnpm build
 pnpm test
 ```
 
+## JSON Schema を使って AI でモックを生成する
+
+mokkun の YAML 構造は [JSON Schema](./schema.json) として公開されています。この schema.json を AI（ChatGPT、Claude など）のプロンプトに含めることで、誰でも mokkun 用の画面モック YAML を生成できます。
+
+### プロンプト例
+
+```
+以下の JSON Schema に従って、mokkun 用の画面モック YAML を生成してください。
+
+[schema.json の URL または内容を貼り付け]
+
+作成したい画面:
+- ユーザー管理画面（一覧表示 + 検索フィルター + 新規追加ボタン）
+```
+
+### schema.json の参照方法
+
+GitHub 上の raw URL から直接取得できます:
+
+```
+https://raw.githubusercontent.com/tango238/mokkun/main/schema.json
+```
+
+または、ローカルにクローンした場合はリポジトリのルートに `schema.json` があります。
+
 ## ディレクトリ構造
 
 ```
