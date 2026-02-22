@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "YAML-based presentation and form builder",
   "type": "module",
+  "bin": {
+    "mokkun": "bin/cli.mjs"
+  },
   "main": "dist/mokkun.js",
   "module": "dist/mokkun.esm.js",
   "types": "dist/types/lib.d.ts",
@@ -15,6 +18,8 @@
     "./style.css": "./dist/mokkun.css"
   },
   "files": [
+    "bin/cli.mjs",
+    "bin/viewer.html",
     "dist/mokkun.js",
     "dist/mokkun.esm.js",
     "dist/mokkun.css",
