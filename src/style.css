@@ -8639,8 +8639,8 @@ body.dialog-open {
    ============================================================================= */
 
 [data-theme="lofi"] {
-  /* Override design tokens for wireframe feel */
-  --font-family: 'Courier New', Courier, monospace;
+  /* Override design tokens for clean wireframe feel */
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --border-radius-sm: 0px;
   --border-radius-md: 0px;
   --border-radius-lg: 0px;
@@ -8662,45 +8662,37 @@ body.dialog-open {
 
 /* Body & base text */
 [data-theme="lofi"] body {
-  font-family: 'Courier New', Courier, monospace;
-  background-color: #f5f5f5;
-  background-image:
-    linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
-  background-size: 20px 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: #ffffff;
 }
 
-/* App header - simple bordered bottom */
+/* App header */
 [data-theme="lofi"] .app-header {
   background-color: #ffffff;
-  border-bottom: 2px solid #333333;
+  border-bottom: 1px solid #cccccc;
 }
 
 [data-theme="lofi"] .app-title {
   color: #333333;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  font-weight: 600;
   font-size: 1rem;
 }
 
-/* Screen container - simple border instead of shadow */
+/* Screen container */
 [data-theme="lofi"] .screen {
-  border: 2px solid #333333;
+  border: 1px solid #cccccc;
   background-color: #ffffff;
 }
 
 [data-theme="lofi"] .screen-header {
-  border-bottom: 1px dashed #999999;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 [data-theme="lofi"] .screen-title {
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+  font-weight: 600;
 }
 
-/* Inputs - simple black borders */
+/* Inputs */
 [data-theme="lofi"] .form-input,
 [data-theme="lofi"] .form-textarea,
 [data-theme="lofi"] .form-select,
@@ -8711,9 +8703,8 @@ body.dialog-open {
 [data-theme="lofi"] .theme-selector,
 [data-theme="lofi"] .duration-input,
 [data-theme="lofi"] .duration-select {
-  border: 1.5px solid #333333;
+  border: 1px solid #cccccc;
   background-color: #ffffff;
-  font-family: 'Courier New', Courier, monospace;
 }
 
 [data-theme="lofi"] .form-input:focus,
@@ -8722,9 +8713,9 @@ body.dialog-open {
 [data-theme="lofi"] .field-input:focus,
 [data-theme="lofi"] .field-select:focus,
 [data-theme="lofi"] .field-textarea:focus {
-  border-color: #000000;
-  outline: 2px solid #000000;
-  outline-offset: 1px;
+  border-color: #999999;
+  outline: 1px solid #999999;
+  outline-offset: 0px;
 }
 
 [data-theme="lofi"] .form-input::placeholder,
@@ -8732,21 +8723,20 @@ body.dialog-open {
 [data-theme="lofi"] .field-input::placeholder,
 [data-theme="lofi"] .field-textarea::placeholder {
   color: #bbbbbb;
-  font-style: italic;
+  font-style: normal;
 }
 
 /* Labels */
 [data-theme="lofi"] .field-label {
-  font-weight: 700;
-  text-transform: uppercase;
-  font-size: 0.75rem;
-  letter-spacing: 0.05em;
+  font-weight: 600;
+  font-size: 0.8125rem;
   color: #333333;
 }
 
 [data-theme="lofi"] .field-description {
-  font-style: italic;
+  font-style: normal;
   color: #999999;
+  font-size: 0.75rem;
 }
 
 /* Required mark */
@@ -8755,42 +8745,39 @@ body.dialog-open {
   color: #cc0000;
 }
 
-/* Buttons - outlined wireframe style */
+/* Buttons */
 [data-theme="lofi"] .btn {
-  border: 2px solid #333333;
+  border: 1px solid #cccccc;
   background-color: #ffffff;
   color: #333333;
-  font-family: 'Courier New', Courier, monospace;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-weight: 500;
   font-size: 0.875rem;
 }
 
 [data-theme="lofi"] .btn:hover:not(:disabled) {
-  background-color: #333333;
-  color: #ffffff;
+  background-color: #f5f5f5;
+  border-color: #999999;
 }
 
 [data-theme="lofi"] .btn-primary {
-  background-color: #333333;
+  background-color: #555555;
   color: #ffffff;
-  border-color: #333333;
+  border-color: #555555;
 }
 
 [data-theme="lofi"] .btn-primary:hover:not(:disabled) {
-  background-color: #000000;
-  border-color: #000000;
+  background-color: #333333;
+  border-color: #333333;
 }
 
 [data-theme="lofi"] .btn-secondary {
   background-color: #ffffff;
-  color: #333333;
-  border-color: #333333;
+  color: #555555;
+  border-color: #cccccc;
 }
 
 [data-theme="lofi"] .btn-secondary:hover:not(:disabled) {
-  background-color: #eeeeee;
+  background-color: #f5f5f5;
 }
 
 [data-theme="lofi"] .btn-danger {
@@ -8807,7 +8794,7 @@ body.dialog-open {
 [data-theme="lofi"] .btn-link {
   border: none;
   background: transparent;
-  color: #333333;
+  color: #555555;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -8819,191 +8806,224 @@ body.dialog-open {
 
 /* Actions section */
 [data-theme="lofi"] .actions-section {
-  border-top: 1px dashed #999999;
+  border-top: 1px solid #e0e0e0;
 }
 
-/* File upload - dashed border */
+/* Crosshatch placeholder pattern for media/image areas */
 [data-theme="lofi"] .file-dropzone,
-[data-theme="lofi"] .drop-zone {
-  border: 2px dashed #333333;
-  background-color: #fafafa;
+[data-theme="lofi"] .drop-zone,
+[data-theme="lofi"] .upload-dropzone,
+[data-theme="lofi"] .photo-upload-area {
+  border: 1px dashed #cccccc;
+  background-color: #f8f8f8;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Crect width='40' height='40' fill='%23f8f8f8'/%3E%3Cline x1='0' y1='0' x2='40' y2='40' stroke='%23e0e0e0' stroke-width='0.5'/%3E%3Cline x1='40' y1='0' x2='0' y2='40' stroke='%23e0e0e0' stroke-width='0.5'/%3E%3C/svg%3E");
+  background-size: 40px 40px;
 }
 
 [data-theme="lofi"] .file-dropzone:hover,
 [data-theme="lofi"] .drop-zone:hover,
-[data-theme="lofi"] .drop-zone.drag-over {
-  border-color: #000000;
+[data-theme="lofi"] .drop-zone.drag-over,
+[data-theme="lofi"] .upload-dropzone:hover,
+[data-theme="lofi"] .photo-upload-area:hover {
+  border-color: #999999;
   background-color: #f0f0f0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Crect width='40' height='40' fill='%23f0f0f0'/%3E%3Cline x1='0' y1='0' x2='40' y2='40' stroke='%23cccccc' stroke-width='0.5'/%3E%3Cline x1='40' y1='0' x2='0' y2='40' stroke='%23cccccc' stroke-width='0.5'/%3E%3C/svg%3E");
 }
 
-/* Radio and Checkbox - keep native styling */
+/* Google Map embed placeholder */
+[data-theme="lofi"] .google-map-embed,
+[data-theme="lofi"] .google-map-embed-placeholder,
+[data-theme="lofi"] .map-container {
+  border: 1px solid #cccccc;
+  background-color: #f8f8f8;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Crect width='40' height='40' fill='%23f8f8f8'/%3E%3Cline x1='0' y1='0' x2='40' y2='40' stroke='%23e0e0e0' stroke-width='0.5'/%3E%3Cline x1='40' y1='0' x2='0' y2='40' stroke='%23e0e0e0' stroke-width='0.5'/%3E%3C/svg%3E");
+  background-size: 40px 40px;
+}
+
+/* Image uploader / Photo manager placeholder */
+[data-theme="lofi"] .image-uploader,
+[data-theme="lofi"] .photo-manager {
+  border: 1px solid #cccccc;
+  background-color: #f8f8f8;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Crect width='40' height='40' fill='%23f8f8f8'/%3E%3Cline x1='0' y1='0' x2='40' y2='40' stroke='%23e0e0e0' stroke-width='0.5'/%3E%3Cline x1='40' y1='0' x2='0' y2='40' stroke='%23e0e0e0' stroke-width='0.5'/%3E%3C/svg%3E");
+  background-size: 40px 40px;
+}
+
+/* Browser component */
+[data-theme="lofi"] .browser-wrapper,
+[data-theme="lofi"] .browser {
+  border: 1px solid #cccccc;
+}
+
+[data-theme="lofi"] .browser-toolbar {
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #cccccc;
+}
+
+[data-theme="lofi"] .browser-content {
+  background-color: #f8f8f8;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Crect width='40' height='40' fill='%23f8f8f8'/%3E%3Cline x1='0' y1='0' x2='40' y2='40' stroke='%23e0e0e0' stroke-width='0.5'/%3E%3Cline x1='40' y1='0' x2='0' y2='40' stroke='%23e0e0e0' stroke-width='0.5'/%3E%3C/svg%3E");
+  background-size: 40px 40px;
+}
+
+/* Radio and Checkbox */
 [data-theme="lofi"] .radio-option input,
 [data-theme="lofi"] .checkbox-option input,
 [data-theme="lofi"] .multi-select-option input {
-  accent-color: #333333;
+  accent-color: #555555;
 }
 
 /* Sections */
 [data-theme="lofi"] .section {
-  border-bottom: 1px dashed #cccccc;
+  border-bottom: 1px solid #e0e0e0;
   padding-bottom: var(--spacing-lg);
 }
 
 [data-theme="lofi"] .section-title {
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 /* Data table */
 [data-theme="lofi"] .data-table,
 [data-theme="lofi"] .data-table-wrapper table {
-  border: 2px solid #333333;
+  border: 1px solid #cccccc;
   border-collapse: collapse;
 }
 
 [data-theme="lofi"] .data-table th,
 [data-theme="lofi"] .data-table-wrapper th {
-  background-color: #eeeeee;
-  border: 1px solid #333333;
-  font-weight: 700;
-  text-transform: uppercase;
-  font-size: 0.75rem;
-  letter-spacing: 0.05em;
+  background-color: #f5f5f5;
+  border: 1px solid #cccccc;
+  font-weight: 600;
+  font-size: 0.8125rem;
 }
 
 [data-theme="lofi"] .data-table td,
 [data-theme="lofi"] .data-table-wrapper td {
-  border: 1px solid #333333;
+  border: 1px solid #cccccc;
 }
 
 /* Tabs */
 [data-theme="lofi"] .mokkun-tabs {
-  border: 2px solid #333333;
+  border: 1px solid #cccccc;
 }
 
 [data-theme="lofi"] .tabs-list {
-  background-color: #eeeeee;
-  border-bottom: 2px solid #333333;
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #cccccc;
 }
 
 [data-theme="lofi"] .tab-btn {
   border: none;
   background: transparent;
-  font-family: 'Courier New', Courier, monospace;
-  font-weight: 700;
-  text-transform: uppercase;
-  font-size: 0.75rem;
+  font-weight: 500;
+  font-size: 0.8125rem;
 }
 
 [data-theme="lofi"] .tab-btn.active,
 [data-theme="lofi"] .tab-btn[aria-selected="true"] {
   background-color: #ffffff;
-  border-bottom: 2px solid #ffffff;
-  color: #000000;
+  border-bottom: 2px solid #555555;
+  color: #333333;
 }
 
 /* Wizard */
 [data-theme="lofi"] .wizard-wrapper {
-  border: 2px solid #333333;
+  border: 1px solid #cccccc;
   background-color: #ffffff;
 }
 
 [data-theme="lofi"] .wizard-indicator {
-  background-color: #eeeeee;
-  border-bottom: 2px solid #333333;
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #cccccc;
 }
 
 [data-theme="lofi"] .wizard-progress-bar {
-  background-color: #dddddd;
+  background-color: #e0e0e0;
 }
 
 [data-theme="lofi"] .mokkun-wizard .wizard-progress {
-  background-color: #333333;
+  background-color: #555555;
 }
 
 [data-theme="lofi"] .step-marker {
   background-color: #ffffff;
-  border: 2px solid #333333;
-  color: #333333;
+  border: 1px solid #cccccc;
+  color: #999999;
 }
 
 [data-theme="lofi"] .mokkun-wizard .wizard-step.current .step-marker {
-  background-color: #333333;
-  border-color: #333333;
+  background-color: #555555;
+  border-color: #555555;
   color: #ffffff;
 }
 
 [data-theme="lofi"] .mokkun-wizard .wizard-step.completed .step-marker {
-  background-color: #666666;
-  border-color: #666666;
+  background-color: #999999;
+  border-color: #999999;
   color: #ffffff;
 }
 
 [data-theme="lofi"] .wizard-btn {
-  font-family: 'Courier New', Courier, monospace;
-  font-weight: 700;
-  text-transform: uppercase;
-  border: 2px solid #333333;
+  font-weight: 500;
+  border: 1px solid #cccccc;
 }
 
 [data-theme="lofi"] .wizard-btn-back {
   background-color: #ffffff;
-  color: #333333;
+  color: #555555;
 }
 
 [data-theme="lofi"] .wizard-btn-next {
-  background-color: #333333;
+  background-color: #555555;
   color: #ffffff;
+  border-color: #555555;
 }
 
 [data-theme="lofi"] .wizard-btn-skip {
-  border: 1px dashed #999999;
+  border: 1px dashed #cccccc;
   color: #999999;
 }
 
 [data-theme="lofi"] .mokkun-wizard .wizard-navigation {
-  background-color: #eeeeee;
-  border-top: 2px solid #333333;
+  background-color: #f5f5f5;
+  border-top: 1px solid #cccccc;
 }
 
 /* Repeater */
 [data-theme="lofi"] .mokkun-repeater {
-  border: 2px solid #333333;
+  border: 1px solid #cccccc;
 }
 
 [data-theme="lofi"] .repeater-header {
-  background-color: #eeeeee;
-  border-bottom: 2px solid #333333;
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #cccccc;
 }
 
 [data-theme="lofi"] .repeater-footer {
-  background-color: #eeeeee;
-  border-top: 2px solid #333333;
+  background-color: #f5f5f5;
+  border-top: 1px solid #cccccc;
 }
 
 [data-theme="lofi"] .repeater-add-btn {
-  background-color: #333333;
+  background-color: #555555;
   color: #ffffff;
-  border: 2px solid #333333;
-  font-family: 'Courier New', Courier, monospace;
-  text-transform: uppercase;
-  font-weight: 700;
+  border: 1px solid #555555;
+  font-weight: 500;
 }
 
 [data-theme="lofi"] .repeater-add-btn:hover:not(:disabled) {
-  background-color: #000000;
+  background-color: #333333;
 }
 
 [data-theme="lofi"] .repeater-add-dummy-btn {
   background-color: #ffffff;
-  border: 1px dashed #333333;
-  color: #333333;
-  font-family: 'Courier New', Courier, monospace;
+  border: 1px dashed #cccccc;
+  color: #555555;
 }
 
 [data-theme="lofi"] .repeater-item {
-  border-bottom: 1px solid #333333;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 [data-theme="lofi"] .repeater-item-header {
@@ -9016,326 +9036,290 @@ body.dialog-open {
 
 [data-theme="lofi"] .repeater-counter {
   background-color: #ffffff;
-  border: 1px solid #333333;
+  border: 1px solid #cccccc;
 }
 
 /* Toggle/Switch */
 [data-theme="lofi"] .toggle-track,
 [data-theme="lofi"] .toggle-switch {
-  border: 2px solid #333333;
+  border: 1px solid #cccccc;
   background-color: #ffffff;
 }
 
 [data-theme="lofi"] .toggle-track.checked,
 [data-theme="lofi"] .toggle-switch.checked {
-  background-color: #333333;
+  background-color: #555555;
+  border-color: #555555;
 }
 
 /* Badge */
 [data-theme="lofi"] .badge,
 [data-theme="lofi"] .status-label,
 [data-theme="lofi"] .chip {
-  border: 1.5px solid #333333;
+  border: 1px solid #cccccc;
   background-color: #ffffff;
-  color: #333333;
-  font-family: 'Courier New', Courier, monospace;
-  font-weight: 700;
-  text-transform: uppercase;
-  font-size: 0.7rem;
-  letter-spacing: 0.05em;
+  color: #555555;
+  font-weight: 500;
+  font-size: 0.75rem;
 }
 
 [data-theme="lofi"] .badge-primary,
 [data-theme="lofi"] .status-label-primary {
-  background-color: #333333;
+  background-color: #555555;
   color: #ffffff;
+  border-color: #555555;
 }
 
 /* Notification bar */
 [data-theme="lofi"] .notification-bar {
-  border: 2px solid #333333;
-  background-color: #eeeeee;
+  border: 1px solid #cccccc;
+  background-color: #f5f5f5;
 }
 
 /* Timeline */
 [data-theme="lofi"] .timeline-dot {
-  border: 2px solid #333333;
+  border: 1px solid #cccccc;
   background-color: #ffffff;
 }
 
 [data-theme="lofi"] .timeline-line {
-  background-color: #333333;
+  background-color: #cccccc;
 }
 
 /* Pagination */
 [data-theme="lofi"] .pagination-btn {
-  border: 1.5px solid #333333;
+  border: 1px solid #cccccc;
   background-color: #ffffff;
-  color: #333333;
-  font-family: 'Courier New', Courier, monospace;
+  color: #555555;
 }
 
 [data-theme="lofi"] .pagination-btn.active,
 [data-theme="lofi"] .pagination-btn[aria-current="page"] {
-  background-color: #333333;
-  color: #ffffff;
+  background-color: #ffffff;
+  color: #333333;
+  border-color: #555555;
+  font-weight: 600;
 }
 
 /* Segmented control */
 [data-theme="lofi"] .segmented-control {
-  border: 2px solid #333333;
-  background-color: #eeeeee;
+  border: 1px solid #cccccc;
+  background-color: #f5f5f5;
 }
 
 [data-theme="lofi"] .segmented-control-btn {
-  font-family: 'Courier New', Courier, monospace;
-  font-weight: 700;
-  text-transform: uppercase;
-  font-size: 0.75rem;
+  font-weight: 500;
+  font-size: 0.8125rem;
 }
 
 [data-theme="lofi"] .segmented-control-btn.active,
 [data-theme="lofi"] .segmented-control-btn[aria-pressed="true"] {
-  background-color: #333333;
-  color: #ffffff;
+  background-color: #ffffff;
+  color: #333333;
+  border-bottom: 2px solid #555555;
 }
 
 /* Stepper */
 [data-theme="lofi"] .stepper-step-circle {
-  border: 2px solid #333333;
+  border: 1px solid #cccccc;
   background-color: #ffffff;
 }
 
 [data-theme="lofi"] .stepper-step.active .stepper-step-circle,
 [data-theme="lofi"] .stepper-step.current .stepper-step-circle {
-  background-color: #333333;
+  background-color: #555555;
   color: #ffffff;
+  border-color: #555555;
 }
 
 [data-theme="lofi"] .stepper-step.completed .stepper-step-circle {
-  background-color: #666666;
+  background-color: #999999;
   color: #ffffff;
+  border-color: #999999;
 }
 
 [data-theme="lofi"] .stepper-line {
-  background-color: #333333;
+  background-color: #cccccc;
 }
 
 /* Accordion / Disclosure */
 [data-theme="lofi"] .accordion-panel,
 [data-theme="lofi"] .disclosure {
-  border: 1.5px solid #333333;
+  border: 1px solid #cccccc;
 }
 
 [data-theme="lofi"] .accordion-header,
 [data-theme="lofi"] .disclosure-header,
 [data-theme="lofi"] .disclosure-trigger {
   background-color: #fafafa;
-  border-bottom: 1px solid #333333;
-  font-family: 'Courier New', Courier, monospace;
-  font-weight: 700;
+  border-bottom: 1px solid #e0e0e0;
+  font-weight: 600;
 }
 
 /* Information panel */
 [data-theme="lofi"] .information-panel {
-  border: 2px solid #333333;
+  border: 1px solid #cccccc;
   background-color: #fafafa;
 }
 
 /* Section nav */
 [data-theme="lofi"] .section-nav {
-  border: 1.5px solid #333333;
-}
-
-[data-theme="lofi"] .section-nav-item {
-  font-family: 'Courier New', Courier, monospace;
+  border: 1px solid #cccccc;
 }
 
 [data-theme="lofi"] .section-nav-item.active {
-  background-color: #333333;
-  color: #ffffff;
+  background-color: #ffffff;
+  color: #333333;
+  border-bottom: 2px solid #555555;
 }
 
 /* Dropdown */
 [data-theme="lofi"] .dropdown-menu {
-  border: 2px solid #333333;
+  border: 1px solid #cccccc;
   background-color: #ffffff;
 }
 
-[data-theme="lofi"] .dropdown-item {
-  font-family: 'Courier New', Courier, monospace;
-}
-
 [data-theme="lofi"] .dropdown-item:hover {
-  background-color: #eeeeee;
+  background-color: #f5f5f5;
 }
 
 /* Dialog */
 [data-theme="lofi"] .dialog,
 [data-theme="lofi"] .modal,
 [data-theme="lofi"] .dialog-content {
-  border: 2px solid #333333;
+  border: 1px solid #cccccc;
   background-color: #ffffff;
 }
 
 [data-theme="lofi"] .dialog-overlay,
 [data-theme="lofi"] .modal-overlay {
-  background-color: rgba(0, 0, 0, 0.3);
+  background-color: rgba(0, 0, 0, 0.2);
 }
 
 /* Calendar */
 [data-theme="lofi"] .calendar {
-  border: 2px solid #333333;
+  border: 1px solid #cccccc;
 }
 
 [data-theme="lofi"] .calendar-day.selected,
 [data-theme="lofi"] .calendar-day.today {
-  background-color: #333333;
+  background-color: #555555;
   color: #ffffff;
 }
 
 /* Definition list */
 [data-theme="lofi"] .definition-list dt {
-  font-weight: 700;
-  text-transform: uppercase;
-  font-size: 0.75rem;
-  letter-spacing: 0.05em;
+  font-weight: 600;
+  font-size: 0.8125rem;
 }
 
 /* Loader */
 [data-theme="lofi"] .loader,
 [data-theme="lofi"] .spinner {
-  border-color: #dddddd;
-  border-top-color: #333333;
+  border-color: #e0e0e0;
+  border-top-color: #555555;
 }
 
 /* Tooltip */
 [data-theme="lofi"] .tooltip {
-  border: 1.5px solid #333333;
+  border: 1px solid #cccccc;
   background-color: #ffffff;
   color: #333333;
-  font-family: 'Courier New', Courier, monospace;
 }
 
 /* Error screen */
 [data-theme="lofi"] .error-screen {
-  border: 2px solid #cc0000;
+  border: 1px solid #cc0000;
 }
 
 [data-theme="lofi"] .error-message {
-  border: 1px solid #333333;
+  border: 1px solid #e0e0e0;
   background-color: #fafafa;
 }
 
 /* Welcome */
 [data-theme="lofi"] .welcome h2 {
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-weight: 600;
 }
 
 /* Filters */
 [data-theme="lofi"] .filters {
-  border: 1.5px solid #333333;
+  border: 1px solid #cccccc;
   background-color: #fafafa;
 }
 
 /* Float area */
 [data-theme="lofi"] .float-area {
-  border: 2px solid #333333;
+  border: 1px solid #cccccc;
   background-color: #ffffff;
 }
 
 /* Heading */
 [data-theme="lofi"] .heading-component,
 [data-theme="lofi"] .heading-wrapper {
-  border-bottom: 2px solid #333333;
+  border-bottom: 1px solid #cccccc;
 }
 
 /* Response message */
 [data-theme="lofi"] .response-message {
-  border: 1.5px solid #333333;
+  border: 1px solid #cccccc;
   background-color: #fafafa;
 }
 
 /* Alert banner */
 [data-theme="lofi"] .alert-banner {
-  border: 2px solid #333333;
+  border: 1px solid #cccccc;
   background-color: #ffffff;
   color: #333333;
 }
 
 [data-theme="lofi"] .alert-banner-info {
-  border-left: 4px solid #555555;
+  border-left: 3px solid #777777;
 }
 
 [data-theme="lofi"] .alert-banner-success {
-  border-left: 4px solid #333333;
+  border-left: 3px solid #555555;
 }
 
 [data-theme="lofi"] .alert-banner-warning {
-  border-left: 4px solid #888888;
+  border-left: 3px solid #999999;
 }
 
 [data-theme="lofi"] .alert-banner-error {
-  border-left: 4px solid #cc0000;
+  border-left: 3px solid #cc0000;
 }
 
 /* Theme selector card preview */
 [data-theme="lofi"] .theme-card {
-  border: 2px solid #333333;
+  border: 1px solid #cccccc;
 }
 
 [data-theme="lofi"] .theme-card.active {
-  border-color: #000000;
-  outline: 2px solid #000000;
+  border-color: #555555;
+  outline: 1px solid #555555;
   outline-offset: 2px;
-}
-
-/* Google Map embed placeholder */
-[data-theme="lofi"] .google-map-embed,
-[data-theme="lofi"] .map-container {
-  border: 2px dashed #333333;
-  background-color: #eeeeee;
-}
-
-/* Image uploader / Photo manager placeholder */
-[data-theme="lofi"] .image-uploader,
-[data-theme="lofi"] .photo-manager {
-  border: 2px dashed #333333;
-  background-color: #fafafa;
-}
-
-/* Browser component */
-[data-theme="lofi"] .browser-wrapper,
-[data-theme="lofi"] .browser {
-  border: 2px solid #333333;
-}
-
-[data-theme="lofi"] .browser-toolbar {
-  background-color: #eeeeee;
-  border-bottom: 2px solid #333333;
 }
 
 /* Line clamp */
 [data-theme="lofi"] .line-clamp-toggle {
-  color: #333333;
+  color: #555555;
   text-decoration: underline;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 /* Combobox */
 [data-theme="lofi"] .combobox-dropdown,
 [data-theme="lofi"] .combobox-list {
-  border: 2px solid #333333;
+  border: 1px solid #cccccc;
   background-color: #ffffff;
 }
 
 [data-theme="lofi"] .combobox-option:hover,
 [data-theme="lofi"] .combobox-option.highlighted {
-  background-color: #eeeeee;
+  background-color: #f5f5f5;
 }
 
 /* Delete confirm dialog */
 [data-theme="lofi"] .delete-confirm-dialog {
-  border: 2px solid #cc0000;
+  border: 1px solid #cc0000;
 }

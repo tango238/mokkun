@@ -1,54 +1,54 @@
 /**
  * Mokkun Lo-Fi Wireframe Theme
- * Sketch-like wireframe style with monospace font and grayscale palette
+ * Clean wireframe style with sans-serif font and light gray palette
  */
 
 [data-theme="lofi"] {
   /* Primary Colors */
-  --primary-color: #333333;
-  --primary-color-hover: #000000;
-  --primary-color-light: #e5e5e5;
+  --primary-color: #555555;
+  --primary-color-hover: #333333;
+  --primary-color-light: #f0f0f0;
 
   /* Secondary Colors */
-  --secondary-color: #888888;
-  --secondary-color-hover: #555555;
+  --secondary-color: #999999;
+  --secondary-color-hover: #777777;
 
   /* Background Colors */
-  --background-color: #f5f5f5;
-  --background-color-subtle: #ebebeb;
+  --background-color: #ffffff;
+  --background-color-subtle: #f5f5f5;
   --surface-color: #ffffff;
 
   /* Text Colors */
   --text-color: #333333;
-  --text-color-muted: #888888;
+  --text-color-muted: #999999;
   --text-color-inverse: #ffffff;
 
   /* Border Colors */
-  --border-color: #333333;
-  --border-color-focus: #000000;
+  --border-color: #cccccc;
+  --border-color-focus: #999999;
 
   /* Input Colors */
   --input-background: #ffffff;
-  --input-border: #333333;
+  --input-border: #cccccc;
   --input-text: #333333;
-  --input-placeholder: #aaaaaa;
+  --input-placeholder: #bbbbbb;
 
   /* Button Colors */
   --button-background: #ffffff;
   --button-text: #333333;
   --button-secondary-background: #ffffff;
-  --button-secondary-text: #333333;
-  --button-secondary-border: #333333;
+  --button-secondary-text: #555555;
+  --button-secondary-border: #cccccc;
 
   /* Status Colors - muted grayscale */
   --error-color: #cc0000;
   --error-color-light: #fff0f0;
-  --success-color: #333333;
-  --success-color-light: #f0f0f0;
-  --warning-color: #888888;
-  --warning-color-light: #f5f5f5;
-  --info-color: #555555;
-  --info-color-light: #f0f0f0;
+  --success-color: #555555;
+  --success-color-light: #f5f5f5;
+  --warning-color: #999999;
+  --warning-color-light: #f8f8f8;
+  --info-color: #777777;
+  --info-color-light: #f5f5f5;
 
   /* Shadow Colors - no shadows in wireframe */
   --shadow-color: transparent;
@@ -57,10 +57,10 @@
   --shadow-lg: none;
 
   /* Focus Ring */
-  --focus-ring-color: rgba(0, 0, 0, 0.2);
+  --focus-ring-color: rgba(0, 0, 0, 0.15);
 
   /* Scrollbar */
-  --scrollbar-track: #ebebeb;
-  --scrollbar-thumb: #cccccc;
-  --scrollbar-thumb-hover: #999999;
+  --scrollbar-track: #f0f0f0;
+  --scrollbar-thumb: #dddddd;
+  --scrollbar-thumb-hover: #bbbbbb;
 }
