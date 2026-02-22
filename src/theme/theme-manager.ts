@@ -22,6 +22,12 @@ import {
  */
 const BUILT_IN_THEMES: ThemeDefinition[] = [
   {
+    id: 'lofi',
+    name: 'ローファイ',
+    description: 'ワイヤフレーム風のスケッチスタイル',
+    isBuiltIn: true,
+  },
+  {
     id: 'light',
     name: 'ライト',
     description: 'デフォルトの明るいテーマ',
@@ -38,7 +44,7 @@ const BUILT_IN_THEMES: ThemeDefinition[] = [
 /**
  * Default theme ID
  */
-const DEFAULT_THEME_ID: BuiltInThemeId = 'light'
+const DEFAULT_THEME_ID: BuiltInThemeId = 'lofi'
 
 /**
  * Theme Manager class

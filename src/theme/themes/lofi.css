@@ -1,0 +1,66 @@
+/**
+ * Mokkun Lo-Fi Wireframe Theme
+ * Sketch-like wireframe style with monospace font and grayscale palette
+ */
+
+[data-theme="lofi"] {
+  /* Primary Colors */
+  --primary-color: #333333;
+  --primary-color-hover: #000000;
+  --primary-color-light: #e5e5e5;
+
+  /* Secondary Colors */
+  --secondary-color: #888888;
+  --secondary-color-hover: #555555;
+
+  /* Background Colors */
+  --background-color: #f5f5f5;
+  --background-color-subtle: #ebebeb;
+  --surface-color: #ffffff;
+
+  /* Text Colors */
+  --text-color: #333333;
+  --text-color-muted: #888888;
+  --text-color-inverse: #ffffff;
+
+  /* Border Colors */
+  --border-color: #333333;
+  --border-color-focus: #000000;
+
+  /* Input Colors */
+  --input-background: #ffffff;
+  --input-border: #333333;
+  --input-text: #333333;
+  --input-placeholder: #aaaaaa;
+
+  /* Button Colors */
+  --button-background: #ffffff;
+  --button-text: #333333;
+  --button-secondary-background: #ffffff;
+  --button-secondary-text: #333333;
+  --button-secondary-border: #333333;
+
+  /* Status Colors - muted grayscale */
+  --error-color: #cc0000;
+  --error-color-light: #fff0f0;
+  --success-color: #333333;
+  --success-color-light: #f0f0f0;
+  --warning-color: #888888;
+  --warning-color-light: #f5f5f5;
+  --info-color: #555555;
+  --info-color-light: #f0f0f0;
+
+  /* Shadow Colors - no shadows in wireframe */
+  --shadow-color: transparent;
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+
+  /* Focus Ring */
+  --focus-ring-color: rgba(0, 0, 0, 0.2);
+
+  /* Scrollbar */
+  --scrollbar-track: #ebebeb;
+  --scrollbar-thumb: #cccccc;
+  --scrollbar-thumb-hover: #999999;
+}
