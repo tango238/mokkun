@@ -78,7 +78,25 @@ https://raw.githubusercontent.com/tango238/mokkun/main/schema.json
 画面間のナビゲーション（actions の navigate）も設定してください。
 ```
 
-生成された YAML を `.yaml` ファイルとして保存し、mokkun で読み込めばモックアップが表示されます。
+### 生成した YAML をモックとして表示する
+
+AI が生成した YAML を `.yaml` ファイルとして保存し、`npx mokkun` で表示できます。
+
+```bash
+# 生成された YAML を保存
+cat > my-screen.yaml << 'EOF'
+# ここに AI が生成した YAML を貼り付け
+EOF
+
+# mokkun でモックアップを表示（ブラウザが自動で開きます）
+npx mokkun my-screen.yaml
+```
+
+ポートを変更したい場合:
+
+```bash
+npx mokkun -p 8080 my-screen.yaml
+```
 
 ## ディレクトリ構造
 
