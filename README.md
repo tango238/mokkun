@@ -37,30 +37,48 @@ pnpm build
 pnpm test
 ```
 
-## JSON Schema を使って AI でモックを生成する
+## AI でモック YAML を生成する
 
-mokkun の YAML 構造は [JSON Schema](./schema.json) として公開されています。この schema.json を AI（ChatGPT、Claude など）のプロンプトに含めることで、誰でも mokkun 用の画面モック YAML を生成できます。
+mokkun の YAML フォーマットは [JSON Schema](./schema.json) として公開されています。
+この schema を AI のプロンプトに渡すだけで、誰でも mokkun 用の画面モック YAML を生成できます。
 
-### プロンプト例
-
-```
-以下の JSON Schema に従って、mokkun 用の画面モック YAML を生成してください。
-
-[schema.json の URL または内容を貼り付け]
-
-作成したい画面:
-- ユーザー管理画面（一覧表示 + 検索フィルター + 新規追加ボタン）
-```
-
-### schema.json の参照方法
-
-GitHub 上の raw URL から直接取得できます:
+### schema.json の URL
 
 ```
 https://raw.githubusercontent.com/tango238/mokkun/main/schema.json
 ```
 
-または、ローカルにクローンした場合はリポジトリのルートに `schema.json` があります。
+### プロンプト例
+
+ChatGPT や Claude に以下のようなプロンプトを送ってください。
+
+**基本**
+
+```
+以下の JSON Schema に準拠した YAML を生成してください。
+https://raw.githubusercontent.com/tango238/mokkun/main/schema.json
+
+作りたい画面: ECサイトの商品一覧画面
+- 検索フィルター（キーワード、カテゴリ、価格帯）
+- 商品テーブル（商品名、価格、在庫数、ステータス）
+- ページネーション
+- 「商品登録」ボタン
+```
+
+**複数画面を一括で生成**
+
+```
+以下の JSON Schema に準拠した YAML を生成してください。
+https://raw.githubusercontent.com/tango238/mokkun/main/schema.json
+
+以下の画面を一つの YAML ファイルにまとめてください:
+1. ログイン画面（メール + パスワード）
+2. ユーザー一覧画面（テーブル + 検索）
+3. ユーザー詳細画面（プロフィール編集フォーム）
+画面間のナビゲーション（actions の navigate）も設定してください。
+```
+
+生成された YAML を `.yaml` ファイルとして保存し、mokkun で読み込めばモックアップが表示されます。
 
 ## ディレクトリ構造
 
