@@ -8,19 +8,34 @@ YAML駆動のフォームレンダリングライブラリ。
 src/
 ├── types/
 │   ├── schema.ts              # 型定義 (InputField union: 44タイプ)
-│   └── field-renderable.ts    # FieldRenderable インターフェース
+│   ├── field-renderable.ts    # FieldRenderable インターフェース
+│   └── theme.ts               # テーマ型定義
 ├── parser/
 │   └── yaml-parser.ts         # VALID_FIELD_TYPES 定義
+├── loader/
+│   └── file-loader.ts         # YAML読み込み (ファイル/URL/D&D)
 ├── renderer/
 │   ├── screen-renderer.ts     # 画面レンダリング
-│   ├── components/            # UIコンポーネント (54ファイル)
+│   ├── action-handler.ts      # ボタンアクション処理
+│   ├── components/            # UIコンポーネント (53ファイル + dialog/4ファイル)
 │   │   ├── form-fields.ts     # ファサード (switch文で委譲)
 │   │   ├── input.ts, select.ts, checkbox.ts ...
-│   │   └── dialog/
+│   │   └── dialog/            # ダイアログ系 (base-dialog, action-dialog等)
 │   └── utils/
-│       └── field-helpers.ts   # createFieldWrapper, escapeHtml
-└── __tests__/
+│       ├── field-helpers.ts   # createFieldWrapper, escapeHtml
+│       ├── dummy-data.ts      # ダミーデータ生成
+│       └── dom.ts             # DOM操作ユーティリティ
+├── theme/
+│   ├── theme-manager.ts       # テーマ管理
+│   └── theme-selector.ts      # テーマ切替UI
+└── __tests__/                 # テスト (38ファイル)
     └── render-verification.test.ts  # コンポーネント検証
+
+examples/
+├── screens.yaml               # 基本フォーム例
+├── admin-dashboard.yaml       # 管理画面例
+├── teamkit-compat.yaml        # teamkit ui.yml 互換形式
+└── index.html                 # ビルド済みライブラリのビューアー
 ```
 
 ## コンポーネントパターン
@@ -106,6 +121,8 @@ pnpm tsc --noEmit
 
 ## YAMLサンプル
 
+### 標準形式
+
 ```yaml
 view:
   login:
@@ -125,6 +142,30 @@ view:
         label: "ログイン"
         style: primary
 ```
+
+### teamkit ui.yml 互換形式
+
+teamkit の `generate-ui` が出力する `sections` + `input_fields` 形式にも対応:
+
+```yaml
+view:
+  order_list:
+    title: "受注一覧"
+    sections:
+      - section_name: "検索・フィルター"
+        input_fields:
+          - id: "search_keyword"
+            type: "text"
+            label: "キーワード検索"
+    actions:
+      - id: "add_order"
+        type: "navigate"
+        label: "新規受注"
+        style: "primary"
+        to: "order_form"
+```
+
+`sections[].input_fields` は内部で `fields` と同様に処理される。
 
 ## 現在のフィールドタイプ (44種類)
 
