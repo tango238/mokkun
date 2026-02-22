@@ -37,6 +37,67 @@ pnpm build
 pnpm test
 ```
 
+## AI でモック YAML を生成する
+
+mokkun の YAML フォーマットは [JSON Schema](./schema.json) として公開されています。
+この schema を AI のプロンプトに渡すだけで、誰でも mokkun 用の画面モック YAML を生成できます。
+
+### schema.json の URL
+
+```
+https://raw.githubusercontent.com/tango238/mokkun/main/schema.json
+```
+
+### プロンプト例
+
+ChatGPT や Claude に以下のようなプロンプトを送ってください。
+
+**基本**
+
+```
+以下の JSON Schema に準拠した YAML を生成してください。
+https://raw.githubusercontent.com/tango238/mokkun/main/schema.json
+
+作りたい画面: ECサイトの商品一覧画面
+- 検索フィルター（キーワード、カテゴリ、価格帯）
+- 商品テーブル（商品名、価格、在庫数、ステータス）
+- ページネーション
+- 「商品登録」ボタン
+```
+
+**複数画面を一括で生成**
+
+```
+以下の JSON Schema に準拠した YAML を生成してください。
+https://raw.githubusercontent.com/tango238/mokkun/main/schema.json
+
+以下の画面を一つの YAML ファイルにまとめてください:
+1. ログイン画面（メール + パスワード）
+2. ユーザー一覧画面（テーブル + 検索）
+3. ユーザー詳細画面（プロフィール編集フォーム）
+画面間のナビゲーション（actions の navigate）も設定してください。
+```
+
+### 生成した YAML をモックとして表示する
+
+AI が生成した YAML を `.yaml` ファイルとして保存し、`npx mokkun` で表示できます。
+
+```bash
+# 生成された YAML を保存
+cat > my-screen.yaml << 'EOF'
+# ここに AI が生成した YAML を貼り付け
+EOF
+
+# mokkun でモックアップを表示（ブラウザが自動で開きます）
+npx mokkun my-screen.yaml
+```
+
+ポートを変更したい場合:
+
+```bash
+npx mokkun -p 8080 my-screen.yaml
+```
+
 ## ディレクトリ構造
 
 ```
