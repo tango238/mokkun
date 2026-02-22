@@ -25,6 +25,9 @@ node_modules/
 .env.local
 .env.*.local
 
+# Claude local settings
+.claude/settings.local.json
+
 # Test coverage
 coverage/
 
