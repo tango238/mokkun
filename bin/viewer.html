@@ -139,7 +139,8 @@
       <div class="toolbar-spacer"></div>
 
       <div class="theme-toggle">
-        <button id="light-theme" class="active">Light</button>
+        <button id="lofi-theme" class="active">Lo-Fi</button>
+        <button id="light-theme">Light</button>
         <button id="dark-theme">Dark</button>
       </div>
     </div>
@@ -154,9 +155,10 @@
     (function() {
       var mokkunInstance = null;
       var screenSelect = document.getElementById('screen-select');
+      var lofiThemeBtn = document.getElementById('lofi-theme');
       var lightThemeBtn = document.getElementById('light-theme');
       var darkThemeBtn = document.getElementById('dark-theme');
-      var currentTheme = 'light';
+      var currentTheme = 'lofi';
 
       // YAML URL injected by CLI (or null for sample)
       var yamlUrl = /* __YAML_URL__ */ null;
@@ -165,11 +167,17 @@
       function setTheme(theme) {
         currentTheme = theme;
         document.body.classList.toggle('dark-theme', theme === 'dark');
+        document.documentElement.setAttribute('data-theme', theme);
+        lofiThemeBtn.classList.toggle('active', theme === 'lofi');
         lightThemeBtn.classList.toggle('active', theme === 'light');
         darkThemeBtn.classList.toggle('active', theme === 'dark');
         if (mokkunInstance) mokkunInstance.setTheme(theme);
       }
 
+      // Set initial theme
+      document.documentElement.setAttribute('data-theme', 'lofi');
+
+      lofiThemeBtn.addEventListener('click', function() { setTheme('lofi'); });
       lightThemeBtn.addEventListener('click', function() { setTheme('light'); });
       darkThemeBtn.addEventListener('click', function() { setTheme('dark'); });
 
