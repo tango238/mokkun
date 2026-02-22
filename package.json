@@ -1,6 +1,6 @@
 {
   "name": "mokkun",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "YAML-based presentation and form builder",
   "type": "module",
   "bin": {
