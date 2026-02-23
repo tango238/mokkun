@@ -389,12 +389,14 @@ describe('parseYaml', () => {
       }
     })
 
-    it('should return error for missing field id', () => {
+    it('should allow missing field id (JSON Schema only requires type)', () => {
       const result = parseYaml(missingFieldIdYaml)
 
-      expect(result.success).toBe(false)
-      if (!result.success) {
-        expect(result.errors.some(e => e.message.includes('id'))).toBe(true)
+      expect(result.success).toBe(true)
+      if (result.success) {
+        const screen = result.data.view['login']
+        expect(screen.fields).toBeDefined()
+        expect(screen.fields?.[0].type).toBe('text')
       }
     })
 

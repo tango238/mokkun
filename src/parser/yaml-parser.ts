@@ -335,8 +335,8 @@ function normalizeInputField(raw: InputFieldRaw): InputField {
       return {
         ...base,
         type: 'browser',
-        items: raw.items as import('../types/schema').BrowserItemSchema[] | undefined ?? [],
-        default: raw.default as string | undefined,
+        items: (raw.browser_items ?? raw.items) as import('../types/schema').BrowserItemSchema[] | undefined ?? [],
+        default: (raw.default_value ?? raw.default) as string | undefined,
         maxColumns: raw.max_columns as number | undefined,
         height: raw.height as string | undefined,
       }
@@ -345,8 +345,8 @@ function normalizeInputField(raw: InputFieldRaw): InputField {
         ...base,
         type: 'calendar',
         default: raw.default as string | undefined,
-        from: raw.from as string | undefined,
-        to: raw.to as string | undefined,
+        from: (raw.calendar_from ?? raw.from) as string | undefined,
+        to: (raw.calendar_to ?? raw.to) as string | undefined,
         weekStartsOn: raw.week_starts_on as 0 | 1 | undefined,
         locale: raw.locale as string | undefined,
       }
@@ -810,22 +810,7 @@ function validateInputField(
     return errors
   }
 
-  // Required fields - relaxed validation for display-only fields and placeholder types
-  const fieldType = field.type as string
-  const isPlaceholderType = PLACEHOLDER_FIELD_TYPES.includes(fieldType)
-  const isDisplayOnlyType = ['heading', 'notification_bar', 'response_message', 'timeline',
-    'chip', 'status_label', 'loader', 'stepper', 'section_nav', 'tabs',
-    'disclosure', 'accordion_panel', 'information_panel', 'float_area'].includes(fieldType)
-
-  // ID is optional for display-only and placeholder types
-  if (!isDefined(field.id) && !isDisplayOnlyType && !isPlaceholderType) {
-    errors.push({
-      type: 'MISSING_REQUIRED_FIELD',
-      message: 'Field must have an "id"',
-      path,
-    })
-  }
-
+  // JSON Schema では InputField の required は ["type"] のみ
   if (!isDefined(field.type)) {
     errors.push({
       type: 'MISSING_REQUIRED_FIELD',
@@ -833,14 +818,13 @@ function validateInputField(
       path,
     })
   }
-  // Note: We allow placeholder field types that are not yet implemented
-  // They will be normalized to 'text' as fallback
 
-  // Label is optional for placeholder types (they often have different required fields)
-  if (!isDefined(field.label) && !isPlaceholderType) {
+  // badge, pagination, float_area は label が必須（JSON Schema allOf if/then）
+  const labelRequiredTypes = ['badge', 'pagination', 'float_area']
+  if (labelRequiredTypes.includes(field.type as string) && !isDefined(field.label)) {
     errors.push({
       type: 'MISSING_REQUIRED_FIELD',
-      message: 'Field must have a "label"',
+      message: `Field type "${field.type}" requires a "label"`,
       path,
     })
   }
@@ -900,10 +884,15 @@ function validateSelectOption(
 ): ParseError[] {
   const errors: ParseError[] = []
 
+  // 文字列の場合はそのまま有効（JSON Schema: SelectOption | string の oneOf）
+  if (isString(option)) {
+    return errors
+  }
+
   if (!isObject(option)) {
     errors.push({
       type: 'INVALID_VALUE',
-      message: 'Option must be an object',
+      message: 'Option must be an object or string',
       path,
     })
     return errors
@@ -937,10 +926,15 @@ function validateAction(
 ): ParseError[] {
   const errors: ParseError[] = []
 
+  // 文字列の場合はラベルとして扱う（JSON Schema: Action | string の oneOf、ノーマライザで変換される）
+  if (isString(action)) {
+    return errors
+  }
+
   if (!isObject(action)) {
     errors.push({
       type: 'INVALID_VALUE',
-      message: 'Action must be an object',
+      message: 'Action must be an object or string',
       path,
     })
     return errors

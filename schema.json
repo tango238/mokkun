@@ -353,6 +353,12 @@
     "InputField": {
       "type": "object",
       "required": ["type"],
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "enum": ["badge", "pagination", "float_area"] } }, "required": ["type"] },
+          "then": { "required": ["type", "label"] }
+        }
+      ],
       "properties": {
         "id": {
           "type": "string",
@@ -386,13 +392,29 @@
             "toggle",
             "image_uploader",
             "badge",
+            "browser",
+            "calendar",
             "heading",
             "tooltip",
             "pagination",
             "float_area",
             "loader",
-            "calendar",
-            "browser"
+            "notification_bar",
+            "response_message",
+            "timeline",
+            "chip",
+            "status_label",
+            "segmented_control",
+            "tabs",
+            "line_clamp",
+            "disclosure",
+            "accordion_panel",
+            "section_nav",
+            "stepper",
+            "information_panel",
+            "dropdown",
+            "delete_confirm_dialog",
+            "definition_list"
           ],
           "description": "フィールドタイプ"
         },
