@@ -1464,29 +1464,6 @@ p {
   display: block;
 }
 
-/* =============================================================================
-   Demo / Utility Styles
-   ============================================================================= */
-
-.demo-section {
-  margin-bottom: var(--spacing-xl);
-  padding: var(--spacing-lg);
-  background: white;
-  border-radius: var(--radius-lg);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.demo-section h2 {
-  margin-bottom: var(--spacing-lg);
-  padding-bottom: var(--spacing-md);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.demo-title {
-  text-align: center;
-  margin-bottom: var(--spacing-xl);
-}
-
 .field-placeholder {
   padding: var(--spacing-md);
   background: var(--color-bg-subtle);
@@ -2333,57 +2310,6 @@ body,
   gap: 0;
 }
 
-/* Demo Page Styles */
-.demo-container {
-  max-width: 900px;
-  margin: 0 auto;
-  background: var(--color-surface);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  padding: var(--spacing-xl);
-}
-
-.demo-container h2 {
-  margin-bottom: var(--spacing-sm);
-}
-
-.demo-description {
-  color: var(--color-text-muted);
-  margin-bottom: var(--spacing-md);
-}
-
-.demo-features {
-  margin: 0 0 var(--spacing-xl);
-  padding-left: var(--spacing-lg);
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-}
-
-.demo-features li {
-  margin-bottom: var(--spacing-xs);
-}
-
-.demo-actions {
-  margin-top: var(--spacing-xl);
-  padding-top: var(--spacing-lg);
-  border-top: 1px solid var(--color-border);
-}
-
-.state-output {
-  margin-top: var(--spacing-lg);
-  padding: var(--spacing-md);
-  background: var(--color-bg-subtle);
-  border-radius: var(--radius-md);
-  overflow-x: auto;
-}
-
-.state-output pre {
-  margin: 0;
-  font-size: var(--font-size-sm);
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
 /* Dark Theme Overrides for FormSection */
 [data-theme="dark"] .mokkun-form-section {
   background: var(--surface-color);
@@ -2405,14 +2331,6 @@ body,
 
 [data-theme="dark"] .section-content {
   background: var(--surface-color);
-}
-
-[data-theme="dark"] .demo-container {
-  background: var(--surface-color);
-}
-
-[data-theme="dark"] .state-output {
-  background: var(--background-color-subtle);
 }
 
 /* =============================================================================
