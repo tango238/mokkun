@@ -746,6 +746,48 @@ view:
     }
   })
 
+  it('should auto-generate consistent IDs between sections and fields', () => {
+    const yaml = `
+view:
+  form:
+    title: Form
+    sections:
+      - section_name: Basic
+        input_fields:
+          - type: text
+            label: Name
+          - type: text
+            label: Email
+`
+    const result = parseYaml(yaml)
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      const screen = result.data.view.form
+      expect(screen.sections?.[0].input_fields?.[0].id).toBe(screen.fields?.[0].id)
+      expect(screen.sections?.[0].input_fields?.[1].id).toBe(screen.fields?.[1].id)
+    }
+  })
+
+  it('should generate IDs starting from 1 for each parseYaml call (counter isolation)', () => {
+    const yaml = `
+view:
+  screen1:
+    title: Screen
+    fields:
+      - type: text
+        label: Field A
+`
+    const result1 = parseYaml(yaml)
+    const result2 = parseYaml(yaml)
+
+    expect(result1.success).toBe(true)
+    expect(result2.success).toBe(true)
+    if (result1.success && result2.success) {
+      expect(result1.data.view.screen1.fields?.[0].id).toBe(result2.data.view.screen1.fields?.[0].id)
+    }
+  })
+
   it('should auto-generate IDs for common_component fields without id', () => {
     const yaml = `
 view:

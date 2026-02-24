@@ -292,7 +292,7 @@ function normalizeInputField(raw: InputFieldRaw, generateId: () => string): Inpu
       // data行にidがない場合は自動生成
       const rawData = raw.data as import('../types/schema').DataTableRow[] | undefined
       const normalizedData = rawData?.map((row, index) => {
-        if (row.id === undefined && row.id !== 0) {
+        if (!isDefined(row.id)) {
           return { ...row, id: `row-${index}` }
         }
         return row
@@ -479,22 +479,6 @@ function normalizeInputField(raw: InputFieldRaw, generateId: () => string): Inpu
   }
 }
 
-/**
- * フォームセクションからフィールドを抽出して正規化
- */
-function normalizeFieldsFromSections(sections: FormSection[], generateId: () => string): InputField[] {
-  const fields: InputField[] = []
-
-  for (const section of sections) {
-    if (section.input_fields) {
-      for (const rawField of section.input_fields) {
-        fields.push(normalizeInputField(rawField, generateId))
-      }
-    }
-  }
-
-  return fields
-}
 
 /**
  * display_fieldsからDataTableFieldを生成
@@ -674,8 +658,15 @@ function normalizeScreenDefinition(raw: ScreenDefinitionRaw, generateId: () => s
   if (raw.sections && raw.sections.length > 0) {
     // セクションを正規化して保持（SectionNavで使用）
     sections = raw.sections.map(s => normalizeSection(s, generateId))
-    // セクションからフィールドも抽出（フォーム全体の処理用）
-    fields = normalizeFieldsFromSections(raw.sections, generateId)
+    // 正規化済みセクションからフィールドを抽出（二重正規化を回避）
+    fields = []
+    for (const section of sections) {
+      if (section.input_fields) {
+        for (const field of section.input_fields) {
+          fields.push(field as InputField)
+        }
+      }
+    }
   } else if (raw.fields) {
     // 通常のfieldsを使用
     fields = (raw.fields as InputFieldRaw[]).map(f => normalizeInputField(f, generateId))
