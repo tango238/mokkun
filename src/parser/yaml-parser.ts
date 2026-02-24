@@ -157,23 +157,22 @@ function toSafeKey(name: string): string {
     .replace(/[^a-z0-9_\u3040-\u309f\u30a0-\u30ff\u4e00-\u9faf]/g, '')
 }
 
-/** id 未指定フィールド用の連番カウンター（パースごとにリセット） */
-let autoFieldIdCounter = 0
-
-function resetAutoFieldIdCounter(): void {
-  autoFieldIdCounter = 0
-}
-
-function generateAutoFieldId(): string {
-  autoFieldIdCounter++
-  return `field_${autoFieldIdCounter}`
+/**
+ * id 未指定フィールド用の連番 ID 生成関数を作成（クロージャでカウンターを保持）
+ */
+function createAutoFieldIdGenerator(): () => string {
+  let counter = 0
+  return () => {
+    counter++
+    return `__auto_field_${counter}`
+  }
 }
 
 /**
  * 配列形式の入力フィールドを正規化
  */
-function normalizeInputField(raw: InputFieldRaw): InputField {
-  const id = raw.id ?? raw.field_name ?? generateAutoFieldId()
+function normalizeInputField(raw: InputFieldRaw, generateId: () => string): InputField {
+  const id = raw.id ?? raw.field_name ?? generateId()
   const label = raw.label ?? raw.field_name ?? 'Unknown'
 
   // 配列形式のオプションをSelectOption形式に変換（文字列/オブジェクト混在配列にも対応）
@@ -184,7 +183,12 @@ function normalizeInputField(raw: InputFieldRaw): InputField {
         if (isString(opt)) {
           return { value: opt, label: opt }
         }
-        return opt as SelectOption
+        if (isObject(opt) && isDefined(opt.value)) {
+          return { value: String(opt.value), label: String(opt.label ?? opt.value) }
+        }
+        // value がないオブジェクトや予期しない型は文字列化してフォールバック
+        const fallback = String(opt)
+        return { value: fallback, label: fallback }
       })
     } else if (isString(raw.options)) {
       options = raw.options
@@ -282,7 +286,7 @@ function normalizeInputField(raw: InputFieldRaw): InputField {
       return {
         ...base,
         type: 'repeater',
-        item_fields: (raw.item_fields as InputFieldRaw[] | undefined)?.map(normalizeInputField) ?? [],
+        item_fields: (raw.item_fields as InputFieldRaw[] | undefined)?.map(f => normalizeInputField(f, generateId)) ?? [],
       }
     case 'data_table': {
       // data行にidがない場合は自動生成
@@ -478,13 +482,13 @@ function normalizeInputField(raw: InputFieldRaw): InputField {
 /**
  * フォームセクションからフィールドを抽出して正規化
  */
-function normalizeFieldsFromSections(sections: FormSection[]): InputField[] {
+function normalizeFieldsFromSections(sections: FormSection[], generateId: () => string): InputField[] {
   const fields: InputField[] = []
 
   for (const section of sections) {
     if (section.input_fields) {
       for (const rawField of section.input_fields) {
-        fields.push(normalizeInputField(rawField))
+        fields.push(normalizeInputField(rawField, generateId))
       }
     }
   }
@@ -553,12 +557,12 @@ function createDataTableFromDisplayFields(
 /**
  * セクションを正規化（フィールドを正規化しつつセクション構造を保持）
  */
-function normalizeSection(rawSection: FormSection): FormSection {
+function normalizeSection(rawSection: FormSection, generateId: () => string): FormSection {
   return {
     section_name: rawSection.section_name,
     icon: rawSection.icon,
     publish_toggle: rawSection.publish_toggle,
-    input_fields: rawSection.input_fields?.map(normalizeInputField) as InputFieldRaw[] | undefined,
+    input_fields: rawSection.input_fields?.map(f => normalizeInputField(f, generateId)) as InputFieldRaw[] | undefined,
   }
 }
 
@@ -643,7 +647,7 @@ function normalizeAppNavi(
 /**
  * 配列形式の画面定義を正規化
  */
-function normalizeScreenDefinition(raw: ScreenDefinitionRaw): ScreenDefinition {
+function normalizeScreenDefinition(raw: ScreenDefinitionRaw, generateId: () => string): ScreenDefinition {
   // タイトルを決定（name, title, purposeの順で優先）
   const title = raw.title ?? raw.name ?? 'Untitled'
 
@@ -653,12 +657,12 @@ function normalizeScreenDefinition(raw: ScreenDefinitionRaw): ScreenDefinition {
 
   if (raw.sections && raw.sections.length > 0) {
     // セクションを正規化して保持（SectionNavで使用）
-    sections = raw.sections.map(normalizeSection)
+    sections = raw.sections.map(s => normalizeSection(s, generateId))
     // セクションからフィールドも抽出（フォーム全体の処理用）
-    fields = normalizeFieldsFromSections(raw.sections)
+    fields = normalizeFieldsFromSections(raw.sections, generateId)
   } else if (raw.fields) {
     // 通常のfieldsを使用
-    fields = (raw.fields as InputFieldRaw[]).map(normalizeInputField)
+    fields = (raw.fields as InputFieldRaw[]).map(f => normalizeInputField(f, generateId))
   } else if (raw.display_fields && isArray(raw.display_fields)) {
     // display_fieldsがある場合はdata_tableフィールドを自動生成
     const dataTableField = createDataTableFromDisplayFields(
@@ -671,7 +675,7 @@ function normalizeScreenDefinition(raw: ScreenDefinitionRaw): ScreenDefinition {
 
   // input_fieldsがある場合（配列形式でのフィールド定義）
   if (!fields && raw.input_fields && isArray(raw.input_fields)) {
-    fields = (raw.input_fields as InputFieldRaw[]).map(normalizeInputField)
+    fields = (raw.input_fields as InputFieldRaw[]).map(f => normalizeInputField(f, generateId))
   }
 
   // アクションを正規化（文字列配列の場合も対応）
@@ -708,7 +712,8 @@ function normalizeScreenDefinition(raw: ScreenDefinitionRaw): ScreenDefinition {
  * 配列形式のviewを正規化
  */
 function normalizeView(
-  view: Record<string, ScreenDefinitionRaw> | ScreenDefinitionRaw[]
+  view: Record<string, ScreenDefinitionRaw> | ScreenDefinitionRaw[],
+  generateId: () => string
 ): Record<string, ScreenDefinition> {
   if (isArray(view)) {
     // 配列形式の場合、オブジェクト形式に変換
@@ -716,7 +721,7 @@ function normalizeView(
 
     for (const screen of view) {
       const key = screen.name ? toSafeKey(screen.name) : `screen_${Object.keys(result).length}`
-      result[key] = normalizeScreenDefinition(screen)
+      result[key] = normalizeScreenDefinition(screen, generateId)
     }
 
     return result
@@ -726,7 +731,7 @@ function normalizeView(
   const result: Record<string, ScreenDefinition> = {}
 
   for (const [key, screen] of Object.entries(view)) {
-    result[key] = normalizeScreenDefinition(screen as ScreenDefinitionRaw)
+    result[key] = normalizeScreenDefinition(screen as ScreenDefinitionRaw, generateId)
   }
 
   return result
@@ -790,8 +795,9 @@ function normalizeValidations(
  * 生のスキーマデータを正規化されたMokkunSchemaに変換
  */
 function normalizeSchema(raw: MokkunSchemaRaw): MokkunSchema {
+  const generateId = createAutoFieldIdGenerator()
   return {
-    view: normalizeView(raw.view),
+    view: normalizeView(raw.view, generateId),
     common_components: normalizeCommonComponents(raw.common_components),
     validations: normalizeValidations(raw.validations),
   }
@@ -932,14 +938,15 @@ function validateSelectOption(
 function validateAction(
   action: unknown,
   path: string,
-  options: { allowString?: boolean } = { allowString: true }
+  options: { allowString?: boolean } = {}
 ): ParseError[] {
+  const allowString = options.allowString ?? true
   const errors: ParseError[] = []
 
   // 文字列の場合はラベルとして扱う（JSON Schema: Action | string の oneOf、ノーマライザで変換される）
   // ただし action_group 等のコンテキストでは文字列を許可しない
   if (isString(action)) {
-    if (options.allowString) {
+    if (allowString) {
       return errors
     }
     errors.push({
@@ -1478,9 +1485,6 @@ function validateSchema(data: unknown): ParseError[] {
  * YAMLテキストをパースしてMokkunSchemaに変換
  */
 export function parseYaml(yamlText: string): ParseResult<MokkunSchema> {
-  // パースごとに自動生成ID カウンターをリセット
-  resetAutoFieldIdCounter()
-
   try {
     // Parse YAML
     const data = yaml.load(yamlText)

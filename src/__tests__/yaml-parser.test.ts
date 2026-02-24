@@ -397,6 +397,7 @@ describe('parseYaml', () => {
         const screen = result.data.view['login']
         expect(screen.fields).toBeDefined()
         expect(screen.fields?.[0].type).toBe('text')
+        expect(screen.fields?.[0].id).toMatch(/^__auto_field_/)
       }
     })
 
