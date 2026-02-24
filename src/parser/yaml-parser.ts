@@ -183,7 +183,10 @@ function normalizeInputField(raw: InputFieldRaw, generateId: () => string): Inpu
           return { value: opt, label: opt }
         }
         if (isObject(opt) && isDefined(opt.value)) {
-          return { value: String(opt.value), label: String(opt.label ?? opt.value) }
+          return {
+            ...opt,
+            label: (opt.label ?? opt.value) as string,
+          } as unknown as SelectOption
         }
         // value がないオブジェクトや予期しない型は文字列化してフォールバック
         const fallback = String(opt)
