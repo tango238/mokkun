@@ -717,3 +717,59 @@ describe('Array Format YAML', () => {
     }
   })
 })
+
+describe('Wizard and CommonComponent field normalization', () => {
+  it('should auto-generate IDs for wizard step fields without id', () => {
+    const yaml = `
+view:
+  signup:
+    title: Signup
+    wizard:
+      steps:
+        - id: step1
+          title: Step 1
+          fields:
+            - type: text
+              label: First Name
+            - type: text
+              label: Last Name
+`
+    const result = parseYaml(yaml)
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      const steps = result.data.view.signup.wizard?.steps
+      expect(steps).toHaveLength(1)
+      expect(steps?.[0].fields[0].id).toMatch(/^__auto_field_/)
+      expect(steps?.[0].fields[1].id).toMatch(/^__auto_field_/)
+      expect(steps?.[0].fields[0].id).not.toBe(steps?.[0].fields[1].id)
+    }
+  })
+
+  it('should auto-generate IDs for common_component fields without id', () => {
+    const yaml = `
+view:
+  home:
+    title: Home
+common_components:
+  address:
+    name: Address
+    type: field_group
+    fields:
+      - type: text
+        label: Street
+      - type: text
+        label: City
+`
+    const result = parseYaml(yaml)
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      const fields = result.data.common_components?.address.fields
+      expect(fields).toHaveLength(2)
+      expect(fields?.[0].id).toMatch(/^__auto_field_/)
+      expect(fields?.[1].id).toMatch(/^__auto_field_/)
+      expect(fields?.[0].id).not.toBe(fields?.[1].id)
+    }
+  })
+})

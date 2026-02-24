@@ -645,6 +645,22 @@ function normalizeAppNavi(
 }
 
 /**
+ * ウィザード設定を正規化（ステップ内のフィールドにIDを付与）
+ */
+function normalizeWizard(
+  wizard: import('../types/schema').WizardConfig,
+  generateId: () => string
+): import('../types/schema').WizardConfig {
+  return {
+    ...wizard,
+    steps: wizard.steps.map(step => ({
+      ...step,
+      fields: (step.fields as InputFieldRaw[]).map(f => normalizeInputField(f, generateId)),
+    })),
+  }
+}
+
+/**
  * 配列形式の画面定義を正規化
  */
 function normalizeScreenDefinition(raw: ScreenDefinitionRaw, generateId: () => string): ScreenDefinition {
@@ -703,7 +719,7 @@ function normalizeScreenDefinition(raw: ScreenDefinitionRaw, generateId: () => s
     sections,
     fields,
     actions,
-    wizard: raw.wizard,
+    wizard: raw.wizard ? normalizeWizard(raw.wizard, generateId) : undefined,
     layout: raw.layout,
   }
 }
@@ -741,7 +757,8 @@ function normalizeView(
  * 配列形式のcommon_componentsを正規化
  */
 function normalizeCommonComponents(
-  components: Record<string, CommonComponent> | CommonComponentRaw[] | undefined
+  components: Record<string, CommonComponent> | CommonComponentRaw[] | undefined,
+  generateId: () => string
 ): Record<string, CommonComponent> | undefined {
   if (!components) return undefined
 
@@ -760,7 +777,17 @@ function normalizeCommonComponents(
     return result
   }
 
-  return components
+  // オブジェクト形式: fields を正規化してIDを付与
+  const result: Record<string, CommonComponent> = {}
+  for (const [key, comp] of Object.entries(components)) {
+    result[key] = {
+      ...comp,
+      fields: comp.fields
+        ? (comp.fields as InputFieldRaw[]).map(f => normalizeInputField(f, generateId))
+        : undefined,
+    }
+  }
+  return result
 }
 
 /**
@@ -798,7 +825,7 @@ function normalizeSchema(raw: MokkunSchemaRaw): MokkunSchema {
   const generateId = createAutoFieldIdGenerator()
   return {
     view: normalizeView(raw.view, generateId),
-    common_components: normalizeCommonComponents(raw.common_components),
+    common_components: normalizeCommonComponents(raw.common_components, generateId),
     validations: normalizeValidations(raw.validations),
   }
 }
