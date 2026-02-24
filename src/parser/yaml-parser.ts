@@ -103,11 +103,6 @@ export const VALID_FIELD_TYPES: InputFieldType[] = [
   'definition_list',
 ]
 
-// Field types that are used in YAML but not yet fully implemented
-// These will be treated as 'text' fallback during normalization
-export const PLACEHOLDER_FIELD_TYPES: string[] = [
-  // All placeholder types have been implemented
-]
 
 const VALID_ACTION_TYPES = ['submit', 'navigate', 'custom', 'reset'] as const
 
@@ -145,16 +140,20 @@ function isString(value: unknown): value is string {
 // Normalizers / 正規化関数
 // =============================================================================
 
+const RESERVED_KEYS = new Set(['__proto__', 'constructor', 'prototype'])
+
 /**
  * 文字列を安全なキーに変換（スペースをアンダースコアに、特殊文字を削除）
  */
 function toSafeKey(name: string): string {
-  return name
+  const key = name
     .toLowerCase()
     .replace(/[（）()]/g, '')
     .replace(/[・]/g, '_')
     .replace(/\s+/g, '_')
     .replace(/[^a-z0-9_\u3040-\u309f\u30a0-\u30ff\u4e00-\u9faf]/g, '')
+  if (!key) return '_unnamed'
+  return RESERVED_KEYS.has(key) ? `_${key}` : key
 }
 
 /**
@@ -173,7 +172,7 @@ function createAutoFieldIdGenerator(): () => string {
  */
 function normalizeInputField(raw: InputFieldRaw, generateId: () => string): InputField {
   const id = raw.id ?? raw.field_name ?? generateId()
-  const label = raw.label ?? raw.field_name ?? 'Unknown'
+  const label = raw.label ?? raw.field_name ?? id
 
   // 配列形式のオプションをSelectOption形式に変換（文字列/オブジェクト混在配列にも対応）
   let options: SelectOption[] | string | undefined
@@ -470,8 +469,9 @@ function normalizeInputField(raw: InputFieldRaw, generateId: () => string): Inpu
         initialProgress: (raw.initial_progress ?? raw.initialProgress) as number | undefined,
       }
     default:
-      // 未知のタイプ（placeholder types等）はそのまま渡す
-      // レンダリング時にフォールバック表示される
+      // 未知のタイプは前方互換のためそのまま保持する（意図的な設計）
+      // バリデーションは validateInputField で実施済み
+      // レンダリング時に form-fields.ts の default ケースでフォールバック表示される
       return {
         ...base,
         type: fieldType as InputFieldType,
@@ -543,9 +543,7 @@ function createDataTableFromDisplayFields(
  */
 function normalizeSection(rawSection: FormSection, generateId: () => string): FormSection {
   return {
-    section_name: rawSection.section_name,
-    icon: rawSection.icon,
-    publish_toggle: rawSection.publish_toggle,
+    ...rawSection,
     input_fields: rawSection.input_fields?.map(f => normalizeInputField(f, generateId)) as InputFieldRaw[] | undefined,
   }
 }
