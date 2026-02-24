@@ -164,19 +164,16 @@ function normalizeInputField(raw: InputFieldRaw): InputField {
   const id = raw.id ?? raw.field_name ?? 'unknown'
   const label = raw.label ?? raw.field_name ?? 'Unknown'
 
-  // 配列形式のオプションをSelectOption形式に変換
+  // 配列形式のオプションをSelectOption形式に変換（文字列/オブジェクト混在配列にも対応）
   let options: SelectOption[] | string | undefined
   if (raw.options) {
     if (isArray(raw.options) && raw.options.length > 0) {
-      if (isString(raw.options[0])) {
-        // 文字列配列の場合、SelectOption配列に変換
-        options = (raw.options as string[]).map(opt => ({
-          value: opt,
-          label: opt,
-        }))
-      } else {
-        options = raw.options as SelectOption[]
-      }
+      options = (raw.options as unknown[]).map(opt => {
+        if (isString(opt)) {
+          return { value: opt, label: opt }
+        }
+        return opt as SelectOption
+      })
     } else if (isString(raw.options)) {
       options = raw.options
     }
@@ -922,12 +919,22 @@ function validateSelectOption(
  */
 function validateAction(
   action: unknown,
-  path: string
+  path: string,
+  options: { allowString?: boolean } = { allowString: true }
 ): ParseError[] {
   const errors: ParseError[] = []
 
   // 文字列の場合はラベルとして扱う（JSON Schema: Action | string の oneOf、ノーマライザで変換される）
+  // ただし action_group 等のコンテキストでは文字列を許可しない
   if (isString(action)) {
+    if (options.allowString) {
+      return errors
+    }
+    errors.push({
+      type: 'INVALID_VALUE',
+      message: 'Action must be an object',
+      path,
+    })
     return errors
   }
 
@@ -1203,6 +1210,7 @@ function validateCommonComponent(
   }
 
   // Validate actions for action_group type
+  // action_group では文字列アクションを許可しない（JSON Schema: Action オブジェクトのみ）
   if (component.type === 'action_group' && isDefined(component.actions)) {
     if (!isArray(component.actions)) {
       errors.push({
@@ -1212,7 +1220,7 @@ function validateCommonComponent(
       })
     } else {
       (component.actions as unknown[]).forEach((action, index) => {
-        errors.push(...validateAction(action, `${path}.actions[${index}]`))
+        errors.push(...validateAction(action, `${path}.actions[${index}]`, { allowString: false }))
       })
     }
   }
