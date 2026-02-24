@@ -103,11 +103,6 @@ export const VALID_FIELD_TYPES: InputFieldType[] = [
   'definition_list',
 ]
 
-// Field types that are used in YAML but not yet fully implemented
-// These will be treated as 'text' fallback during normalization
-export const PLACEHOLDER_FIELD_TYPES: string[] = [
-  // All placeholder types have been implemented
-]
 
 const VALID_ACTION_TYPES = ['submit', 'navigate', 'custom', 'reset'] as const
 
@@ -145,38 +140,58 @@ function isString(value: unknown): value is string {
 // Normalizers / 正規化関数
 // =============================================================================
 
+const RESERVED_KEYS = new Set(['__proto__', 'constructor', 'prototype'])
+
 /**
  * 文字列を安全なキーに変換（スペースをアンダースコアに、特殊文字を削除）
  */
 function toSafeKey(name: string): string {
-  return name
+  const key = name
     .toLowerCase()
     .replace(/[（）()]/g, '')
     .replace(/[・]/g, '_')
     .replace(/\s+/g, '_')
     .replace(/[^a-z0-9_\u3040-\u309f\u30a0-\u30ff\u4e00-\u9faf]/g, '')
+  if (!key) return '_unnamed'
+  return RESERVED_KEYS.has(key) ? `_${key}` : key
+}
+
+/**
+ * id 未指定フィールド用の連番 ID 生成関数を作成（クロージャでカウンターを保持）
+ */
+function createAutoFieldIdGenerator(): () => string {
+  let counter = 0
+  return () => {
+    counter++
+    return `__auto_field_${counter}`
+  }
 }
 
 /**
  * 配列形式の入力フィールドを正規化
  */
-function normalizeInputField(raw: InputFieldRaw): InputField {
-  const id = raw.id ?? raw.field_name ?? 'unknown'
-  const label = raw.label ?? raw.field_name ?? 'Unknown'
+function normalizeInputField(raw: InputFieldRaw, generateId: () => string): InputField {
+  const id = raw.id ?? raw.field_name ?? generateId()
+  const label = raw.label ?? raw.field_name ?? id
 
-  // 配列形式のオプションをSelectOption形式に変換
+  // 配列形式のオプションをSelectOption形式に変換（文字列/オブジェクト混在配列にも対応）
   let options: SelectOption[] | string | undefined
   if (raw.options) {
     if (isArray(raw.options) && raw.options.length > 0) {
-      if (isString(raw.options[0])) {
-        // 文字列配列の場合、SelectOption配列に変換
-        options = (raw.options as string[]).map(opt => ({
-          value: opt,
-          label: opt,
-        }))
-      } else {
-        options = raw.options as SelectOption[]
-      }
+      options = (raw.options as unknown[]).map(opt => {
+        if (isString(opt)) {
+          return { value: opt, label: opt }
+        }
+        if (isObject(opt) && isDefined(opt.value)) {
+          return {
+            ...opt,
+            label: (opt.label ?? opt.value) as string,
+          } as unknown as SelectOption
+        }
+        // value がないオブジェクトや予期しない型は文字列化してフォールバック
+        const fallback = String(opt)
+        return { value: fallback, label: fallback }
+      })
     } else if (isString(raw.options)) {
       options = raw.options
     }
@@ -273,13 +288,13 @@ function normalizeInputField(raw: InputFieldRaw): InputField {
       return {
         ...base,
         type: 'repeater',
-        item_fields: (raw.item_fields as InputFieldRaw[] | undefined)?.map(normalizeInputField) ?? [],
+        item_fields: (raw.item_fields as InputFieldRaw[] | undefined)?.map(f => normalizeInputField(f, generateId)) ?? [],
       }
     case 'data_table': {
       // data行にidがない場合は自動生成
       const rawData = raw.data as import('../types/schema').DataTableRow[] | undefined
       const normalizedData = rawData?.map((row, index) => {
-        if (row.id === undefined && row.id !== 0) {
+        if (!isDefined(row.id)) {
           return { ...row, id: `row-${index}` }
         }
         return row
@@ -335,8 +350,8 @@ function normalizeInputField(raw: InputFieldRaw): InputField {
       return {
         ...base,
         type: 'browser',
-        items: raw.items as import('../types/schema').BrowserItemSchema[] | undefined ?? [],
-        default: raw.default as string | undefined,
+        items: (raw.browser_items ?? raw.items) as import('../types/schema').BrowserItemSchema[] | undefined ?? [],
+        default: (raw.default_value ?? raw.default) as string | undefined,
         maxColumns: raw.max_columns as number | undefined,
         height: raw.height as string | undefined,
       }
@@ -345,8 +360,8 @@ function normalizeInputField(raw: InputFieldRaw): InputField {
         ...base,
         type: 'calendar',
         default: raw.default as string | undefined,
-        from: raw.from as string | undefined,
-        to: raw.to as string | undefined,
+        from: (raw.calendar_from ?? raw.from) as string | undefined,
+        to: (raw.calendar_to ?? raw.to) as string | undefined,
         weekStartsOn: raw.week_starts_on as 0 | 1 | undefined,
         locale: raw.locale as string | undefined,
       }
@@ -457,8 +472,9 @@ function normalizeInputField(raw: InputFieldRaw): InputField {
         initialProgress: (raw.initial_progress ?? raw.initialProgress) as number | undefined,
       }
     default:
-      // 未知のタイプ（placeholder types等）はそのまま渡す
-      // レンダリング時にフォールバック表示される
+      // 未知のタイプは前方互換のためそのまま保持する（意図的な設計）
+      // バリデーションは validateInputField で実施済み
+      // レンダリング時に form-fields.ts の default ケースでフォールバック表示される
       return {
         ...base,
         type: fieldType as InputFieldType,
@@ -466,22 +482,6 @@ function normalizeInputField(raw: InputFieldRaw): InputField {
   }
 }
 
-/**
- * フォームセクションからフィールドを抽出して正規化
- */
-function normalizeFieldsFromSections(sections: FormSection[]): InputField[] {
-  const fields: InputField[] = []
-
-  for (const section of sections) {
-    if (section.input_fields) {
-      for (const rawField of section.input_fields) {
-        fields.push(normalizeInputField(rawField))
-      }
-    }
-  }
-
-  return fields
-}
 
 /**
  * display_fieldsからDataTableFieldを生成
@@ -544,12 +544,10 @@ function createDataTableFromDisplayFields(
 /**
  * セクションを正規化（フィールドを正規化しつつセクション構造を保持）
  */
-function normalizeSection(rawSection: FormSection): FormSection {
+function normalizeSection(rawSection: FormSection, generateId: () => string): FormSection {
   return {
-    section_name: rawSection.section_name,
-    icon: rawSection.icon,
-    publish_toggle: rawSection.publish_toggle,
-    input_fields: rawSection.input_fields?.map(normalizeInputField) as InputFieldRaw[] | undefined,
+    ...rawSection,
+    input_fields: rawSection.input_fields?.map(f => normalizeInputField(f, generateId)) as InputFieldRaw[] | undefined,
   }
 }
 
@@ -632,9 +630,25 @@ function normalizeAppNavi(
 }
 
 /**
+ * ウィザード設定を正規化（ステップ内のフィールドにIDを付与）
+ */
+function normalizeWizard(
+  wizard: import('../types/schema').WizardConfig,
+  generateId: () => string
+): import('../types/schema').WizardConfig {
+  return {
+    ...wizard,
+    steps: wizard.steps.map(step => ({
+      ...step,
+      fields: ((step.fields ?? []) as InputFieldRaw[]).map(f => normalizeInputField(f, generateId)),
+    })),
+  }
+}
+
+/**
  * 配列形式の画面定義を正規化
  */
-function normalizeScreenDefinition(raw: ScreenDefinitionRaw): ScreenDefinition {
+function normalizeScreenDefinition(raw: ScreenDefinitionRaw, generateId: () => string): ScreenDefinition {
   // タイトルを決定（name, title, purposeの順で優先）
   const title = raw.title ?? raw.name ?? 'Untitled'
 
@@ -644,12 +658,19 @@ function normalizeScreenDefinition(raw: ScreenDefinitionRaw): ScreenDefinition {
 
   if (raw.sections && raw.sections.length > 0) {
     // セクションを正規化して保持（SectionNavで使用）
-    sections = raw.sections.map(normalizeSection)
-    // セクションからフィールドも抽出（フォーム全体の処理用）
-    fields = normalizeFieldsFromSections(raw.sections)
+    sections = raw.sections.map(s => normalizeSection(s, generateId))
+    // 正規化済みセクションからフィールドを抽出（二重正規化を回避）
+    fields = []
+    for (const section of sections) {
+      if (section.input_fields) {
+        for (const field of section.input_fields) {
+          fields.push(field as InputField)
+        }
+      }
+    }
   } else if (raw.fields) {
     // 通常のfieldsを使用
-    fields = (raw.fields as InputFieldRaw[]).map(normalizeInputField)
+    fields = (raw.fields as InputFieldRaw[]).map(f => normalizeInputField(f, generateId))
   } else if (raw.display_fields && isArray(raw.display_fields)) {
     // display_fieldsがある場合はdata_tableフィールドを自動生成
     const dataTableField = createDataTableFromDisplayFields(
@@ -662,7 +683,7 @@ function normalizeScreenDefinition(raw: ScreenDefinitionRaw): ScreenDefinition {
 
   // input_fieldsがある場合（配列形式でのフィールド定義）
   if (!fields && raw.input_fields && isArray(raw.input_fields)) {
-    fields = (raw.input_fields as InputFieldRaw[]).map(normalizeInputField)
+    fields = (raw.input_fields as InputFieldRaw[]).map(f => normalizeInputField(f, generateId))
   }
 
   // アクションを正規化（文字列配列の場合も対応）
@@ -690,7 +711,7 @@ function normalizeScreenDefinition(raw: ScreenDefinitionRaw): ScreenDefinition {
     sections,
     fields,
     actions,
-    wizard: raw.wizard,
+    wizard: raw.wizard ? normalizeWizard(raw.wizard, generateId) : undefined,
     layout: raw.layout,
   }
 }
@@ -699,7 +720,8 @@ function normalizeScreenDefinition(raw: ScreenDefinitionRaw): ScreenDefinition {
  * 配列形式のviewを正規化
  */
 function normalizeView(
-  view: Record<string, ScreenDefinitionRaw> | ScreenDefinitionRaw[]
+  view: Record<string, ScreenDefinitionRaw> | ScreenDefinitionRaw[],
+  generateId: () => string
 ): Record<string, ScreenDefinition> {
   if (isArray(view)) {
     // 配列形式の場合、オブジェクト形式に変換
@@ -707,7 +729,7 @@ function normalizeView(
 
     for (const screen of view) {
       const key = screen.name ? toSafeKey(screen.name) : `screen_${Object.keys(result).length}`
-      result[key] = normalizeScreenDefinition(screen)
+      result[key] = normalizeScreenDefinition(screen, generateId)
     }
 
     return result
@@ -717,7 +739,7 @@ function normalizeView(
   const result: Record<string, ScreenDefinition> = {}
 
   for (const [key, screen] of Object.entries(view)) {
-    result[key] = normalizeScreenDefinition(screen as ScreenDefinitionRaw)
+    result[key] = normalizeScreenDefinition(screen as ScreenDefinitionRaw, generateId)
   }
 
   return result
@@ -727,7 +749,8 @@ function normalizeView(
  * 配列形式のcommon_componentsを正規化
  */
 function normalizeCommonComponents(
-  components: Record<string, CommonComponent> | CommonComponentRaw[] | undefined
+  components: Record<string, CommonComponent> | CommonComponentRaw[] | undefined,
+  generateId: () => string
 ): Record<string, CommonComponent> | undefined {
   if (!components) return undefined
 
@@ -746,7 +769,17 @@ function normalizeCommonComponents(
     return result
   }
 
-  return components
+  // オブジェクト形式: fields を正規化してIDを付与
+  const result: Record<string, CommonComponent> = {}
+  for (const [key, comp] of Object.entries(components)) {
+    result[key] = {
+      ...comp,
+      fields: comp.fields
+        ? (comp.fields as InputFieldRaw[]).map(f => normalizeInputField(f, generateId))
+        : undefined,
+    }
+  }
+  return result
 }
 
 /**
@@ -781,9 +814,10 @@ function normalizeValidations(
  * 生のスキーマデータを正規化されたMokkunSchemaに変換
  */
 function normalizeSchema(raw: MokkunSchemaRaw): MokkunSchema {
+  const generateId = createAutoFieldIdGenerator()
   return {
-    view: normalizeView(raw.view),
-    common_components: normalizeCommonComponents(raw.common_components),
+    view: normalizeView(raw.view, generateId),
+    common_components: normalizeCommonComponents(raw.common_components, generateId),
     validations: normalizeValidations(raw.validations),
   }
 }
@@ -810,22 +844,7 @@ function validateInputField(
     return errors
   }
 
-  // Required fields - relaxed validation for display-only fields and placeholder types
-  const fieldType = field.type as string
-  const isPlaceholderType = PLACEHOLDER_FIELD_TYPES.includes(fieldType)
-  const isDisplayOnlyType = ['heading', 'notification_bar', 'response_message', 'timeline',
-    'chip', 'status_label', 'loader', 'stepper', 'section_nav', 'tabs',
-    'disclosure', 'accordion_panel', 'information_panel', 'float_area'].includes(fieldType)
-
-  // ID is optional for display-only and placeholder types
-  if (!isDefined(field.id) && !isDisplayOnlyType && !isPlaceholderType) {
-    errors.push({
-      type: 'MISSING_REQUIRED_FIELD',
-      message: 'Field must have an "id"',
-      path,
-    })
-  }
-
+  // JSON Schema では InputField の required は ["type"] のみ
   if (!isDefined(field.type)) {
     errors.push({
       type: 'MISSING_REQUIRED_FIELD',
@@ -833,14 +852,13 @@ function validateInputField(
       path,
     })
   }
-  // Note: We allow placeholder field types that are not yet implemented
-  // They will be normalized to 'text' as fallback
 
-  // Label is optional for placeholder types (they often have different required fields)
-  if (!isDefined(field.label) && !isPlaceholderType) {
+  // badge, pagination, float_area は label が必須（JSON Schema allOf if/then）
+  const labelRequiredTypes = ['badge', 'pagination', 'float_area']
+  if (labelRequiredTypes.includes(field.type as string) && !isDefined(field.label)) {
     errors.push({
       type: 'MISSING_REQUIRED_FIELD',
-      message: 'Field must have a "label"',
+      message: `Field type "${field.type}" requires a "label"`,
       path,
     })
   }
@@ -900,10 +918,15 @@ function validateSelectOption(
 ): ParseError[] {
   const errors: ParseError[] = []
 
+  // 文字列の場合はそのまま有効（JSON Schema: SelectOption | string の oneOf）
+  if (isString(option)) {
+    return errors
+  }
+
   if (!isObject(option)) {
     errors.push({
       type: 'INVALID_VALUE',
-      message: 'Option must be an object',
+      message: 'Option must be an object or string',
       path,
     })
     return errors
@@ -933,14 +956,30 @@ function validateSelectOption(
  */
 function validateAction(
   action: unknown,
-  path: string
+  path: string,
+  options: { allowString?: boolean } = {}
 ): ParseError[] {
+  const allowString = options.allowString ?? true
   const errors: ParseError[] = []
+
+  // 文字列の場合はラベルとして扱う（JSON Schema: Action | string の oneOf、ノーマライザで変換される）
+  // ただし action_group 等のコンテキストでは文字列を許可しない
+  if (isString(action)) {
+    if (allowString) {
+      return errors
+    }
+    errors.push({
+      type: 'INVALID_VALUE',
+      message: 'Action must be an object',
+      path,
+    })
+    return errors
+  }
 
   if (!isObject(action)) {
     errors.push({
       type: 'INVALID_VALUE',
-      message: 'Action must be an object',
+      message: 'Action must be an object or string',
       path,
     })
     return errors
@@ -1209,6 +1248,7 @@ function validateCommonComponent(
   }
 
   // Validate actions for action_group type
+  // action_group では文字列アクションを許可しない（JSON Schema: Action オブジェクトのみ）
   if (component.type === 'action_group' && isDefined(component.actions)) {
     if (!isArray(component.actions)) {
       errors.push({
@@ -1218,7 +1258,7 @@ function validateCommonComponent(
       })
     } else {
       (component.actions as unknown[]).forEach((action, index) => {
-        errors.push(...validateAction(action, `${path}.actions[${index}]`))
+        errors.push(...validateAction(action, `${path}.actions[${index}]`, { allowString: false }))
       })
     }
   }

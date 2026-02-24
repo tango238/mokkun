@@ -60,8 +60,8 @@ describe('ThemeManager', () => {
     it('should apply default theme on initialize when no saved preference', () => {
       manager.initialize()
 
-      expect(manager.getCurrentTheme()).toBe('light')
-      expect(document.documentElement.getAttribute(THEME_DATA_ATTRIBUTE)).toBe('light')
+      expect(manager.getCurrentTheme()).toBe('lofi')
+      expect(document.documentElement.getAttribute(THEME_DATA_ATTRIBUTE)).toBe('lofi')
     })
 
     it('should apply saved theme on initialize', () => {
@@ -78,7 +78,7 @@ describe('ThemeManager', () => {
 
       manager.initialize()
 
-      expect(manager.getCurrentTheme()).toBe('light')
+      expect(manager.getCurrentTheme()).toBe('lofi')
     })
   })
 
@@ -211,7 +211,7 @@ describe('ThemeManager', () => {
 
       manager.unregisterTheme('custom')
 
-      expect(manager.getCurrentTheme()).toBe('light')
+      expect(manager.getCurrentTheme()).toBe('lofi')
     })
   })
 
@@ -310,7 +310,7 @@ custom_themes:
 
   describe('getDefaultTheme', () => {
     it('should return default theme id', () => {
-      expect(manager.getDefaultTheme()).toBe('light')
+      expect(manager.getDefaultTheme()).toBe('lofi')
     })
 
     it('should return config default if loaded', () => {

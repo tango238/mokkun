@@ -389,12 +389,15 @@ describe('parseYaml', () => {
       }
     })
 
-    it('should return error for missing field id', () => {
+    it('should allow missing field id (JSON Schema only requires type)', () => {
       const result = parseYaml(missingFieldIdYaml)
 
-      expect(result.success).toBe(false)
-      if (!result.success) {
-        expect(result.errors.some(e => e.message.includes('id'))).toBe(true)
+      expect(result.success).toBe(true)
+      if (result.success) {
+        const screen = result.data.view['login']
+        expect(screen.fields).toBeDefined()
+        expect(screen.fields?.[0].type).toBe('text')
+        expect(screen.fields?.[0].id).toMatch(/^__auto_field_/)
       }
     })
 
@@ -711,6 +714,104 @@ describe('Array Format YAML', () => {
       const secondAction = listScreen.actions?.[1]
       expect(secondAction?.label).toBe('編集')
       expect(secondAction?.style).toBe('secondary')
+    }
+  })
+})
+
+describe('Wizard and CommonComponent field normalization', () => {
+  it('should auto-generate IDs for wizard step fields without id', () => {
+    const yaml = `
+view:
+  signup:
+    title: Signup
+    wizard:
+      steps:
+        - id: step1
+          title: Step 1
+          fields:
+            - type: text
+              label: First Name
+            - type: text
+              label: Last Name
+`
+    const result = parseYaml(yaml)
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      const steps = result.data.view.signup.wizard?.steps
+      expect(steps).toHaveLength(1)
+      expect(steps?.[0].fields[0].id).toMatch(/^__auto_field_/)
+      expect(steps?.[0].fields[1].id).toMatch(/^__auto_field_/)
+      expect(steps?.[0].fields[0].id).not.toBe(steps?.[0].fields[1].id)
+    }
+  })
+
+  it('should auto-generate consistent IDs between sections and fields', () => {
+    const yaml = `
+view:
+  form:
+    title: Form
+    sections:
+      - section_name: Basic
+        input_fields:
+          - type: text
+            label: Name
+          - type: text
+            label: Email
+`
+    const result = parseYaml(yaml)
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      const screen = result.data.view.form
+      expect(screen.sections?.[0].input_fields?.[0].id).toBe(screen.fields?.[0].id)
+      expect(screen.sections?.[0].input_fields?.[1].id).toBe(screen.fields?.[1].id)
+    }
+  })
+
+  it('should generate IDs starting from 1 for each parseYaml call (counter isolation)', () => {
+    const yaml = `
+view:
+  screen1:
+    title: Screen
+    fields:
+      - type: text
+        label: Field A
+`
+    const result1 = parseYaml(yaml)
+    const result2 = parseYaml(yaml)
+
+    expect(result1.success).toBe(true)
+    expect(result2.success).toBe(true)
+    if (result1.success && result2.success) {
+      expect(result1.data.view.screen1.fields?.[0].id).toBe(result2.data.view.screen1.fields?.[0].id)
+    }
+  })
+
+  it('should auto-generate IDs for common_component fields without id', () => {
+    const yaml = `
+view:
+  home:
+    title: Home
+common_components:
+  address:
+    name: Address
+    type: field_group
+    fields:
+      - type: text
+        label: Street
+      - type: text
+        label: City
+`
+    const result = parseYaml(yaml)
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      const fields = result.data.common_components?.address.fields
+      expect(fields).toHaveLength(2)
+      expect(fields?.[0].id).toMatch(/^__auto_field_/)
+      expect(fields?.[1].id).toMatch(/^__auto_field_/)
+      expect(fields?.[0].id).not.toBe(fields?.[1].id)
     }
   })
 })
