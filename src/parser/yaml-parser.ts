@@ -637,7 +637,7 @@ function normalizeWizard(
     ...wizard,
     steps: wizard.steps.map(step => ({
       ...step,
-      fields: (step.fields as InputFieldRaw[]).map(f => normalizeInputField(f, generateId)),
+      fields: ((step.fields ?? []) as InputFieldRaw[]).map(f => normalizeInputField(f, generateId)),
     })),
   }
 }
