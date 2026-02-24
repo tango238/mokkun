@@ -157,11 +157,23 @@ function toSafeKey(name: string): string {
     .replace(/[^a-z0-9_\u3040-\u309f\u30a0-\u30ff\u4e00-\u9faf]/g, '')
 }
 
+/** id 未指定フィールド用の連番カウンター（パースごとにリセット） */
+let autoFieldIdCounter = 0
+
+function resetAutoFieldIdCounter(): void {
+  autoFieldIdCounter = 0
+}
+
+function generateAutoFieldId(): string {
+  autoFieldIdCounter++
+  return `field_${autoFieldIdCounter}`
+}
+
 /**
  * 配列形式の入力フィールドを正規化
  */
 function normalizeInputField(raw: InputFieldRaw): InputField {
-  const id = raw.id ?? raw.field_name ?? 'unknown'
+  const id = raw.id ?? raw.field_name ?? generateAutoFieldId()
   const label = raw.label ?? raw.field_name ?? 'Unknown'
 
   // 配列形式のオプションをSelectOption形式に変換（文字列/オブジェクト混在配列にも対応）
@@ -1466,6 +1478,9 @@ function validateSchema(data: unknown): ParseError[] {
  * YAMLテキストをパースしてMokkunSchemaに変換
  */
 export function parseYaml(yamlText: string): ParseResult<MokkunSchema> {
+  // パースごとに自動生成ID カウンターをリセット
+  resetAutoFieldIdCounter()
+
   try {
     // Parse YAML
     const data = yaml.load(yamlText)
