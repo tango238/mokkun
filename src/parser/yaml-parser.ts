@@ -758,9 +758,10 @@ function normalizeCommonComponents(
     const result: Record<string, CommonComponent> = {}
 
     for (const comp of components) {
-      const key = toSafeKey(comp.component_name)
+      const componentName = comp.component_name ?? (comp as Record<string, unknown>).name as string
+      const key = toSafeKey(componentName)
       result[key] = {
-        name: comp.component_name,
+        name: componentName,
         description: comp.description,
         type: 'field_group', // デフォルト
       }
@@ -807,7 +808,15 @@ function normalizeValidations(
     return result
   }
 
-  return validations
+  // オブジェクト形式 → name が未設定ならキーを name として補完
+  const result: Record<string, ValidationRule> = {}
+  for (const [key, rule] of Object.entries(validations)) {
+    result[key] = {
+      ...rule,
+      name: rule.name ?? key,
+    }
+  }
+  return result
 }
 
 /**
@@ -1284,14 +1293,6 @@ function validateValidationRule(
     return errors
   }
 
-  if (!isDefined(rule.name)) {
-    errors.push({
-      type: 'MISSING_REQUIRED_FIELD',
-      message: 'Validation rule must have a "name"',
-      path,
-    })
-  }
-
   if (!isDefined(rule.rules)) {
     errors.push({
       type: 'MISSING_REQUIRED_FIELD',
@@ -1363,10 +1364,10 @@ function validateCommonComponentArray(
     return errors
   }
 
-  if (!isDefined(component.component_name)) {
+  if (!isDefined(component.component_name) && !isDefined(component.name)) {
     errors.push({
       type: 'MISSING_REQUIRED_FIELD',
-      message: 'Common component must have a "component_name"',
+      message: 'Common component must have a "component_name" or "name"',
       path,
     })
   }

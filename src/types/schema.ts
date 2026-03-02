@@ -140,7 +140,9 @@ export interface ScreenValidation {
  */
 export interface CommonComponentRaw {
   /** コンポーネント名 */
-  component_name: string
+  component_name?: string
+  /** コンポーネント名（name形式） */
+  name?: string
   /** 説明 */
   description?: string
   /** 使用箇所 */
