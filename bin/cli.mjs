@@ -13,10 +13,15 @@ const distDir = resolve(__dirname, '../dist')
 const args = process.argv.slice(2)
 let yamlFile = null
 let port = 3333
+let theme = 'lofi'
+const VALID_THEMES = ['lofi', 'light', 'dark']
 
 for (let i = 0; i < args.length; i++) {
   if (args[i] === '--port' || args[i] === '-p') {
     port = parseInt(args[i + 1], 10)
+    i++
+  } else if (args[i] === '--theme' || args[i] === '-t') {
+    theme = args[i + 1]
     i++
   } else if (args[i] === '--help' || args[i] === '-h') {
     printHelp()
@@ -24,6 +29,12 @@ for (let i = 0; i < args.length; i++) {
   } else if (!args[i].startsWith('-')) {
     yamlFile = resolve(process.cwd(), args[i])
   }
+}
+
+// Validate theme
+if (!VALID_THEMES.includes(theme)) {
+  console.error(`Error: Invalid theme "${theme}". Valid themes: ${VALID_THEMES.join(', ')}`)
+  process.exit(1)
 }
 
 function printHelp() {
@@ -34,13 +45,15 @@ Usage:
   npx mokkun [options] [yaml-file]
 
 Options:
-  -p, --port <port>  Port number (default: 3333)
-  -h, --help         Show this help
+  -p, --port <port>    Port number (default: 3333)
+  -t, --theme <theme>  Theme: lofi, light, dark (default: lofi)
+  -h, --help           Show this help
 
 Examples:
-  npx mokkun                     # Start with built-in sample
-  npx mokkun ./my-form.yaml      # Open specific YAML file
-  npx mokkun -p 8080 form.yaml   # Custom port
+  npx mokkun                            # Start with built-in sample
+  npx mokkun ./my-form.yaml             # Open specific YAML file
+  npx mokkun -p 8080 form.yaml          # Custom port
+  npx mokkun --theme light form.yaml    # Use light theme
 `)
 }
 
@@ -76,12 +89,12 @@ const MIME_TYPES = {
 
 // Generate viewer HTML
 function generateViewerHtml() {
-  const yamlParam = yamlFile ? `yaml=${encodeURIComponent('/__yaml__/' + basename(yamlFile))}` : ''
   const viewerHtmlPath = resolve(__dirname, 'viewer.html')
   let html = readFileSync(viewerHtmlPath, 'utf-8')
-  if (yamlParam) {
+  if (yamlFile) {
     html = html.replace('/* __YAML_URL__ */ null', JSON.stringify('/__yaml__/' + basename(yamlFile)))
   }
+  html = html.replace('/* __THEME__ */ \'lofi\'', JSON.stringify(theme))
   return html
 }
 
@@ -136,6 +149,7 @@ server.listen(port, () => {
   if (yamlFile) {
     console.log(`Serving: ${yamlFile}`)
   }
+  console.log(`Theme: ${theme}`)
   console.log('Press Ctrl+C to stop.\n')
 
   // Open browser

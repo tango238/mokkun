@@ -14,12 +14,7 @@ import {
   formatFileLoadError,
   type FileLoadResult,
 } from './loader'
-import { initializeTheme } from './theme'
-import {
-  renderThemeSelector,
-  attachThemeSelectorListeners,
-  setupThemeSelectorSync,
-} from './theme/theme-selector'
+import { initializeTheme, applyTheme } from './theme'
 import { initializeGoogleMapEmbedFields } from './renderer/components/google-map-embed-init'
 import type { MokkunSchema } from './types/schema'
 
@@ -82,8 +77,6 @@ function renderApp(schema: MokkunSchema, screenName: string | null): void {
     ? `<span class="current-file" title="${escapeHtml(currentFileName)}">${escapeHtml(truncateFileName(currentFileName))}</span>`
     : ''
 
-  const themeSelectorHtml = renderThemeSelector()
-
   app.innerHTML = `
     <div class="app-layout">
       <header class="app-header">
@@ -95,7 +88,6 @@ function renderApp(schema: MokkunSchema, screenName: string | null): void {
           </button>
           <label for="screen-selector" class="screen-selector-label">画面:</label>
           ${screenSelectorHtml}
-          ${themeSelectorHtml}
         </div>
       </header>
       <main class="main-content">
@@ -106,9 +98,6 @@ function renderApp(schema: MokkunSchema, screenName: string | null): void {
 
   // イベントリスナーを設定
   attachEventListeners()
-
-  // テーマセレクターのイベントリスナーを設定
-  attachThemeSelectorListeners()
 
   // セクションナビを初期化（セクション付き画面の場合）
   if (sectionNavController) {
@@ -423,11 +412,14 @@ function truncateFileName(fileName: string, maxLength = 30): string {
  * アプリケーション初期化
  */
 async function init(): Promise<void> {
-  // テーマを初期化（ローカルストレージから読み込みまたはデフォルト適用）
+  // テーマを初期化（デフォルト: lofi）
   initializeTheme()
 
-  // テーマ同期のセットアップ
-  setupThemeSelectorSync()
+  // URLパラメータ ?theme= でテーマを上書き
+  const urlTheme = new URLSearchParams(window.location.search).get('theme')
+  if (urlTheme) {
+    applyTheme(urlTheme)
+  }
 
   // URLパラメータからYAMLを読み込み
   const urlResult = await loadFromUrlParams()
