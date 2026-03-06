@@ -101,6 +101,9 @@ export const VALID_FIELD_TYPES: InputFieldType[] = [
   'dropdown',
   'delete_confirm_dialog',
   'definition_list',
+  'line_chart',
+  'pie_chart',
+  'bar_chart',
 ]
 
 
@@ -470,6 +473,37 @@ function normalizeInputField(raw: InputFieldRaw, generateId: () => string): Inpu
         overlay: raw.overlay as boolean | undefined,
         showProgress: (raw.show_progress ?? raw.showProgress) as boolean | undefined,
         initialProgress: (raw.initial_progress ?? raw.initialProgress) as number | undefined,
+      }
+    case 'line_chart':
+      return {
+        ...base,
+        type: 'line_chart',
+        series: raw.series as import('../types/schema').LineChartSeries[] ?? [],
+        x_labels: raw.x_labels as string[] | undefined,
+        y_min: raw.y_min as number | undefined,
+        y_max: raw.y_max as number | undefined,
+        height: raw.height as number | undefined,
+        show_grid: raw.show_grid as boolean | undefined,
+        show_legend: raw.show_legend as boolean | undefined,
+      }
+    case 'pie_chart':
+      return {
+        ...base,
+        type: 'pie_chart',
+        segments: raw.segments as import('../types/schema').PieChartSegment[] ?? [],
+        size: raw.size as number | undefined,
+        show_legend: raw.show_legend as boolean | undefined,
+        donut: raw.donut as number | undefined,
+      }
+    case 'bar_chart':
+      return {
+        ...base,
+        type: 'bar_chart',
+        bars: raw.bars as import('../types/schema').BarChartBar[] ?? [],
+        height: raw.height as number | undefined,
+        y_max: raw.y_max as number | undefined,
+        show_grid: raw.show_grid as boolean | undefined,
+        show_legend: raw.show_legend as boolean | undefined,
       }
     default:
       // 未知のタイプは前方互換のためそのまま保持する（意図的な設計）

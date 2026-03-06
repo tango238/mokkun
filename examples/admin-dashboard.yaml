@@ -118,6 +118,66 @@ view:
             color: "red"
             dot: true
 
+          - id: "user_trend"
+            type: "line_chart"
+            label: "ユーザー推移（過去7日）"
+            height: 200
+            show_grid: true
+            show_legend: true
+            x_labels: ["月", "火", "水", "木", "金", "土", "日"]
+            series:
+              - name: "アクティブユーザー"
+                data: [980, 1050, 1120, 1080, 1200, 1150, 1234]
+                color: "#3b82f6"
+              - name: "新規ユーザー"
+                data: [45, 52, 48, 60, 55, 70, 56]
+                color: "#22c55e"
+
+          - id: "order_breakdown"
+            type: "pie_chart"
+            label: "注文カテゴリ別"
+            size: 200
+            show_legend: true
+            segments:
+              - name: "電子機器"
+                value: 42
+                color: "#14b8a6"
+              - name: "書籍"
+                value: 28
+                color: "#f59e0b"
+              - name: "衣類"
+                value: 18
+                color: "#3b82f6"
+              - name: "その他"
+                value: 12
+                color: "#ef4444"
+
+          - id: "monthly_sales"
+            type: "bar_chart"
+            label: "月間売上"
+            height: 200
+            show_grid: true
+            show_legend: true
+            bars:
+              - name: "1月"
+                value: 320
+                color: "#14b8a6"
+              - name: "2月"
+                value: 450
+                color: "#3b82f6"
+              - name: "3月"
+                value: 280
+                color: "#f59e0b"
+              - name: "4月"
+                value: 510
+                color: "#ef4444"
+              - name: "5月"
+                value: 390
+                color: "#8b5cf6"
+              - name: "6月"
+                value: 620
+                color: "#ec4899"
+
       - section_name: "最近のアクティビティ"
         input_fields:
           - type: "heading"

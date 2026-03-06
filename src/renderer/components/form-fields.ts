@@ -63,6 +63,9 @@ import { Stepper } from './stepper'
 import { InformationPanel } from './information-panel'
 import { Dropdown } from './dropdown'
 import { DeleteConfirmDialog } from './delete-confirm-dialog'
+import { LineChart } from './line-chart'
+import { PieChart } from './pie-chart'
+import { BarChart } from './bar-chart'
 import { renderDataTableField } from './data-table'
 import { renderPhotoManagerField } from './photo-manager-renderer'
 
@@ -448,6 +451,12 @@ export function renderField(field: InputField): string {
       return Dropdown.renderField(field)
     case 'delete_confirm_dialog':
       return DeleteConfirmDialog.renderField(field)
+    case 'line_chart':
+      return LineChart.renderField(field)
+    case 'pie_chart':
+      return PieChart.renderField(field)
+    case 'bar_chart':
+      return BarChart.renderField(field)
     default:
       return createFieldWrapper(field, `<div class="unknown-field">不明なフィールドタイプ: ${(field as InputField).type}</div>`)
   }

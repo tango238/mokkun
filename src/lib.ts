@@ -10,9 +10,7 @@ import './style.css'
 import { parseYaml, getScreen, getScreenNames, findFieldById } from './parser'
 import {
   renderScreen,
-  initializeSectionNav,
   mountWizardScreen,
-  type SectionNavController,
   type WizardController,
 } from './renderer/screen-renderer'
 import { attachActionHandler, type ActionHandlerCallbacks } from './renderer/action-handler'
@@ -83,7 +81,6 @@ interface InternalState {
   container: HTMLElement
   schema: MokkunSchema | null
   currentScreenName: string | null
-  sectionNavController: SectionNavController | null
   wizardController: WizardController | null
   actionHandler: ReturnType<typeof attachActionHandler> | null
   options: MokkunInitOptions
@@ -104,10 +101,6 @@ function createInstance(state: InternalState): MokkunInstance {
     if (!screen) return
 
     // Cleanup previous controllers
-    if (state.sectionNavController) {
-      state.sectionNavController.destroy()
-      state.sectionNavController = null
-    }
     if (state.actionHandler) {
       state.actionHandler.detach()
       state.actionHandler = null
@@ -120,10 +113,6 @@ function createInstance(state: InternalState): MokkunInstance {
     } else {
       state.container.innerHTML = renderScreen(screen)
 
-      // Initialize section nav if needed
-      if (screen.sections && screen.sections.length > 0) {
-        state.sectionNavController = initializeSectionNav(state.container, screen)
-      }
     }
 
     // Attach action handler
@@ -203,16 +192,12 @@ function createInstance(state: InternalState): MokkunInstance {
     },
 
     destroy() {
-      if (state.sectionNavController) {
-        state.sectionNavController.destroy()
-      }
       if (state.actionHandler) {
         state.actionHandler.detach()
       }
       state.container.innerHTML = ''
       state.schema = null
       state.currentScreenName = null
-      state.sectionNavController = null
       state.wizardController = null
       state.actionHandler = null
     },
@@ -253,7 +238,6 @@ async function init(options: MokkunInitOptions): Promise<MokkunInstance> {
     container,
     schema: null,
     currentScreenName: null,
-    sectionNavController: null,
     wizardController: null,
     actionHandler: null,
     options,

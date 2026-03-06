@@ -5,7 +5,7 @@
 
 import './style.css'
 import { getScreenNames, getScreen } from './parser'
-import { renderScreen, renderWizardScreen, initializeSectionNav, attachActionHandler, type SectionNavController, type ActionHandler } from './renderer'
+import { renderScreen, renderWizardScreen, attachActionHandler, type ActionHandler } from './renderer'
 import {
   loadFromUrl,
   loadFromUrlParams,
@@ -23,7 +23,6 @@ let currentSchema: MokkunSchema | null = null
 let currentScreenName: string | null = null
 let currentFileName: string | null = null
 let fileLoaderCleanup: (() => void) | null = null
-let sectionNavController: SectionNavController | null = null
 let actionHandler: ActionHandler | null = null
 
 /**
@@ -98,22 +97,6 @@ function renderApp(schema: MokkunSchema, screenName: string | null): void {
 
   // イベントリスナーを設定
   attachEventListeners()
-
-  // セクションナビを初期化（セクション付き画面の場合）
-  if (sectionNavController) {
-    sectionNavController.destroy()
-    sectionNavController = null
-  }
-
-  if (screenName) {
-    const screen = getScreen(schema, screenName)
-    if (screen?.sections && screen.sections.length > 0) {
-      const mainContent = app.querySelector<HTMLElement>('.main-content')
-      if (mainContent) {
-        sectionNavController = initializeSectionNav(mainContent, screen)
-      }
-    }
-  }
 
   // アクションハンドラーを設定（確認ダイアログ対応）
   attachActionHandlerToMain()
