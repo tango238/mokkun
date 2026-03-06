@@ -8553,13 +8553,218 @@ body.dialog-open {
 }
 
 /* =============================================================================
+   Line Chart Component
+   ============================================================================= */
+
+.line-chart-container {
+  width: 100%;
+}
+
+.line-chart-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.line-chart-grid-line {
+  stroke: var(--color-border, #e2e8f0);
+  stroke-width: 1;
+  stroke-dasharray: 4, 4;
+}
+
+.line-chart-y-label {
+  font-size: 11px;
+  fill: var(--color-text-muted, #64748b);
+  font-family: var(--font-family);
+}
+
+.line-chart-x-label {
+  font-size: 11px;
+  fill: var(--color-text-muted, #64748b);
+  font-family: var(--font-family);
+}
+
+.line-chart-line {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.line-chart-dot {
+  stroke: var(--color-surface, #ffffff);
+  stroke-width: 2;
+  transition: r 0.15s ease;
+  cursor: pointer;
+}
+
+.line-chart-dot:hover {
+  r: 5.5;
+}
+
+.line-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm) var(--spacing-md);
+  padding-top: var(--spacing-sm);
+  justify-content: center;
+}
+
+.line-chart-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted, #64748b);
+}
+
+.line-chart-legend-color {
+  display: inline-block;
+  width: 12px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.line-chart-empty {
+  padding: var(--spacing-xl);
+  text-align: center;
+  color: var(--color-text-muted, #64748b);
+  font-size: var(--font-size-sm);
+}
+
+/* =============================================================================
+   Pie Chart Component
+   ============================================================================= */
+
+.pie-chart-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.pie-chart-svg {
+  width: 200px;
+  height: auto;
+  display: block;
+}
+
+.pie-chart-segment {
+  transition: opacity 0.15s ease;
+  cursor: pointer;
+}
+
+.pie-chart-segment:hover {
+  opacity: 0.8;
+}
+
+.pie-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm) var(--spacing-md);
+  padding-top: var(--spacing-sm);
+  justify-content: center;
+}
+
+.pie-chart-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted, #64748b);
+}
+
+.pie-chart-legend-color {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.pie-chart-empty {
+  padding: var(--spacing-xl);
+  text-align: center;
+  color: var(--color-text-muted, #64748b);
+  font-size: var(--font-size-sm);
+}
+
+/* =============================================================================
+   Bar Chart Component
+   ============================================================================= */
+
+.bar-chart-container {
+  width: 100%;
+}
+
+.bar-chart-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.bar-chart-grid-line {
+  stroke: var(--color-border, #e2e8f0);
+  stroke-width: 1;
+  stroke-dasharray: 4, 4;
+}
+
+.bar-chart-y-label {
+  font-size: 11px;
+  fill: var(--color-text-muted, #64748b);
+  font-family: var(--font-family);
+}
+
+.bar-chart-x-label {
+  font-size: 11px;
+  fill: var(--color-text-muted, #64748b);
+  font-family: var(--font-family);
+}
+
+.bar-chart-bar {
+  transition: opacity 0.15s ease;
+  cursor: pointer;
+}
+
+.bar-chart-bar:hover {
+  opacity: 0.8;
+}
+
+.bar-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm) var(--spacing-md);
+  padding-top: var(--spacing-sm);
+  justify-content: center;
+}
+
+.bar-chart-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted, #64748b);
+}
+
+.bar-chart-legend-color {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.bar-chart-empty {
+  padding: var(--spacing-xl);
+  text-align: center;
+  color: var(--color-text-muted, #64748b);
+  font-size: var(--font-size-sm);
+}
+
+/* =============================================================================
    Lo-Fi Wireframe Theme Overrides
    Hand-drawn wireframe style with sketch font and grid-paper background
    ============================================================================= */
 
 [data-theme="lofi"] {
   /* Override design tokens for wireframe feel */
-  --font-family: 'Caveat', cursive, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-family: 'Roboto', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   --border-radius-sm: 0px;
   --border-radius-md: 0px;
   --border-radius-lg: 0px;
@@ -8581,35 +8786,12 @@ body.dialog-open {
 
 /* Body & base text — grid paper background */
 [data-theme="lofi"] body {
-  font-family: 'Caveat', cursive, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Roboto', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   background-color: #f8f8f8;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Crect width='20' height='20' fill='%23f8f8f8'/%3E%3Cline x1='20' y1='0' x2='20' y2='20' stroke='%23e0e0e0' stroke-width='0.5'/%3E%3Cline x1='0' y1='20' x2='20' y2='20' stroke='%23e0e0e0' stroke-width='0.5'/%3E%3C/svg%3E");
   background-size: 20px 20px;
 }
 
-/* Bump font sizes for handwriting legibility */
-[data-theme="lofi"] .field-label,
-[data-theme="lofi"] .field-description,
-[data-theme="lofi"] .btn,
-[data-theme="lofi"] .tab-btn,
-[data-theme="lofi"] .segmented-control-btn,
-[data-theme="lofi"] .data-table th,
-[data-theme="lofi"] .data-table td,
-[data-theme="lofi"] .data-table-wrapper th,
-[data-theme="lofi"] .data-table-wrapper td,
-[data-theme="lofi"] .definition-list dt,
-[data-theme="lofi"] .definition-list dd {
-  font-size: 1.1rem;
-}
-
-[data-theme="lofi"] .form-input,
-[data-theme="lofi"] .form-textarea,
-[data-theme="lofi"] .form-select,
-[data-theme="lofi"] .field-input,
-[data-theme="lofi"] .field-select,
-[data-theme="lofi"] .field-textarea {
-  font-size: 1.15rem;
-}
 
 /* App header */
 [data-theme="lofi"] .app-header {

@@ -264,7 +264,6 @@ function renderSectionsScreen(screen: ScreenDefinition): string {
     <div class="screen screen-with-sections">
       ${appLayoutHtml}
       ${headerHtml}
-      <div id="section-nav-container" class="section-nav-container"></div>
       <form class="screen-form">
         ${sectionsHtml}
         ${actionsHtml}
@@ -327,8 +326,6 @@ export interface ScreenController {
   appHeader?: AppHeader
   /** AppNaviインスタンス（存在する場合） */
   appNavi?: AppNavi
-  /** SectionNavコントローラー（存在する場合） */
-  sectionNav?: SectionNavController
   /** 全コンポーネントを破棄 */
   destroy: () => void
 }
@@ -346,7 +343,6 @@ export function mountScreen(
     destroy: () => {
       controller.appHeader?.destroy()
       controller.appNavi?.destroy()
-      controller.sectionNav?.destroy()
     },
   }
 
@@ -364,11 +360,6 @@ export function mountScreen(
     if (appNaviContainer) {
       controller.appNavi = initializeAppNavi(appNaviContainer, screen)
     }
-  }
-
-  // セクション付き画面の場合はSectionNavを初期化
-  if (screen.sections && screen.sections.length > 0) {
-    controller.sectionNav = initializeSectionNav(container, screen) ?? undefined
   }
 
   return controller

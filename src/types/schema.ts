@@ -1095,6 +1095,105 @@ export interface BadgeField extends BaseInputField {
 }
 
 /**
+ * 線グラフデータ系列
+ */
+export interface LineChartSeries {
+  /** 系列名 */
+  name: string
+  /** データポイント */
+  data: number[]
+  /** 線の色 */
+  color?: string
+}
+
+/**
+ * 線グラフフィールド
+ *
+ * SVGで線グラフを描画するコンポーネント。
+ * 機能:
+ * - 複数データ系列の表示
+ * - グリッド線・凡例の表示
+ * - テーマ対応
+ */
+export interface LineChartField extends BaseInputField {
+  type: 'line_chart'
+  /** グラフデータ系列 */
+  series: LineChartSeries[]
+  /** X軸ラベル */
+  x_labels?: string[]
+  /** Y軸の最小値 */
+  y_min?: number
+  /** Y軸の最大値 */
+  y_max?: number
+  /** グラフの高さ(px) */
+  height?: number
+  /** グリッド線を表示 */
+  show_grid?: boolean
+  /** 凡例を表示 */
+  show_legend?: boolean
+}
+
+/**
+ * 円グラフのセグメント
+ */
+export interface PieChartSegment {
+  /** セグメント名 */
+  name: string
+  /** 値 */
+  value: number
+  /** 色 */
+  color?: string
+}
+
+/**
+ * 円グラフフィールド
+ *
+ * SVGで円グラフを描画するコンポーネント。
+ */
+export interface PieChartField extends BaseInputField {
+  type: 'pie_chart'
+  /** セグメントデータ */
+  segments: PieChartSegment[]
+  /** グラフのサイズ(px) */
+  size?: number
+  /** 凡例を表示 */
+  show_legend?: boolean
+  /** ドーナツ型にする（内側の半径比率 0-0.9） */
+  donut?: number
+}
+
+/**
+ * 棒グラフの棒データ
+ */
+export interface BarChartBar {
+  /** ラベル */
+  name: string
+  /** 値 */
+  value: number
+  /** 色 */
+  color?: string
+}
+
+/**
+ * 棒グラフフィールド
+ *
+ * SVGで棒グラフを描画するコンポーネント。
+ */
+export interface BarChartField extends BaseInputField {
+  type: 'bar_chart'
+  /** 棒データ */
+  bars: BarChartBar[]
+  /** グラフの高さ(px) */
+  height?: number
+  /** Y軸の最大値 */
+  y_max?: number
+  /** グリッド線を表示 */
+  show_grid?: boolean
+  /** 凡例を表示 */
+  show_legend?: boolean
+}
+
+/**
  * 見出しフィールド
  *
  * セマンティックな見出しコンポーネント。
@@ -1584,6 +1683,9 @@ export type InputField =
   | InformationPanelField
   | DropdownFieldType
   | DeleteConfirmDialogField
+  | LineChartField
+  | PieChartField
+  | BarChartField
 
 /**
  * 入力フィールドのタイプ
