@@ -286,15 +286,17 @@ export class Repeater {
   private createInitialState(nestLevel: number): RepeaterState {
     const initialItems: RepeaterItem[] = []
 
-    // 最小アイテム数分の空アイテムを作成
-    if (this.config.min_items) {
-      for (let i = 0; i < this.config.min_items; i++) {
-        initialItems.push({
-          id: generateId('item'),
-          data: {},
-          expanded: true,
-        })
-      }
+    // 初期アイテム数は静的描画と同じ min_items ?? 1（max_items を超えない）
+    const initialCount = Math.max(
+      0,
+      Math.min(this.config.min_items ?? 1, this.config.max_items ?? Number.MAX_SAFE_INTEGER)
+    )
+    for (let i = 0; i < initialCount; i++) {
+      initialItems.push({
+        id: generateId('item'),
+        data: {},
+        expanded: true,
+      })
     }
 
     return {
@@ -335,8 +337,8 @@ export class Repeater {
     // カウンター
     const counter = createElement('span', { className: 'repeater-counter' })
     const countText = this.config.max_items
-      ? `${this.state.items.length} / ${this.config.max_items}`
-      : `${this.state.items.length} items`
+      ? `${this.state.items.length} / ${this.config.max_items} 件`
+      : `${this.state.items.length} 件`
     counter.textContent = countText
     header.appendChild(counter)
 
@@ -528,7 +530,7 @@ export class Repeater {
         })
 
         // 空オプション
-        const emptyOption = createElement('option', { textContent: field.placeholder ?? 'Select...' })
+        const emptyOption = createElement('option', { textContent: field.placeholder ?? '選択してください' })
         emptyOption.value = ''
         select.appendChild(emptyOption)
 
@@ -573,7 +575,7 @@ export class Repeater {
     const addBtn = createElement('button', {
       className: 'repeater-add-btn',
       attributes: { type: 'button' },
-      textContent: this.config.add_button_label ?? 'Add Item',
+      textContent: this.config.add_button_label ?? '追加',
     })
     addBtn.disabled = !canAdd
     addBtn.addEventListener('click', () => this.addItem())

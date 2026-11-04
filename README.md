@@ -78,6 +78,16 @@ https://raw.githubusercontent.com/tango238/mokkun/main/schema.json
 画面間のナビゲーション（actions の navigate）も設定してください。
 ```
 
+### エディタで補完を使う
+
+YAML の先頭行に次のモードラインを書くと、[YAML Language Server](https://github.com/redhat-developer/yaml-language-server)（VS Code の YAML 拡張など）でキー補完とバリデーションが効きます。
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/tango238/mokkun/main/schema.json
+```
+
+リポジトリ内では `.vscode/settings.json` の `"yaml.schemas": { "./schema.json": ["examples/*.yaml", "*.mokkun.yaml"] }` で、`examples/*.yaml` と `*.mokkun.yaml` に自動適用できます。
+
 ### 生成した YAML をモックとして表示する
 
 AI が生成した YAML を `.yaml` ファイルとして保存し、`npx mokkun` で表示できます。
@@ -161,8 +171,8 @@ mokkun/
 
 | コンポーネント | 説明 |
 |---------------|------|
-| app_header | アプリケーションヘッダー（ロゴ、テナント切替、ユーザーメニュー） |
-| app_navi | アプリナビゲーション（主要機能の切り替え） |
+| appHeader | アプリケーションヘッダー（ロゴ、テナント切替、ユーザーメニュー。`systemName` で左上のシステム名を指定） |
+| appNavi | アプリナビゲーション（主要機能の切り替え） |
 | heading | 見出し |
 | tabs | タブ |
 | accordion_panel | アコーディオン |
@@ -195,9 +205,11 @@ mokkun/
 
 ## YAML構造
 
+YAML のキーは camelCase が正規形です。snake_case のキー（teamkit の generate-ui 出力など）も互換として引き続き受け付けます。
+
 ```yaml
 view:
-  screen_name:
+  myScreen:
     title: "画面タイトル"
     description: "画面の説明"
     fields:
@@ -211,13 +223,13 @@ view:
         label: "送信"
         style: "primary"
 
-common_components:
-  component_name:
+commonComponents:
+  myComponent:
     type: "field_group"
     fields: []
 
 validations:
-  rule_name:
+  myRule:
     rules:
       required: true
       min: 1

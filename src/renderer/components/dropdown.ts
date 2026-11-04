@@ -819,7 +819,7 @@ export class Dropdown {
     const dropdownHtml = `
       <div class="mokkun-dropdown">
         <button type="button" class="dropdown-trigger" aria-haspopup="listbox" aria-expanded="false">
-          <span>${escapeHtml(field.label)}</span>
+          ${field.label ? `<span>${escapeHtml(field.label)}</span>` : ''}
           <span class="dropdown-arrow">▼</span>
         </button>
         <ul class="dropdown-menu" role="listbox" hidden>

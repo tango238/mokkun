@@ -385,14 +385,17 @@ export class Loader {
     const loaderField = field as InputField & {
       size?: 'small' | 'medium' | 'large'
       text?: string
+      loaderType?: 'primary' | 'light'
     }
-    const size = loaderField.size ?? 'medium'
+    const loaderTypeValue = loaderField.loaderType === 'light' ? 'light' : 'primary'
+    const rawSize = loaderField.size ?? 'medium'
+    const size = ['small', 'medium', 'large'].includes(rawSize) ? rawSize : 'medium'
     const text = loaderField.text
 
     const loaderHtml = `
-      <div class="mokkun-loader loader-${size}">
-        <div class="loader-spinner"></div>
-        ${text ? `<span class="loader-text">${escapeHtml(text)}</span>` : ''}
+      <div class="mokkun-loader" role="status" aria-label="${escapeHtml(text || 'Loading')}">
+        <div class="loader-spinner" data-size="${size}" data-type="${loaderTypeValue}" aria-hidden="true"></div>
+        ${text ? `<div class="loader-text">${escapeHtml(text)}</div>` : ''}
       </div>
     `
 

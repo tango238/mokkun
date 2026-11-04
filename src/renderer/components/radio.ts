@@ -14,6 +14,7 @@ import {
   escapeHtml,
   createFieldWrapper,
   getOptions,
+  resolveGroupDirection,
 } from '../utils/field-helpers'
 import type { RadioGroupField } from '../../types/schema'
 
@@ -362,7 +363,7 @@ export class RadioButton {
    */
   static renderField(field: RadioGroupField): string {
     const options = getOptions(field.options)
-    const direction = field.direction ?? 'vertical'
+    const direction = resolveGroupDirection(field.direction, options)
 
     const optionHtml = options
       .map((opt) => {
@@ -394,7 +395,7 @@ export class RadioButton {
       })
       .join('')
 
-    const content = `<div class="radio-group direction-${direction}">${optionHtml}</div>`
+    const content = `<div class="radio-group direction-${direction}${direction === 'horizontal' ? ' inline' : ''}">${optionHtml}</div>`
     return createFieldWrapper(field, content)
   }
 }

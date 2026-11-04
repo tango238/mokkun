@@ -67,7 +67,7 @@ export interface ThemeDefinition {
 /**
  * Built-in theme IDs
  */
-export type BuiltInThemeId = 'light' | 'dark' | 'lofi'
+export type BuiltInThemeId = 'light' | 'dark'
 
 /**
  * Theme configuration from YAML

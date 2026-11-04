@@ -23,7 +23,7 @@ function createContainer(): HTMLElement {
 }
 
 function cleanup(): void {
-  document.querySelectorAll('.delete-confirm-dialog, .dialog-overlay').forEach(el => el.remove())
+  document.querySelectorAll('.delete-confirm-dialog, .dialog-action, .dialog-overlay').forEach(el => el.remove())
   document.body.classList.remove('dialog-open')
 }
 
@@ -224,8 +224,9 @@ describe('ActionHandler', () => {
       container.appendChild(button)
       button.click()
 
-      // Dialog should be shown
-      expect(document.querySelector('.delete-confirm-dialog')).toBeTruthy()
+      // 汎用の確認ダイアログ（ActionDialog）が表示される
+      expect(document.querySelector('.dialog-action')).toBeTruthy()
+      expect(document.querySelector('.delete-confirm-dialog')).toBeNull()
       // onSubmit should not be called yet
       expect(onSubmit).not.toHaveBeenCalled()
     })
@@ -272,6 +273,44 @@ describe('ActionHandler', () => {
 
       expect(onSubmit).not.toHaveBeenCalled()
       expect(onCancel).toHaveBeenCalledWith('delete')
+    })
+
+    it('should open a non-danger dialog with default labels for primary actions', () => {
+      const handler = new ActionHandler(container, {})
+      handler.attach()
+      const button = createButton({
+        actionId: 'save',
+        actionType: 'submit',
+        confirmTitle: '保存',
+        confirmMessage: '保存しますか？',
+      })
+      button.dataset.actionStyle = 'primary'
+      container.appendChild(button)
+      button.click()
+
+      expect(document.querySelector('.dialog-danger')).toBeNull()
+      expect(document.querySelector('.dialog-btn-confirm')?.textContent).toContain('確認')
+      expect(document.querySelector('.dialog-btn-cancel')?.textContent).toContain('キャンセル')
+    })
+
+    it('should use confirm_label / cancel_label and danger style', () => {
+      const handler = new ActionHandler(container, {})
+      handler.attach()
+      const button = createButton({
+        actionId: 'remove',
+        actionType: 'submit',
+        confirmTitle: '削除',
+        confirmMessage: '削除しますか？',
+      })
+      button.dataset.actionStyle = 'danger'
+      button.dataset.confirmLabel = '消す'
+      button.dataset.cancelLabel = 'やめる'
+      container.appendChild(button)
+      button.click()
+
+      expect(document.querySelector('.dialog-danger')).toBeTruthy()
+      expect(document.querySelector('.dialog-btn-confirm')?.textContent).toContain('消す')
+      expect(document.querySelector('.dialog-btn-cancel')?.textContent).toContain('やめる')
     })
 
     it('should use extended config for dependencies', async () => {

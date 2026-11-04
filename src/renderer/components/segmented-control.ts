@@ -477,14 +477,14 @@ export class SegmentedControl {
     const defaultValue = segmentedField.default ?? options[0]?.value
 
     const segmentedHtml = `
-      <div class="mokkun-segmented-control" role="radiogroup" aria-label="${escapeHtml(field.label)}">
-        ${options.map(opt => `
-          <button type="button" class="segment-button ${opt.value === defaultValue ? 'active' : ''}"
-                  role="radio" aria-checked="${opt.value === defaultValue}"
-                  data-value="${escapeHtml(opt.value)}">
-            ${escapeHtml(opt.label)}
-          </button>
-        `).join('')}
+      <div class="mokkun-segmented-control segmented-medium" role="group"${field.label ? ` aria-label="${escapeHtml(field.label)}"` : ''}>
+        <div class="segmented-options">
+          ${options.map(opt => {
+            const selected = opt.value === defaultValue
+            return `<button type="button" class="segmented-button${selected ? ' selected' : ''}"
+                    aria-pressed="${selected}" data-value="${escapeHtml(String(opt.value))}"><span class="segmented-label">${escapeHtml(String(opt.label))}</span></button>`
+          }).join('')}
+        </div>
       </div>
     `
     return createFieldWrapper(field, segmentedHtml)

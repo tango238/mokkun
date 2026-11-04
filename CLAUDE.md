@@ -17,6 +17,7 @@ src/
 ├── renderer/
 │   ├── screen-renderer.ts     # 画面レンダリング
 │   ├── action-handler.ts      # ボタンアクション処理
+│   ├── layouts/               # 画面レイアウト (shell 固定)
 │   ├── components/            # UIコンポーネント (53ファイル + dialog/4ファイル)
 │   │   ├── form-fields.ts     # ファサード (switch文で委譲)
 │   │   ├── input.ts, select.ts, checkbox.ts ...
@@ -135,7 +136,7 @@ view:
       - id: password
         type: text
         label: "パスワード"
-        input_type: password
+        inputType: password
     actions:
       - id: submit
         type: submit
@@ -166,6 +167,7 @@ view:
 ```
 
 `sections[].input_fields` は内部で `fields` と同様に処理される。
+snake_case は互換として受け付ける。YAML の正規形は camelCase（`inputType`, `visibleWhen`, `appHeader` など。`schema.json` 参照）。
 
 ## 現在のフィールドタイプ (44種類)
 

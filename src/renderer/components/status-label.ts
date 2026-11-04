@@ -449,11 +449,15 @@ export class StatusLabel {
       variant?: 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'info'
     }
     const variant = statusField.variant ?? 'default'
+    const typeMap: Record<string, StatusLabelType> = {
+      default: 'grey', primary: 'blue', success: 'green', warning: 'yellow', danger: 'red', info: 'blue',
+    }
+    const type = Object.hasOwn(typeMap, variant) ? typeMap[variant] : 'grey'
 
+    // インタラクティブ版 (render()) と同じクラス名。
     const statusHtml = `
-      <span class="mokkun-status-label status-${variant}">
-        <span class="status-dot"></span>
-        <span class="status-text">${escapeHtml(field.label)}</span>
+      <span class="mokkun-status-label status-label status-label-${type} status-label-medium" data-type="${type}">
+        <span class="status-label-content" role="status">${field.label ? `<span class="status-label-text">${escapeHtml(field.label)}</span>` : ''}</span>
       </span>
     `
     return createFieldWrapper(field, statusHtml)

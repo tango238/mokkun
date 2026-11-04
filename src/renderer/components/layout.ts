@@ -3,6 +3,8 @@
  * レイアウト要素（display_fields, actions, filters）のHTML生成
  */
 
+import { renderIconHtml } from '../utils/icons'
+import { safeClassName } from '../utils/field-helpers'
 import type { Action, InputField } from '../../types/schema'
 import { renderFields } from './form-fields'
 
@@ -36,8 +38,9 @@ export interface DisplayField {
 export function renderDisplayField(field: DisplayField): string {
   const valueStr = field.value !== undefined ? String(field.value) : '-'
   const classes = ['display-field']
-  if (field.class) {
-    classes.push(field.class)
+  const safeClass = safeClassName(field.class)
+  if (safeClass) {
+    classes.push(safeClass)
   }
 
   return `
@@ -88,13 +91,16 @@ function getButtonClass(style?: Action['style']): string {
  */
 export function renderAction(action: Action): string {
   const buttonClass = getButtonClass(action.style)
-  const iconHtml = action.icon ? `<span class="btn-icon">${escapeHtml(action.icon)}</span>` : ''
+  const iconHtml = renderIconHtml(action.icon, 'btn-icon')
 
   // data属性でアクション情報を埋め込む
   const dataAttrs: string[] = [
     `data-action-id="${escapeHtml(action.id)}"`,
     `data-action-type="${escapeHtml(action.type)}"`,
   ]
+  if (action.style) {
+    dataAttrs.push(`data-action-style="${escapeHtml(action.style)}"`)
+  }
 
   if (action.type === 'navigate') {
     dataAttrs.push(`data-navigate-to="${escapeHtml(action.to)}"`)
@@ -113,6 +119,12 @@ export function renderAction(action: Action): string {
   if (action.confirm) {
     dataAttrs.push(`data-confirm-title="${escapeHtml(action.confirm.title)}"`)
     dataAttrs.push(`data-confirm-message="${escapeHtml(action.confirm.message)}"`)
+    if (action.confirm.confirm_label) {
+      dataAttrs.push(`data-confirm-label="${escapeHtml(action.confirm.confirm_label)}"`)
+    }
+    if (action.confirm.cancel_label) {
+      dataAttrs.push(`data-cancel-label="${escapeHtml(action.confirm.cancel_label)}"`)
+    }
   }
 
   const buttonType = action.type === 'submit' ? 'submit' : action.type === 'reset' ? 'reset' : 'button'

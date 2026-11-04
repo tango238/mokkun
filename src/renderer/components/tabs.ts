@@ -3,9 +3,11 @@
  * タブUIコンポーネント
  */
 
-import type { InputField } from '../../types'
+import type { InputField, TabsField } from '../../types'
 import { createElement, clearElement, generateId } from '../utils/dom'
-import { createFieldWrapper } from '../utils/field-helpers'
+import { createFieldWrapper, escapeHtml } from '../utils/field-helpers'
+import { renderIconHtml } from '../utils/icons'
+import { renderFields } from './form-fields'
 
 // =============================================================================
 // Types
@@ -707,18 +709,136 @@ export class Tabs {
   // ===========================================================================
 
   static renderField(field: InputField): string {
-    const tabsHtml = `
+    const f = field as TabsField
+    const rawItems = (Array.isArray(f.items) && f.items.length > 0 ? f.items : Array.isArray(f.tabs) ? f.tabs : [])
+    if (rawItems.length === 0) {
+      return createFieldWrapper(field, Tabs.renderDummy(field))
+    }
+
+    const uid = escapeHtml(`${field.id || 'tabs'}`)
+    const items = rawItems.map((item, i) => ({ ...item, _id: String(item.id ?? `tab-${i + 1}`) }))
+    const wanted = f.active ?? f.default
+    const activeItem =
+      items.find(t => t._id === wanted && !t.disabled) ??
+      items.find(t => !t.disabled) ??
+      items[0]
+
+    const position = ['top', 'bottom', 'left', 'right'].includes(f.position ?? '') ? f.position : 'top'
+    const variant = ['default', 'pills', 'underline', 'bordered', 'segmented'].includes(f.variant ?? '')
+      ? f.variant
+      : 'default'
+
+    const buttons = items.map((t, i) => {
+      const active = t === activeItem
+      const cls = ['tab-button', active ? 'active' : '', t.disabled ? 'disabled' : ''].filter(Boolean).join(' ')
+      const icon = renderIconHtml(t.icon, 'tab-icon')
+      const badge = t.badge !== undefined && t.badge !== null && t.badge !== ''
+        ? `<span class="tab-badge">${escapeHtml(String(t.badge))}</span>`
+        : ''
+      return `<button type="button" class="${cls}" role="tab" id="${uid}-tab-${i}" data-tab-index="${i}" aria-selected="${active}" aria-controls="${uid}-panel-${i}" tabindex="${active ? '0' : '-1'}"${t.disabled ? ' aria-disabled="true" disabled' : ''}>${icon}<span class="tab-label">${escapeHtml(String(t.label ?? t._id))}</span>${badge}</button>`
+    }).join('')
+
+    const panels = items.map((t, i) => {
+      const active = t === activeItem
+      let body = ''
+      if (Array.isArray(t.fields) && t.fields.length > 0) {
+        body = renderFields(t.fields)
+      } else if (t.content) {
+        body = `<p>${escapeHtml(String(t.content))}</p>`
+      }
+      return `<div class="tab-panel${active ? ' active' : ''}" role="tabpanel" id="${uid}-panel-${i}" aria-labelledby="${uid}-tab-${i}"${active ? '' : ' hidden'}>${body}</div>`
+    }).join('')
+
+    const html = `
+      <div class="mokkun-tabs tabs-${position} tabs-${variant}" data-tabs-static>
+        <div class="tabs-wrapper">
+          <div class="tabs-list" role="tablist"${field.label ? ` aria-label="${escapeHtml(field.label)}"` : ''}${position === 'left' || position === 'right' ? ' aria-orientation="vertical"' : ''}>${buttons}</div>
+          <div class="tabs-panels">${panels}</div>
+        </div>
+      </div>
+    `
+    return createFieldWrapper(field, html)
+  }
+
+  private static renderDummy(field: InputField): string {
+    return `
       <div class="mokkun-tabs">
-        <div class="tabs-list" role="tablist">
+        <div class="tabs-list" role="tablist"${field.label ? ` aria-label="${escapeHtml(field.label)}"` : ''}>
           <button type="button" class="tab-button active" role="tab" aria-selected="true">タブ1</button>
           <button type="button" class="tab-button" role="tab" aria-selected="false">タブ2</button>
           <button type="button" class="tab-button" role="tab" aria-selected="false">タブ3</button>
         </div>
-        <div class="tab-panel" role="tabpanel">
+        <div class="tab-panel active" role="tabpanel">
           <p>タブコンテンツがここに表示されます</p>
         </div>
       </div>
     `
-    return createFieldWrapper(field, tabsHtml)
+  }
+}
+
+/**
+ * 静的出力（Tabs.renderField）のタブ切替を有効化する。クリックと矢印キーに対応。
+ * @returns クリーンアップ関数
+ */
+export function attachTabsBehavior(container: HTMLElement): () => void {
+  // 入れ子の tabs を拾わないよう、自身に属する要素だけを返す
+  const own = (root: HTMLElement, sel: string): HTMLElement[] =>
+    Array.from(root.querySelectorAll<HTMLElement>(sel)).filter(
+      el => el.closest('[data-tabs-static]') === root
+    )
+
+  const activate = (root: HTMLElement, index: number, focus: boolean): void => {
+    const buttons = Array.from(own(root, '[role="tab"][data-tab-index]'))
+    const panels = Array.from(own(root, '[role="tabpanel"]'))
+    buttons.forEach((b, i) => {
+      const on = i === index
+      b.classList.toggle('active', on)
+      b.setAttribute('aria-selected', String(on))
+      b.setAttribute('tabindex', on ? '0' : '-1')
+      if (on && focus) b.focus()
+    })
+    panels.forEach((p, i) => {
+      const on = i === index
+      p.classList.toggle('active', on)
+      if (on) p.removeAttribute('hidden')
+      else p.setAttribute('hidden', '')
+    })
+  }
+
+  const onClick = (e: Event): void => {
+    const btn = (e.target as HTMLElement).closest<HTMLElement>('[role="tab"][data-tab-index]')
+    const root = btn?.closest<HTMLElement>('[data-tabs-static]')
+    if (!btn || !root || !container.contains(root) || btn.hasAttribute('disabled')) return
+    activate(root, Number(btn.dataset.tabIndex), false)
+  }
+
+  const onKeyDown = (e: KeyboardEvent): void => {
+    const btn = (e.target as HTMLElement).closest<HTMLElement>('[role="tab"][data-tab-index]')
+    const root = btn?.closest<HTMLElement>('[data-tabs-static]')
+    if (!btn || !root || !container.contains(root)) return
+    const vertical = root.classList.contains('tabs-left') || root.classList.contains('tabs-right')
+    const prev = vertical ? 'ArrowUp' : 'ArrowLeft'
+    const next = vertical ? 'ArrowDown' : 'ArrowRight'
+    const keys = [prev, next, 'ArrowLeft', 'ArrowRight', 'Home', 'End']
+    if (!keys.includes(e.key)) return
+    if (vertical && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) return
+    const enabled = Array.from(own(root, '[role="tab"][data-tab-index]'))
+      .filter(b => !b.hasAttribute('disabled'))
+    const pos = enabled.indexOf(btn)
+    if (pos < 0 || enabled.length === 0) return
+    let target = pos
+    if (e.key === 'Home') target = 0
+    else if (e.key === 'End') target = enabled.length - 1
+    else if (e.key === next || (!vertical && e.key === 'ArrowRight')) target = (pos + 1) % enabled.length
+    else target = (pos - 1 + enabled.length) % enabled.length
+    e.preventDefault()
+    activate(root, Number(enabled[target].dataset.tabIndex), true)
+  }
+
+  container.addEventListener('click', onClick)
+  container.addEventListener('keydown', onKeyDown)
+  return () => {
+    container.removeEventListener('click', onClick)
+    container.removeEventListener('keydown', onKeyDown)
   }
 }

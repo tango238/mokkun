@@ -11,7 +11,7 @@
  */
 
 import { createElement, generateId } from '../utils/dom'
-import { escapeHtml, createFieldWrapper } from '../utils/field-helpers'
+import { escapeHtml, createFieldWrapper, safeToken } from '../utils/field-helpers'
 import type { InputField } from '../../types/schema'
 
 // =============================================================================
@@ -337,29 +337,46 @@ export class Toggle {
    * SSR/初期レンダリング用
    */
   static renderField(field: InputField): string {
+    // snake_case（ToggleField）を正とし、camelCase は後方互換で読む
     const toggleField = field as InputField & {
+      default?: unknown
+      disabled?: boolean
+      checked_label?: string
+      unchecked_label?: string
+      label_position?: 'left' | 'right'
+      size?: 'small' | 'medium' | 'large'
       defaultChecked?: boolean
       checkedLabel?: string
       uncheckedLabel?: string
-      size?: 'small' | 'medium' | 'large'
+      labelPosition?: 'left' | 'right'
     }
-    const checked = toggleField.defaultChecked ?? false
-    const checkedLabel = toggleField.checkedLabel ?? 'ON'
-    const uncheckedLabel = toggleField.uncheckedLabel ?? 'OFF'
-    const size = toggleField.size ?? 'medium'
+    const checked = toggleField.default !== undefined
+      ? toggleField.default === true || toggleField.default === 'true'
+      : toggleField.defaultChecked ?? false
+    const disabled = toggleField.disabled === true
+    const checkedLabel = toggleField.checked_label ?? toggleField.checkedLabel ?? 'ON'
+    const uncheckedLabel = toggleField.unchecked_label ?? toggleField.uncheckedLabel ?? 'OFF'
+    const labelPosition = safeToken(toggleField.label_position ?? toggleField.labelPosition, 'right') === 'left' ? 'left' : 'right'
+    const size = safeToken(toggleField.size, 'medium')
     const stateClass = checked ? 'checked' : 'unchecked'
+    const disabledAttr = disabled ? ' disabled aria-disabled="true"' : ''
+    const disabledClass = disabled ? ' disabled' : ''
+    const disabledData = disabled ? ' data-disabled' : ''
+
+    const labelHtml = `<span class="toggle-label ${stateClass}" aria-live="polite" data-state="${stateClass}">${escapeHtml(checked ? checkedLabel : uncheckedLabel)}</span>`
 
     const toggleHtml = `
-      <div class="mokkun-toggle toggle-${size} toggle-label-right" data-state="${stateClass}">
+      <div class="mokkun-toggle toggle-${size} toggle-label-${labelPosition}" data-state="${stateClass}"${disabledData}>
         <div class="toggle-wrapper">
+          ${labelPosition === 'left' ? labelHtml : ''}
           <div class="toggle-switch-container">
-            <input type="checkbox" class="toggle-checkbox visually-hidden" id="${escapeHtml(field.id)}" role="switch" aria-checked="${checked}" ${checked ? 'checked' : ''}>
-            <label class="toggle-switch ${stateClass}" for="${escapeHtml(field.id)}" data-state="${stateClass}">
+            <input type="checkbox" class="toggle-checkbox visually-hidden" id="${escapeHtml(field.id)}" role="switch" aria-checked="${checked}" ${checked ? 'checked' : ''}${disabledAttr}>
+            <label class="toggle-switch ${stateClass}${disabledClass}" for="${escapeHtml(field.id)}" data-state="${stateClass}"${disabledData}>
               <span class="toggle-track"></span>
               <span class="toggle-thumb" data-state="${stateClass}"></span>
             </label>
           </div>
-          <span class="toggle-label ${stateClass}" aria-live="polite" data-state="${stateClass}">${escapeHtml(checked ? checkedLabel : uncheckedLabel)}</span>
+          ${labelPosition === 'right' ? labelHtml : ''}
         </div>
       </div>
     `

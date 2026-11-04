@@ -5,6 +5,7 @@
  * 複数のアクションボタンを適切に配置するコンポーネント
  */
 
+import { resolveIcon } from '../utils/icons'
 import type { Action, ConfirmConfig } from '../../types/schema'
 import { clearElement } from '../utils/dom'
 
@@ -285,10 +286,12 @@ export class ActionButtonGroup {
     }
 
     // アイコン
-    if (button.icon) {
+    const iconGlyph = resolveIcon(button.icon)
+    if (iconGlyph) {
       const iconSpan = document.createElement('span')
       iconSpan.className = 'action-btn-icon'
-      iconSpan.textContent = button.icon
+      iconSpan.setAttribute('aria-hidden', 'true')
+      iconSpan.textContent = iconGlyph
       btnEl.appendChild(iconSpan)
     }
 

@@ -3,9 +3,12 @@
  * タブコンポーネントのテスト
  */
 
+import { parseYaml } from '../parser'
+import { renderScreen } from '../renderer/screen-renderer'
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import {
   Tabs,
+  attachTabsBehavior,
   type TabsConfig,
   type TabDefinition,
 } from '../renderer/components/tabs'
@@ -616,5 +619,215 @@ describe('Tabs Component', () => {
 
       expect(container.innerHTML).toBe('')
     })
+  })
+})
+
+// =============================================================================
+// Static renderField / attachTabsBehavior
+// =============================================================================
+
+describe('Tabs.renderField (static)', () => {
+  const base = { id: 'my_tabs', label: 'Tabs', type: 'tabs' } as const
+
+  it('items の label / content / fields を描画し、最初のタブをアクティブにする', () => {
+    const html = Tabs.renderField({
+      ...base,
+      items: [
+        { id: 'a', label: '概要', content: '概要の本文', badge: 3 },
+        { id: 'b', label: '設定', fields: [{ id: 'name', type: 'text', label: '名前' }] },
+      ],
+    } as never)
+    expect(html).toContain('概要')
+    expect(html).toContain('設定')
+    expect(html).toContain('概要の本文')
+    expect(html).toContain('name="name"')
+    expect(html).toContain('role="tablist"')
+    expect(html).toContain('role="tabpanel"')
+    expect(html).toContain('tab-badge')
+    expect(html).not.toContain('タブ1')
+    const el = document.createElement('div')
+    el.innerHTML = html
+    const tabs = el.querySelectorAll('[role="tab"]')
+    expect(tabs[0].getAttribute('aria-selected')).toBe('true')
+    expect(tabs[1].getAttribute('aria-selected')).toBe('false')
+    const panels = el.querySelectorAll('[role="tabpanel"]')
+    expect(panels[0].hasAttribute('hidden')).toBe(false)
+    expect(panels[1].hasAttribute('hidden')).toBe(true)
+    expect(tabs[0].getAttribute('aria-controls')).toBe(panels[0].id)
+  })
+
+  it('default 指定のタブをアクティブにし variant / position を反映する', () => {
+    const html = Tabs.renderField({
+      ...base,
+      default: 'b',
+      variant: 'pills',
+      position: 'left',
+      items: [{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }],
+    } as never)
+    const el = document.createElement('div')
+    el.innerHTML = html
+    expect(el.querySelectorAll('[role="tab"]')[1].getAttribute('aria-selected')).toBe('true')
+    expect(el.querySelector('.mokkun-tabs')?.className).toContain('tabs-pills')
+    expect(el.querySelector('.mokkun-tabs')?.className).toContain('tabs-left')
+  })
+
+  it('items が無い場合はダミーを出す', () => {
+    const html = Tabs.renderField(base as never)
+    expect(html).toContain('タブ1')
+    expect(html).toContain('タブ3')
+  })
+
+  it('文字列を escapeHtml する', () => {
+    const html = Tabs.renderField({
+      ...base,
+      items: [{ id: 'x', label: '<img src=x onerror=alert(1)>', content: '<script>bad()</script>' }],
+    } as never)
+    expect(html).not.toContain('<img src=x')
+    expect(html).not.toContain('<script>')
+    expect(html).toContain('&lt;img')
+  })
+
+  it('attachTabsBehavior でクリック・キーボード切替ができ、cleanup で解除される', () => {
+    const container = document.createElement('div')
+    container.innerHTML = Tabs.renderField({
+      ...base,
+      items: [{ id: 'a', label: 'A', content: 'pa' }, { id: 'b', label: 'B', content: 'pb' }, { id: 'c', label: 'C', content: 'pc' }],
+    } as never)
+    document.body.appendChild(container)
+    const cleanup = attachTabsBehavior(container)
+    const tabs = container.querySelectorAll<HTMLElement>('[role="tab"]')
+    const panels = container.querySelectorAll<HTMLElement>('[role="tabpanel"]')
+
+    tabs[1].click()
+    expect(tabs[1].getAttribute('aria-selected')).toBe('true')
+    expect(tabs[0].getAttribute('aria-selected')).toBe('false')
+    expect(panels[1].hasAttribute('hidden')).toBe(false)
+    expect(panels[0].hasAttribute('hidden')).toBe(true)
+
+    tabs[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }))
+    expect(tabs[2].getAttribute('aria-selected')).toBe('true')
+    tabs[2].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }))
+    expect(tabs[0].getAttribute('aria-selected')).toBe('true')
+
+    cleanup()
+    tabs[1].click()
+    expect(tabs[0].getAttribute('aria-selected')).toBe('true')
+    container.remove()
+  })
+})
+
+describe('Tabs static: 追加ケース', () => {
+  const base = { id: 'tt', label: 'T', type: 'tabs' } as const
+  const mk = (field: object): HTMLElement => {
+    const c = document.createElement('div')
+    c.innerHTML = Tabs.renderField({ ...base, ...field } as never)
+    document.body.appendChild(c)
+    return c
+  }
+  const key = (el: Element, k: string) =>
+    el.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true }))
+
+  it('入れ子 tabs: 外側を切り替えても内側の状態が保たれる', () => {
+    const inner = Tabs.renderField({
+      id: 'inner', type: 'tabs', label: 'in',
+      items: [{ id: 'x', label: 'X', content: 'cx' }, { id: 'y', label: 'Y', content: 'cy' }],
+    } as never)
+    const c = document.createElement('div')
+    c.innerHTML = Tabs.renderField({
+      ...base, id: 'outer',
+      items: [{ id: 'o1', label: 'O1', content: 'c1' }, { id: 'o2', label: 'O2', content: 'c2' }],
+    } as never)
+    c.querySelector('#outer-panel-0')!.innerHTML = inner
+    document.body.appendChild(c)
+    const cleanup = attachTabsBehavior(c)
+    c.querySelector<HTMLElement>('#outer-tab-1')!.click()
+    expect(c.querySelector('#outer-panel-1')!.hasAttribute('hidden')).toBe(false)
+    expect(c.querySelector('#outer-panel-0')!.hasAttribute('hidden')).toBe(true)
+    expect(c.querySelector('#inner-tab-0')!.getAttribute('aria-selected')).toBe('true')
+    expect(c.querySelector('#inner-panel-0')!.hasAttribute('hidden')).toBe(false)
+    expect(c.querySelector('#inner-panel-1')!.hasAttribute('hidden')).toBe(true)
+    c.querySelector<HTMLElement>('#outer-tab-0')!.click()
+    c.querySelector<HTMLElement>('#inner-tab-1')!.click()
+    expect(c.querySelector('#outer-panel-0')!.hasAttribute('hidden')).toBe(false)
+    expect(c.querySelector('#inner-panel-1')!.hasAttribute('hidden')).toBe(false)
+    cleanup(); c.remove()
+  })
+
+  it('tabs が配列でなくても例外にならずダミーを出す', () => {
+    expect(Tabs.renderField({ ...base, tabs: 'abc' } as never)).toContain('タブ1')
+  })
+
+  it('ダミーの先頭パネルは active', () => {
+    expect(Tabs.renderField(base as never)).toContain('class="tab-panel active"')
+  })
+
+  it('tabs キーでも描画できる', () => {
+    expect(Tabs.renderField({ ...base, tabs: [{ id: 'a', label: 'AAA' }] } as never)).toContain('AAA')
+  })
+
+  it('default が存在しない値なら最初の有効タブ', () => {
+    const c = mk({ default: 'nope', items: [{ id: 'a', label: 'A', disabled: true }, { id: 'b', label: 'B' }] })
+    const tabs = c.querySelectorAll('[role="tab"]')
+    expect(tabs[1].getAttribute('aria-selected')).toBe('true')
+    c.remove()
+  })
+
+  it('disabled スキップ・Home/End・縦方向キー', () => {
+    const c = mk({ items: [{ label: 'A' }, { label: 'B', disabled: true }, { label: 'C' }, { label: 'D' }] })
+    const cleanup = attachTabsBehavior(c)
+    const t = () => Array.from(c.querySelectorAll<HTMLElement>('[role="tab"]'))
+    key(t()[0], 'ArrowRight')
+    expect(t()[2].getAttribute('aria-selected')).toBe('true')
+    key(t()[2], 'End')
+    expect(t()[3].getAttribute('aria-selected')).toBe('true')
+    key(t()[3], 'Home')
+    expect(t()[0].getAttribute('aria-selected')).toBe('true')
+    cleanup(); c.remove()
+
+    const v = mk({ position: 'left', items: [{ label: 'A' }, { label: 'B' }] })
+    const cl = attachTabsBehavior(v)
+    const vt = Array.from(v.querySelectorAll<HTMLElement>('[role="tab"]'))
+    key(vt[0], 'ArrowRight')
+    expect(vt[0].getAttribute('aria-selected')).toBe('true')
+    key(vt[0], 'ArrowDown')
+    expect(vt[1].getAttribute('aria-selected')).toBe('true')
+    key(vt[1], 'ArrowUp')
+    expect(vt[0].getAttribute('aria-selected')).toBe('true')
+    cl(); v.remove()
+  })
+
+  it('パーサ: items[].fields / tabs[].fields に ID が付き、描画できる', () => {
+    const yaml = `
+view:
+  s:
+    title: S
+    fields:
+      - type: tabs
+        label: a
+        items:
+          - id: p
+            label: P
+            fields:
+              - type: text
+                label: 名前
+      - type: tabs
+        label: b
+        tabs:
+          - id: q
+            label: Q
+            fields:
+              - type: text
+                label: 年齢
+`
+    const r = parseYaml(yaml)
+    expect(r.success).toBe(true)
+    if (!r.success) return
+    const fs = (r.data.view as any).s.fields
+    expect(fs[0].items[0].fields[0].id).toBeTruthy()
+    expect(fs[1].tabs[0].fields[0].id).toBeTruthy()
+    const html = renderScreen((r.data.view as any).s)
+    expect(html).toContain('名前')
+    expect(html).toContain('年齢')
+    expect(html).toContain('role="tabpanel"')
   })
 })

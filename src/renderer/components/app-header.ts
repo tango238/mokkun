@@ -8,6 +8,7 @@
  */
 
 import { createElement, clearElement } from '../utils/dom'
+import { escapeHtml } from '../utils/field-helpers'
 
 // =============================================================================
 // Types
@@ -131,6 +132,8 @@ export interface AppHeaderConfig {
   logoAlt?: string
   /** ロゴのリンク先 */
   logoHref?: string
+  /** システム名（既定ロゴのテキスト。logo 指定時は無視） */
+  systemName?: string
   /** アプリ名 */
   appName: string
   /** テナント一覧 */
@@ -326,7 +329,7 @@ export class AppHeader {
         className: 'app-header-logo-link',
         attributes: {
           href: this.config.logoHref,
-          'aria-label': this.config.logoAlt ?? 'ホーム',
+          'aria-label': this.config.logoAlt ?? this.config.systemName ?? 'ホーム',
         },
       })
 
@@ -362,10 +365,7 @@ export class AppHeader {
    * デフォルトロゴをレンダリング
    */
   private renderDefaultLogo(): string {
-    return `<svg width="120" height="24" viewBox="0 0 120 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="24" height="24" rx="4" fill="currentColor"/>
-      <text x="32" y="17" font-size="14" font-weight="600" fill="currentColor">mokkun</text>
-    </svg>`
+    return `<span class="app-header-logo-mark" aria-hidden="true"></span><span class="app-header-logo-name">${escapeHtml(this.config.systemName || 'mokkun')}</span>`
   }
 
   /**

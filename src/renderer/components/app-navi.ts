@@ -7,6 +7,7 @@
  */
 
 import { createElement, clearElement, generateId } from '../utils/dom'
+import { resolveIcon } from '../utils/icons'
 
 // =============================================================================
 // Types
@@ -423,7 +424,7 @@ export class AppNavi {
     // アイコン
     if (item.icon) {
       const icon = createElement('span', { className: 'app-navi-icon' })
-      icon.innerHTML = item.icon
+      icon.textContent = resolveIcon(item.icon)
       button.appendChild(icon)
     }
 
@@ -490,7 +491,7 @@ export class AppNavi {
     // アイコン
     if (item.icon) {
       const icon = createElement('span', { className: 'app-navi-icon' })
-      icon.innerHTML = item.icon
+      icon.textContent = resolveIcon(item.icon)
       anchor.appendChild(icon)
     }
 
@@ -559,7 +560,7 @@ export class AppNavi {
     // アイコン
     if (item.icon) {
       const icon = createElement('span', { className: 'app-navi-icon' })
-      icon.innerHTML = item.icon
+      icon.textContent = resolveIcon(item.icon)
       trigger.appendChild(icon)
     }
 
@@ -654,7 +655,7 @@ export class AppNavi {
       // アイコン
       if (menuItem.icon) {
         const icon = createElement('span', { className: 'app-navi-dropdown-menu-icon' })
-        icon.innerHTML = menuItem.icon
+        icon.textContent = resolveIcon(menuItem.icon)
         anchor.appendChild(icon)
       }
 
@@ -690,7 +691,7 @@ export class AppNavi {
     // アイコン
     if (menuItem.icon) {
       const icon = createElement('span', { className: 'app-navi-dropdown-menu-icon' })
-      icon.innerHTML = menuItem.icon
+      icon.textContent = resolveIcon(menuItem.icon)
       button.appendChild(icon)
     }
 

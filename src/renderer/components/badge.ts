@@ -71,6 +71,9 @@ export interface BadgeConfig {
 // Badge Class
 // =============================================================================
 
+const BADGE_COLORS = new Set(['gray', 'blue', 'green', 'yellow', 'red'])
+const BADGE_SIZES = new Set(['small', 'medium'])
+
 /**
  * バッジコンポーネント
  */
@@ -383,13 +386,55 @@ export class Badge {
   static renderField(field: InputField): string {
     const badgeField = field as InputField & {
       text?: string
+      count?: number
+      dot?: boolean
+      color?: string
+      size?: string
+      max_count?: number
+      maxCount?: number
       variant?: 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'info'
     }
-    const text = badgeField.text ?? field.label
-    const variant = badgeField.variant ?? 'default'
+    const variantToColor: Record<string, string> = {
+      default: 'gray', primary: 'blue', success: 'green', warning: 'yellow', danger: 'red', info: 'blue',
+    }
+    const rawColor = badgeField.color
+      ?? (badgeField.variant ? variantToColor[badgeField.variant] : undefined)
+      ?? 'gray'
+    const color = BADGE_COLORS.has(rawColor) ? rawColor : 'gray'
+    const size = badgeField.size && BADGE_SIZES.has(badgeField.size) ? badgeField.size : 'medium'
+    const maxCount = badgeField.max_count ?? badgeField.maxCount
+    const classes = ['mokkun-badge', `badge-${color}`, `badge-${size}`]
+    if (badgeField.dot) classes.push('badge-dot')
+
+    // hide_on_zero: count が 0 のときは何も描画しない
+    const hideOnZero = (badgeField as { hide_on_zero?: boolean; hideOnZero?: boolean }).hide_on_zero
+      ?? (badgeField as { hideOnZero?: boolean }).hideOnZero
+    if (hideOnZero && badgeField.count === 0 && !badgeField.dot) {
+      return createFieldWrapper(field, '')
+    }
+
+    let valueHtml = ''
+    if (badgeField.dot) {
+      valueHtml = '<span class="badge-dot-indicator" aria-hidden="true"></span>'
+    } else if (badgeField.text !== undefined && badgeField.text !== '') {
+      valueHtml = `<span class="badge-content" role="status">${escapeHtml(badgeField.text)}</span>`
+    } else if (typeof badgeField.count === 'number') {
+      const display = maxCount !== undefined && badgeField.count > maxCount
+        ? `${maxCount}+`
+        : String(badgeField.count)
+      valueHtml = `<span class="badge-content" role="status">${escapeHtml(display)}</span>`
+    }
+
+    const labelHtml = field.label
+      ? `<span class="badge-label">${escapeHtml(field.label)}</span>`
+      : ''
+
+    const dotAria = badgeField.dot
+      ? ` aria-label="${escapeHtml(`${field.label ?? ''} ${typeof badgeField.count === 'number' ? `${badgeField.count}件` : ''}`.trim())}"`
+      : ''
 
     const badgeHtml = `
-      <span class="mokkun-badge badge-${variant}">${escapeHtml(text)}</span>
+      <span class="${classes.join(' ')}" data-color="${escapeHtml(color)}" data-size="${escapeHtml(size)}"${dotAria}>${labelHtml}${valueHtml}</span>
     `
 
     return createFieldWrapper(field, badgeHtml)

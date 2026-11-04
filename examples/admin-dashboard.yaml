@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/tango238/mokkun/main/schema.json
 # =============================================================================
 # 管理画面モック - 全コンポーネント showcase
 # =============================================================================
@@ -12,16 +13,17 @@ view:
     actor: "管理者"
     purpose: "KPIの確認とクイックアクション"
 
-    app_header:
-      app_name: "管理コンソール"
-      logo_href: "#dashboard"
+    appHeader:
+      systemName: "サンプル業務システム"
+      appName: "管理コンソール"
+      logoHref: "#dashboard"
       tenants:
         - id: "tenant-1"
           name: "株式会社サンプル"
         - id: "tenant-2"
           name: "テスト企業"
-      current_tenant_id: "tenant-1"
-      user_info:
+      currentTenantId: "tenant-1"
+      userInfo:
         name: "山田太郎"
         email: "yamada@example.com"
       navigations:
@@ -50,11 +52,11 @@ view:
         - id: "nav-settings"
           label: "設定"
           href: "#settings"
-      help_page_url: "https://help.example.com"
-      show_release_note: true
-      release_note_text: "v2.0リリース"
+      helpPageUrl: "https://help.example.com"
+      showReleaseNote: true
+      releaseNoteText: "v2.0リリース"
 
-    app_navi:
+    appNavi:
       label: "メインナビゲーション"
       items:
         - id: "overview"
@@ -68,7 +70,7 @@ view:
         - id: "reports"
           label: "レポート"
           type: "dropdown"
-          dropdown_items:
+          dropdownItems:
             - id: "daily"
               label: "日次レポート"
             - id: "weekly"
@@ -77,8 +79,8 @@ view:
               label: "月次レポート"
 
     sections:
-      - section_name: "通知エリア"
-        input_fields:
+      - sectionName: "通知エリア"
+        inputFields:
           - type: "heading"
             level: 2
             label: "お知らせ"
@@ -93,8 +95,8 @@ view:
             label: "保存完了"
             description: "設定が正常に保存されました"
 
-      - section_name: "統計サマリー"
-        input_fields:
+      - sectionName: "統計サマリー"
+        inputFields:
           - type: "heading"
             level: 2
             label: "本日の統計"
@@ -118,8 +120,8 @@ view:
             color: "red"
             dot: true
 
-      - section_name: "最近のアクティビティ"
-        input_fields:
+      - sectionName: "最近のアクティビティ"
+        inputFields:
           - type: "heading"
             level: 3
             label: "タイムライン"
@@ -156,8 +158,8 @@ view:
     actor: "管理者"
 
     sections:
-      - section_name: "検索・フィルター"
-        input_fields:
+      - sectionName: "検索・フィルター"
+        inputFields:
           - type: "heading"
             level: 2
             label: "ユーザー検索"
@@ -196,7 +198,7 @@ view:
           - id: "department_browser"
             type: "browser"
             label: "部署選択"
-            browser_items:
+            browserItems:
               - value: "company"
                 label: "会社全体"
                 children:
@@ -216,10 +218,10 @@ view:
                         label: "バックエンド"
                   - value: "hr"
                     label: "人事部"
-            max_columns: 3
+            maxColumns: 3
 
-      - section_name: "ユーザー一覧"
-        input_fields:
+      - sectionName: "ユーザー一覧"
+        inputFields:
           - id: "user_table"
             type: "data_table"
             label: "ユーザー一覧"
@@ -234,7 +236,7 @@ view:
               - id: "role"
                 label: "役割"
                 format: "status"
-                status_map:
+                statusMap:
                   admin:
                     label: "管理者"
                     color: "danger"
@@ -251,7 +253,7 @@ view:
               - id: "status"
                 label: "状態"
                 format: "status"
-                status_map:
+                statusMap:
                   active:
                     label: "有効"
                     color: "success"
@@ -278,7 +280,7 @@ view:
                 last_login: "2024-01-18T09:00:00"
                 status: "inactive"
             selection: "multiple"
-            row_actions:
+            rowActions:
               - id: "edit"
                 label: "編集"
                 icon: "edit"
@@ -290,23 +292,23 @@ view:
                   message: "このユーザーを削除してもよろしいですか？"
             pagination:
               enabled: true
-              page_size: 10
-              page_size_options: [10, 25, 50, 100]
+              pageSize: 10
+              pageSizeOptions: [10, 25, 50, 100]
             filters:
               enabled: true
-              show_search: true
+              showSearch: true
             striped: true
             hoverable: true
 
           - id: "user_pagination"
             type: "pagination"
             label: "ページネーション"
-            total_items: 156
-            current_page: 1
-            page_size: 10
-            show_page_size_selector: true
-            show_item_count: true
-            show_jump_buttons: true
+            totalItems: 156
+            currentPage: 1
+            pageSize: 10
+            showPageSizeSelector: true
+            showItemCount: true
+            showJumpButtons: true
 
     actions:
       - id: "add_user"
@@ -331,10 +333,10 @@ view:
 
     wizard:
       layout: "horizontal"
-      validate_on_step: true
-      allow_back: true
-      show_progress: true
-      clickable_steps: false
+      validateOnStep: true
+      allowBack: true
+      showProgress: true
+      clickableSteps: false
       steps:
         - id: "basic_info"
           title: "基本情報"
@@ -352,22 +354,22 @@ view:
             - id: "user_email"
               type: "text"
               label: "メールアドレス"
-              input_type: "email"
+              inputType: "email"
               required: true
               placeholder: "example@company.com"
 
             - id: "user_password"
               type: "text"
               label: "パスワード"
-              input_type: "password"
+              inputType: "password"
               required: true
-              min_length: 8
+              minLength: 8
               description: "8文字以上で入力してください"
 
             - id: "user_phone"
               type: "text"
               label: "電話番号"
-              input_type: "tel"
+              inputType: "tel"
               placeholder: "090-1234-5678"
 
         - id: "role_permissions"
@@ -427,15 +429,15 @@ view:
             - id: "avatar"
               type: "image_uploader"
               label: "プロフィール画像"
-              max_files: 1
-              max_file_size: 5242880
-              accepted_formats: ["image/jpeg", "image/png", "image/gif"]
+              maxFiles: 1
+              maxFileSize: 5242880
+              acceptedFormats: ["image/jpeg", "image/png", "image/gif"]
 
             - id: "bio"
               type: "textarea"
               label: "自己紹介"
               rows: 4
-              max_length: 500
+              maxLength: 500
               placeholder: "簡単な自己紹介を入力してください"
 
             - id: "birth_date"
@@ -445,14 +447,14 @@ view:
             - id: "join_date"
               type: "calendar"
               label: "入社日"
-              week_starts_on: 1
+              weekStartsOn: 1
               locale: "ja-JP"
 
             - id: "notification_enabled"
               type: "toggle"
               label: "通知設定"
-              checked_label: "有効"
-              unchecked_label: "無効"
+              checkedLabel: "有効"
+              uncheckedLabel: "無効"
               size: "medium"
 
         - id: "confirmation"
@@ -467,7 +469,7 @@ view:
               type: "checkbox"
               label: "利用規約に同意する"
               required: true
-              label_position: "right"
+              labelPosition: "right"
 
     actions:
       - id: "cancel"
@@ -481,7 +483,7 @@ view:
         style: "primary"
         url: "/api/users"
         method: "POST"
-        on_success:
+        onSuccess:
           to: "#users"
           message: "ユーザーを登録しました"
 
@@ -494,14 +496,14 @@ view:
     actor: "編集者"
 
     sections:
-      - section_name: "タブナビゲーション"
-        input_fields:
+      - sectionName: "タブナビゲーション"
+        inputFields:
           - id: "content_tabs"
             type: "tabs"
             label: "コンテンツタイプ"
 
-      - section_name: "記事作成"
-        input_fields:
+      - sectionName: "記事作成"
+        inputFields:
           - type: "heading"
             level: 2
             label: "新規記事"
@@ -530,7 +532,7 @@ view:
                 label: "ビジネス"
               - value: "lifestyle"
                 label: "ライフスタイル"
-            max_selections: 3
+            maxSelections: 3
 
           - id: "article_body"
             type: "textarea"
@@ -551,16 +553,16 @@ view:
           - id: "publish_time"
             type: "time_picker"
             label: "公開時刻"
-            use_24_hour: true
-            minute_step: 15
+            use24Hour: true
+            minuteStep: 15
 
           - id: "publish_duration"
             type: "duration_picker"
             label: "公開期間"
             units: ["days", "hours"]
 
-      - section_name: "SEO設定"
-        input_fields:
+      - sectionName: "SEO設定"
+        inputFields:
           - id: "seo_disclosure"
             type: "disclosure"
             label: "SEO設定を表示"
@@ -568,16 +570,16 @@ view:
           - id: "meta_title"
             type: "text"
             label: "メタタイトル"
-            max_length: 60
+            maxLength: 60
 
           - id: "meta_description"
             type: "textarea"
             label: "メタディスクリプション"
             rows: 3
-            max_length: 160
+            maxLength: 160
 
-      - section_name: "メディア"
-        input_fields:
+      - sectionName: "メディア"
+        inputFields:
           - type: "heading"
             level: 3
             label: "アイキャッチ画像"
@@ -585,9 +587,9 @@ view:
           - id: "featured_image"
             type: "image_uploader"
             label: "アイキャッチ画像"
-            max_files: 1
-            max_file_size: 10485760
-            accepted_formats: ["image/jpeg", "image/png", "image/webp"]
+            maxFiles: 1
+            maxFileSize: 10485760
+            acceptedFormats: ["image/jpeg", "image/png", "image/webp"]
 
           - type: "heading"
             level: 3
@@ -597,10 +599,10 @@ view:
             type: "file_upload"
             label: "添付ファイル"
             multiple: true
-            max_files: 5
-            max_size: 52428800
+            maxFiles: 5
+            maxSize: 52428800
             accept: [".pdf", ".doc", ".docx", ".xls", ".xlsx"]
-            drag_drop: true
+            dragDrop: true
 
           - type: "heading"
             level: 3
@@ -609,11 +611,11 @@ view:
           - id: "gallery"
             type: "photo_manager"
             label: "ギャラリー"
-            max_photos: 10
+            maxPhotos: 10
             columns: 4
 
-      - section_name: "関連コンテンツ"
-        input_fields:
+      - sectionName: "関連コンテンツ"
+        inputFields:
           - id: "related_accordion"
             type: "accordion_panel"
             label: "関連設定"
@@ -621,19 +623,19 @@ view:
           - id: "related_articles"
             type: "repeater"
             label: "関連記事"
-            min_items: 0
-            max_items: 5
-            add_button_label: "関連記事を追加"
-            show_remove_button: true
+            minItems: 0
+            maxItems: 5
+            addButtonLabel: "関連記事を追加"
+            showRemoveButton: true
             sortable: true
-            item_fields:
+            itemFields:
               - id: "related_title"
                 type: "text"
                 label: "記事タイトル"
               - id: "related_url"
                 type: "text"
                 label: "URL"
-                input_type: "url"
+                inputType: "url"
 
     actions:
       - id: "save_draft"
@@ -661,15 +663,15 @@ view:
     actor: "管理者"
 
     sections:
-      - section_name: "セクションナビゲーション"
-        input_fields:
+      - sectionName: "セクションナビゲーション"
+        inputFields:
           - id: "settings_nav"
             type: "section_nav"
             label: "設定カテゴリ"
 
-      - section_name: "一般設定"
+      - sectionName: "一般設定"
         icon: "settings"
-        input_fields:
+        inputFields:
           - type: "heading"
             level: 2
             label: "一般設定"
@@ -683,13 +685,13 @@ view:
           - id: "site_url"
             type: "text"
             label: "サイトURL"
-            input_type: "url"
+            inputType: "url"
             placeholder: "https://example.com"
 
           - id: "admin_email"
             type: "text"
             label: "管理者メールアドレス"
-            input_type: "email"
+            inputType: "email"
             required: true
 
           - id: "timezone"
@@ -714,9 +716,9 @@ view:
                 label: "English"
             default: "ja"
 
-      - section_name: "表示設定"
+      - sectionName: "表示設定"
         icon: "display"
-        input_fields:
+        inputFields:
           - type: "heading"
             level: 2
             label: "表示設定"
@@ -755,12 +757,12 @@ view:
             type: "duration_input"
             label: "セッションタイムアウト"
             format: "HH:mm"
-            display_unit: "minutes"
+            displayUnit: "minutes"
             default: 30
 
-      - section_name: "通知設定"
+      - sectionName: "通知設定"
         icon: "bell"
-        input_fields:
+        inputFields:
           - type: "heading"
             level: 2
             label: "通知設定"
@@ -768,15 +770,15 @@ view:
           - id: "email_notifications"
             type: "toggle"
             label: "メール通知"
-            checked_label: "有効"
-            unchecked_label: "無効"
+            checkedLabel: "有効"
+            uncheckedLabel: "無効"
             default: true
 
           - id: "push_notifications"
             type: "toggle"
             label: "プッシュ通知"
-            checked_label: "有効"
-            unchecked_label: "無効"
+            checkedLabel: "有効"
+            uncheckedLabel: "無効"
 
           - id: "notification_frequency"
             type: "select"
@@ -790,7 +792,7 @@ view:
                 label: "1日1回"
               - value: "weekly"
                 label: "週1回"
-            visible_when:
+            visibleWhen:
               or:
                 - field: "email_notifications"
                   operator: "eq"
@@ -799,9 +801,9 @@ view:
                   operator: "eq"
                   value: true
 
-      - section_name: "セキュリティ設定"
+      - sectionName: "セキュリティ設定"
         icon: "shield"
-        input_fields:
+        inputFields:
           - type: "heading"
             level: 2
             label: "セキュリティ設定"
@@ -809,8 +811,8 @@ view:
           - id: "two_factor_auth"
             type: "toggle"
             label: "二要素認証"
-            checked_label: "必須"
-            unchecked_label: "任意"
+            checkedLabel: "必須"
+            uncheckedLabel: "任意"
 
           - id: "password_policy"
             type: "checkbox_group"
@@ -835,9 +837,9 @@ view:
             placeholder: "1行に1つのIPアドレスを入力"
             description: "空白の場合はすべてのIPからアクセス可能"
 
-      - section_name: "API設定"
+      - sectionName: "API設定"
         icon: "code"
-        input_fields:
+        inputFields:
           - type: "heading"
             level: 2
             label: "API設定"
@@ -845,8 +847,8 @@ view:
           - id: "api_enabled"
             type: "toggle"
             label: "APIアクセス"
-            checked_label: "有効"
-            unchecked_label: "無効"
+            checkedLabel: "有効"
+            uncheckedLabel: "無効"
 
           - id: "api_key"
             type: "text"
@@ -866,11 +868,11 @@ view:
           - id: "webhook_url"
             type: "text"
             label: "WebhookエンドポイントURL"
-            input_type: "url"
+            inputType: "url"
             placeholder: "https://your-server.com/webhook"
 
-      - section_name: "地図設定"
-        input_fields:
+      - sectionName: "地図設定"
+        inputFields:
           - type: "heading"
             level: 2
             label: "拠点情報"
@@ -881,7 +883,7 @@ view:
             width: "100%"
             height: "300px"
             zoom: 15
-            show_open_link: true
+            showOpenLink: true
 
     actions:
       - id: "reset"
@@ -905,14 +907,14 @@ view:
     actor: "管理者"
 
     sections:
-      - section_name: "レポート進捗"
-        input_fields:
+      - sectionName: "レポート進捗"
+        inputFields:
           - id: "report_stepper"
             type: "stepper"
             label: "レポート生成ステップ"
 
-      - section_name: "レポート条件"
-        input_fields:
+      - sectionName: "レポート条件"
+        inputFields:
           - type: "heading"
             level: 2
             label: "レポート条件の設定"
@@ -954,23 +956,23 @@ view:
                 label: "CSV"
             default: "pdf"
 
-      - section_name: "レポート生成状況"
-        input_fields:
+      - sectionName: "レポート生成状況"
+        inputFields:
           - id: "report_loader"
             type: "loader"
             label: "レポート生成中"
-            loader_size: "large"
-            loader_type: "primary"
-            show_progress: true
-            initial_progress: 0
+            loaderSize: "large"
+            loaderType: "primary"
+            showProgress: true
+            initialProgress: 0
 
           - id: "generation_status"
             type: "information_panel"
             label: "生成状況"
             description: "レポートの生成には数分かかる場合があります"
 
-      - section_name: "アクションメニュー"
-        input_fields:
+      - sectionName: "アクションメニュー"
+        inputFields:
           - id: "action_dropdown"
             type: "dropdown"
             label: "アクション"
@@ -984,23 +986,23 @@ view:
               - value: "schedule"
                 label: "定期実行を設定"
 
-      - section_name: "ツールチップサンプル"
-        input_fields:
+      - sectionName: "ツールチップサンプル"
+        inputFields:
           - id: "tooltip_sample"
             type: "tooltip"
             label: "ヘルプアイコン"
             content: "レポートは毎日深夜に自動更新されます。リアルタイムデータが必要な場合は手動で再生成してください。"
             position: "right"
-            show_arrow: true
+            showArrow: true
 
-      - section_name: "フローティングアクション"
-        input_fields:
+      - sectionName: "フローティングアクション"
+        inputFields:
           - id: "float_actions"
             type: "float_area"
             label: "フローティングアクション"
             position: "bottom"
-            show_shadow: true
-            float_align: "right"
+            showShadow: true
+            floatAlign: "right"
 
     actions:
       - id: "generate_report"
@@ -1040,16 +1042,16 @@ view:
 # =============================================================================
 # 共通コンポーネント定義
 # =============================================================================
-common_components:
-  - component_name: "user_form_fields"
+commonComponents:
+  - componentName: "user_form_fields"
     description: "ユーザー情報の共通入力フィールド"
-    used_in:
+    usedIn:
       - "user_form"
       - "profile_edit"
 
-  - component_name: "date_range_selector"
+  - componentName: "date_range_selector"
     description: "日付範囲選択の共通コンポーネント"
-    used_in:
+    usedIn:
       - "reports"
       - "analytics"
 

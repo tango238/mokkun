@@ -107,7 +107,7 @@ describe('Select Component', () => {
       const selectElement = container.querySelector('select') as HTMLSelectElement
       const blankOption = selectElement.options[0]
       expect(blankOption.value).toBe('')
-      expect(blankOption.textContent).toBe('Select...')
+      expect(blankOption.textContent).toBe('選択してください')
     })
 
     it('should render custom placeholder', () => {

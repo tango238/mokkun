@@ -11,7 +11,7 @@ export * from './screen-renderer'
 // Phase 3 exports (new)
 export { Wizard, type WizardState } from './components/wizard'
 export { Repeater, type RepeaterState, type RepeaterItem } from './components/repeater'
-export { Tabs, type TabsState } from './components/tabs'
+export { Tabs, attachTabsBehavior, type TabsState } from './components/tabs'
 export { renderField } from './components/field-renderer'
 export { generateDummyData } from './utils/dummy-data'
 

@@ -10,11 +10,12 @@ import './style.css'
 import { parseYaml, getScreen, getScreenNames, findFieldById } from './parser'
 import {
   renderScreen,
-  initializeSectionNav,
+  mountAppChrome,
+  type AppChromeController,
   mountWizardScreen,
-  type SectionNavController,
   type WizardController,
 } from './renderer/screen-renderer'
+import { attachTabsBehavior } from './renderer/components/tabs'
 import { attachActionHandler, type ActionHandlerCallbacks } from './renderer/action-handler'
 import { loadFromUrl } from './loader'
 import {
@@ -83,7 +84,8 @@ interface InternalState {
   container: HTMLElement
   schema: MokkunSchema | null
   currentScreenName: string | null
-  sectionNavController: SectionNavController | null
+  appChrome: AppChromeController | null
+  tabsCleanup?: (() => void) | null
   wizardController: WizardController | null
   actionHandler: ReturnType<typeof attachActionHandler> | null
   options: MokkunInitOptions
@@ -104,14 +106,19 @@ function createInstance(state: InternalState): MokkunInstance {
     if (!screen) return
 
     // Cleanup previous controllers
-    if (state.sectionNavController) {
-      state.sectionNavController.destroy()
-      state.sectionNavController = null
+    if (state.appChrome) {
+      state.appChrome.destroy()
+      state.appChrome = null
+    }
+    if (state.tabsCleanup) {
+      state.tabsCleanup()
+      state.tabsCleanup = null
     }
     if (state.actionHandler) {
       state.actionHandler.detach()
       state.actionHandler = null
     }
+    state.wizardController?.destroy()
     state.wizardController = null
 
     // Render screen
@@ -119,12 +126,11 @@ function createInstance(state: InternalState): MokkunInstance {
       state.wizardController = mountWizardScreen(state.container, screen, 0)
     } else {
       state.container.innerHTML = renderScreen(screen)
-
-      // Initialize section nav if needed
-      if (screen.sections && screen.sections.length > 0) {
-        state.sectionNavController = initializeSectionNav(state.container, screen)
-      }
+      state.appChrome = mountAppChrome(state.container, screen)
     }
+
+    // Enable tab switching for statically rendered tabs
+    state.tabsCleanup = attachTabsBehavior(state.container)
 
     // Attach action handler
     const callbacks: ActionHandlerCallbacks = {
@@ -203,16 +209,17 @@ function createInstance(state: InternalState): MokkunInstance {
     },
 
     destroy() {
-      if (state.sectionNavController) {
-        state.sectionNavController.destroy()
-      }
+      state.appChrome?.destroy()
+      state.appChrome = null
+      state.tabsCleanup?.()
+      state.tabsCleanup = null
+      state.wizardController?.destroy()
       if (state.actionHandler) {
         state.actionHandler.detach()
       }
       state.container.innerHTML = ''
       state.schema = null
       state.currentScreenName = null
-      state.sectionNavController = null
       state.wizardController = null
       state.actionHandler = null
     },
@@ -242,9 +249,8 @@ async function init(options: MokkunInitOptions): Promise<MokkunInstance> {
   }
 
   // Initialize theme
-  if (options.theme) {
-    applyTheme(options.theme)
-  } else {
+  // 未知のテーマIDは既定テーマにフォールバック
+  if (!options.theme || !applyTheme(options.theme)) {
     initializeTheme()
   }
 
@@ -253,7 +259,7 @@ async function init(options: MokkunInitOptions): Promise<MokkunInstance> {
     container,
     schema: null,
     currentScreenName: null,
-    sectionNavController: null,
+    appChrome: null,
     wizardController: null,
     actionHandler: null,
     options,

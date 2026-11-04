@@ -49,7 +49,9 @@ JSON Schema で `oneOf` を使って複数の型を許可している箇所と�
 
 ### 5. ノーマライザのプロパティ名対応の検証
 
-JSON Schema で定義されたプロパティ名がノーマライザで正しくマッピングされているか:
+JSON Schema のプロパティ名は camelCase（正規形）。パーサーは入口（`src/parser/key-normalizer.ts` の `normalizeKeysDeep`）で
+camelCase を内部の snake_case に変換するため、下表の左列は schema.json では camelCase（例: `browserItems`）で、
+右列の `raw.xxx_yyy` は変換後の snake_case 名。比較時は schema 側のキーを `toSnake` してから突き合わせる:
 
 | JSON Schema プロパティ | ノーマライザでの参照 |
 |----------------------|---------------------|
@@ -65,7 +67,7 @@ JSON Schema にあるプロパティがノーマライザで参照されてい�
 
 ### 6. YAML ファイルのバリデーション検証
 
-`examples/` 配下の全 YAML ファイルに対して:
+`examples/` 配下の全 YAML ファイルに対して（`teamkit-compat.yaml` は snake_case の後方互換例のため schema.json の検証対象外。`parseYaml()` の成功のみ確認）:
 1. `parseYaml()` でパースが成功するか
 2. パースエラーがある場合、JSON Schema では有効な記述なのにパーサーが拒否していないか
 

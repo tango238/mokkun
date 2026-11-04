@@ -403,7 +403,8 @@ export class NotificationBar {
       variant?: 'info' | 'success' | 'warning' | 'error'
       dismissible?: boolean
     }
-    const variant = notificationField.variant ?? 'info'
+    const rawVariant = notificationField.variant ?? 'info'
+    const variant = ['info', 'success', 'warning', 'error'].includes(rawVariant) ? rawVariant : 'info'
     const dismissible = notificationField.dismissible ?? true
 
     const iconMap: Record<string, string> = {
@@ -414,12 +415,12 @@ export class NotificationBar {
     }
 
     const notificationHtml = `
-      <div class="mokkun-notification-bar notification-${variant}" role="alert">
-        <span class="notification-icon">${iconMap[variant]}</span>
-        <div class="notification-content">
-          <span class="notification-message">${escapeHtml(field.description ?? field.label)}</span>
+      <div class="mokkun-notification-bar notification-bar-${variant}" data-type="${variant}" role="alert">
+        <div class="notification-bar-content">
+          <span class="notification-bar-icon" aria-hidden="true">${iconMap[variant]}</span>
+          <span class="notification-bar-message">${escapeHtml(field.description ?? field.label)}</span>
         </div>
-        ${dismissible ? '<button type="button" class="notification-dismiss" aria-label="閉じる">×</button>' : ''}
+        ${dismissible ? '<button type="button" class="notification-bar-close" aria-label="閉じる">×</button>' : ''}
       </div>
     `
     return createFieldWrapper(field, notificationHtml)

@@ -30,7 +30,7 @@ export function renderPhotoManagerField(field: PhotoManagerField): string {
   const maxPhotos = field.max_photos ?? 20
   const maxFileSize = field.max_file_size ?? 10
   const acceptedFormats = field.accepted_formats ?? ['JPG', 'PNG']
-  const columns = field.columns ?? 4
+  const columns = Number.isFinite(Number(field.columns ?? 4)) ? Number(field.columns ?? 4) : 4
 
   // アップロードエリアHTML
   const uploadAreaHtml = `
@@ -90,7 +90,7 @@ export function renderPhotoManagerField(field: PhotoManagerField): string {
         id="${managerId}"
         data-config='${JSON.stringify({ maxPhotos, maxFileSize, acceptedFormats, columns })}'
         role="region"
-        aria-label="${field.label ?? '写真管理'}"
+        aria-label="${escapeHtml(field.label || '写真管理')}"
       >
         ${uploadAreaHtml}
         ${counterHtml}

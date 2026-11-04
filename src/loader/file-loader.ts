@@ -39,6 +39,8 @@ export interface FileLoadSuccess {
   schema: MokkunSchema
   fileName: string
   source: 'file' | 'url' | 'drop'
+  /** 読み込んだ YAML の原文（コメント・順序を保持） */
+  content: string
 }
 
 /**
@@ -174,6 +176,7 @@ function parseYamlContent(
     schema: result.data,
     fileName,
     source,
+    content,
   }
 }
 

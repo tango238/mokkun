@@ -638,7 +638,7 @@ export class AccordionPanel {
       <div class="mokkun-accordion">
         <div class="accordion-item">
           <button type="button" class="accordion-trigger" aria-expanded="false">
-            <span>${escapeHtml(field.label)}</span>
+            ${field.label ? `<span>${escapeHtml(field.label)}</span>` : ''}
             <span class="accordion-icon">▼</span>
           </button>
           <div class="accordion-content" hidden>

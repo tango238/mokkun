@@ -4,6 +4,7 @@
  */
 
 import yaml from 'js-yaml'
+import { normalizeKeysDeep } from './key-normalizer'
 import type {
   MokkunSchema,
   MokkunSchemaRaw,
@@ -157,6 +158,18 @@ function toSafeKey(name: string): string {
 }
 
 /**
+ * プロトタイプ汚染につながる予約キーを除いた浅いコピーを返す
+ */
+function omitReservedKeys(obj: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = {}
+  for (const key of Object.keys(obj)) {
+    if (RESERVED_KEYS.has(key)) continue
+    result[key] = obj[key]
+  }
+  return result
+}
+
+/**
  * id 未指定フィールド用の連番 ID 生成関数を作成（クロージャでカウンターを保持）
  */
 function createAutoFieldIdGenerator(): () => string {
@@ -168,11 +181,30 @@ function createAutoFieldIdGenerator(): () => string {
 }
 
 /**
+ * accept / accepted_types を配列に正規化（カンマ区切り文字列にも対応）
+ */
+function normalizeAccept(value: unknown): string[] | undefined {
+  if (isString(value)) return value.split(',').map(t => t.trim()).filter(Boolean)
+  if (isArray(value)) return (value as unknown[]).map(String)
+  return undefined
+}
+
+/**
  * 配列形式の入力フィールドを正規化
  */
 function normalizeInputField(raw: InputFieldRaw, generateId: () => string): InputField {
   const id = raw.id ?? raw.field_name ?? generateId()
-  const label = raw.label ?? raw.field_name ?? id
+  const label = (raw.label ?? raw.field_name ?? '') as string
+
+  // 列挙されていないキーも落とさないよう raw を素通しし、正規化キーで上書きする
+  const passthrough = omitReservedKeys(raw as Record<string, unknown>)
+  delete passthrough.field_name
+  delete passthrough.accepted_types
+  delete passthrough.display_fields
+  delete passthrough.filters
+  if (raw.default === undefined && raw.default_value !== undefined) {
+    passthrough.default = raw.default_value
+  }
 
   // 配列形式のオプションをSelectOption形式に変換（文字列/オブジェクト混在配列にも対応）
   let options: SelectOption[] | string | undefined
@@ -213,12 +245,14 @@ function normalizeInputField(raw: InputFieldRaw, generateId: () => string): Inpu
   switch (fieldType) {
     case 'text':
       return {
+        ...passthrough,
         ...base,
         type: 'text',
         input_type: raw.input_type as 'text' | 'email' | 'url' | 'tel' | 'password' | undefined,
       }
     case 'number':
       return {
+        ...passthrough,
         ...base,
         type: 'number',
         min: raw.min as number | undefined,
@@ -227,65 +261,76 @@ function normalizeInputField(raw: InputFieldRaw, generateId: () => string): Inpu
       }
     case 'textarea':
       return {
+        ...passthrough,
         ...base,
         type: 'textarea',
         rows: raw.rows as number | undefined,
       }
     case 'select':
       return {
+        ...passthrough,
         ...base,
         type: 'select',
         options: options ?? [],
       }
     case 'multi_select':
       return {
+        ...passthrough,
         ...base,
         type: 'multi_select',
         options: options ?? [],
       }
     case 'radio_group':
       return {
+        ...passthrough,
         ...base,
         type: 'radio_group',
         options: options ?? [],
       }
     case 'checkbox_group':
       return {
+        ...passthrough,
         ...base,
         type: 'checkbox_group',
         options: options ?? [],
       }
     case 'date_picker':
       return {
+        ...passthrough,
         ...base,
         type: 'date_picker',
       }
     case 'time_picker':
       return {
+        ...passthrough,
         ...base,
         type: 'time_picker',
       }
     case 'duration_picker':
       return {
+        ...passthrough,
         ...base,
         type: 'duration_picker',
         units: raw.units as ('hours' | 'minutes' | 'seconds' | 'days')[] | undefined,
       }
     case 'duration_input':
       return {
+        ...passthrough,
         ...base,
         type: 'duration_input',
-        display_unit: raw.unit as 'hours' | 'minutes' | 'seconds' | undefined,
+        display_unit: (raw.display_unit ?? raw.unit) as 'hours' | 'minutes' | 'seconds' | undefined,
       }
     case 'file_upload':
       return {
+        ...passthrough,
         ...base,
         type: 'file_upload',
-        accept: raw.accepted_types?.split(',').map(t => t.trim()) ?? raw.accept as string[] | undefined,
+        accept: normalizeAccept(raw.accepted_types ?? raw.accept),
         multiple: raw.multiple as boolean | undefined,
       }
     case 'repeater':
       return {
+        ...passthrough,
         ...base,
         type: 'repeater',
         item_fields: (raw.item_fields as InputFieldRaw[] | undefined)?.map(f => normalizeInputField(f, generateId)) ?? [],
@@ -300,6 +345,7 @@ function normalizeInputField(raw: InputFieldRaw, generateId: () => string): Inpu
         return row
       })
       return {
+        ...passthrough,
         ...base,
         type: 'data_table',
         columns: (raw.columns ?? []) as import('../types/schema').DataTableColumn[],
@@ -320,6 +366,7 @@ function normalizeInputField(raw: InputFieldRaw, generateId: () => string): Inpu
     }
     case 'google_map_embed':
       return {
+        ...passthrough,
         ...base,
         type: 'google_map_embed',
         height: raw.height as string | undefined,
@@ -329,6 +376,7 @@ function normalizeInputField(raw: InputFieldRaw, generateId: () => string): Inpu
       }
     case 'photo_manager':
       return {
+        ...passthrough,
         ...base,
         type: 'photo_manager',
         photos: raw.photos as import('../types/schema').PhotoConfig[] | undefined,
@@ -339,6 +387,7 @@ function normalizeInputField(raw: InputFieldRaw, generateId: () => string): Inpu
       }
     case 'image_uploader':
       return {
+        ...passthrough,
         ...base,
         type: 'image_uploader',
         accepted_formats: raw.accepted_formats as string[] | undefined,
@@ -348,18 +397,20 @@ function normalizeInputField(raw: InputFieldRaw, generateId: () => string): Inpu
       }
     case 'browser':
       return {
+        ...passthrough,
         ...base,
         type: 'browser',
         items: (raw.browser_items ?? raw.items) as import('../types/schema').BrowserItemSchema[] | undefined ?? [],
-        default: (raw.default_value ?? raw.default) as string | undefined,
+        default: (raw.default ?? raw.default_value) as string | undefined,
         maxColumns: raw.max_columns as number | undefined,
         height: raw.height as string | undefined,
       }
     case 'calendar':
       return {
+        ...passthrough,
         ...base,
         type: 'calendar',
-        default: raw.default as string | undefined,
+        default: (raw.default ?? raw.default_value) as string | undefined,
         from: (raw.calendar_from ?? raw.from) as string | undefined,
         to: (raw.calendar_to ?? raw.to) as string | undefined,
         weekStartsOn: raw.week_starts_on as 0 | 1 | undefined,
@@ -367,6 +418,7 @@ function normalizeInputField(raw: InputFieldRaw, generateId: () => string): Inpu
       }
     case 'combobox':
       return {
+        ...passthrough,
         ...base,
         type: 'combobox',
         mode: raw.mode as 'single' | 'multi' | undefined,
@@ -380,6 +432,7 @@ function normalizeInputField(raw: InputFieldRaw, generateId: () => string): Inpu
       }
     case 'checkbox':
       return {
+        ...passthrough,
         ...base,
         type: 'checkbox',
         checked_label: raw.checked_label as string | undefined,
@@ -390,6 +443,7 @@ function normalizeInputField(raw: InputFieldRaw, generateId: () => string): Inpu
       }
     case 'toggle':
       return {
+        ...passthrough,
         ...base,
         type: 'toggle',
         checked_label: raw.checked_label as string | undefined,
@@ -400,6 +454,7 @@ function normalizeInputField(raw: InputFieldRaw, generateId: () => string): Inpu
       }
     case 'badge':
       return {
+        ...passthrough,
         ...base,
         type: 'badge',
         color: raw.color as 'gray' | 'blue' | 'green' | 'yellow' | 'red' | undefined,
@@ -408,9 +463,31 @@ function normalizeInputField(raw: InputFieldRaw, generateId: () => string): Inpu
         count: raw.count as number | undefined,
         max_count: raw.max_count as number | undefined,
         text: raw.text as string | undefined,
+        ...(raw.hide_on_zero !== undefined ? { hide_on_zero: raw.hide_on_zero as boolean } : {}),
+      }
+    case 'segmented_control':
+      return {
+        ...passthrough,
+        ...base,
+        type: 'segmented_control',
+        options: Array.isArray(options) ? options : undefined,
+        default: (raw.default ?? raw.default_value) as string | undefined,
+      }
+    case 'timeline':
+      return {
+        ...passthrough,
+        ...base,
+        type: 'timeline',
+        items: (raw.items as Record<string, unknown>[] | undefined)?.map((item) => ({
+          ...omitReservedKeys(item),
+          time: String(item.time ?? item.datetime ?? item.date ?? ''),
+          title: String(item.title ?? ''),
+          description: (item.description ?? item.content) as string | undefined,
+        })),
       }
     case 'heading':
       return {
+        ...passthrough,
         ...base,
         type: 'heading',
         level: (raw.level ?? 2) as 1 | 2 | 3 | 4 | 5 | 6,
@@ -422,6 +499,7 @@ function normalizeInputField(raw: InputFieldRaw, generateId: () => string): Inpu
       }
     case 'tooltip':
       return {
+        ...passthrough,
         ...base,
         type: 'tooltip',
         content: (raw.content ?? '') as string,
@@ -433,6 +511,7 @@ function normalizeInputField(raw: InputFieldRaw, generateId: () => string): Inpu
       }
     case 'pagination':
       return {
+        ...passthrough,
         ...base,
         type: 'pagination',
         total_items: (raw.total_items ?? 0) as number,
@@ -448,6 +527,7 @@ function normalizeInputField(raw: InputFieldRaw, generateId: () => string): Inpu
       }
     case 'float_area':
       return {
+        ...passthrough,
         ...base,
         type: 'float_area',
         position: raw.position as 'top' | 'bottom' | undefined,
@@ -463,6 +543,7 @@ function normalizeInputField(raw: InputFieldRaw, generateId: () => string): Inpu
       }
     case 'loader':
       return {
+        ...passthrough,
         ...base,
         type: 'loader',
         size: (raw.loader_size ?? raw.size) as 'small' | 'medium' | 'large' | undefined,
@@ -471,11 +552,36 @@ function normalizeInputField(raw: InputFieldRaw, generateId: () => string): Inpu
         showProgress: (raw.show_progress ?? raw.showProgress) as boolean | undefined,
         initialProgress: (raw.initial_progress ?? raw.initialProgress) as number | undefined,
       }
+    case 'tabs': {
+      // タブ内の fields も正規化する（ID 自動付与など）。それ以外のキーは raw を保持
+      const normalizeTabs = (list: unknown): Record<string, unknown>[] | undefined =>
+        isArray(list)
+          ? (list as unknown[]).filter(isObject).map((item) => ({
+              ...omitReservedKeys(item),
+              ...(isArray(item.fields)
+                ? { fields: (item.fields as InputFieldRaw[]).map(f => normalizeInputField(f, generateId)) }
+                : {}),
+            }))
+          : undefined
+      const tabItems = normalizeTabs(raw.items)
+      const tabTabs = normalizeTabs(raw.tabs)
+      return {
+        ...passthrough,
+        ...(tabItems ? { items: tabItems } : {}),
+        ...(tabTabs ? { tabs: tabTabs } : {}),
+        ...base,
+        type: 'tabs',
+      } as InputField
+    }
     default:
       // 未知のタイプは前方互換のためそのまま保持する（意図的な設計）
       // バリデーションは validateInputField で実施済み
       // レンダリング時に form-fields.ts の default ケースでフォールバック表示される
+      // 型固有のキー（variant, lines, options 等）を落とさないよう raw を保持し、
+      // 正規化済みキー（id/label/options 等）は base 側を優先する
       return {
+        ...passthrough,
+        ...(options !== undefined ? { options } : {}),
         ...base,
         type: fieldType as InputFieldType,
       } as InputField
@@ -563,6 +669,7 @@ function normalizeAppHeader(
     logo: raw.logo as string | undefined,
     logoAlt: raw.logo_alt as string | undefined,
     logoHref: raw.logo_href as string | undefined,
+    systemName: (raw.system_name ?? raw.systemName) as string | undefined,
     appName: (raw.app_name ?? raw.appName ?? '') as string,
     tenants: raw.tenants as import('../types/schema').TenantSchema[] | undefined,
     currentTenantId: (raw.current_tenant_id ?? raw.currentTenantId) as string | undefined,
@@ -694,7 +801,8 @@ function normalizeScreenDefinition(raw: ScreenDefinitionRaw, generateId: () => s
         // 文字列の場合はボタンラベルとして扱う
         return {
           id: `action_${index}`,
-          type: 'submit' as const,
+          type: 'custom' as const,
+          handler: `action_${index}`,
           label: action,
           style: index === 0 ? 'primary' as const : 'secondary' as const,
         }
@@ -1507,7 +1615,8 @@ function validateSchema(data: unknown): ParseError[] {
 export function parseYaml(yamlText: string): ParseResult<MokkunSchema> {
   try {
     // Parse YAML
-    const data = yaml.load(yamlText)
+    // camelCase（正規形）→ 内部 snake_case へキーを変換（snake_case はそのまま通す）
+    const data = normalizeKeysDeep(yaml.load(yamlText))
 
     // Validate schema
     const errors = validateSchema(data)

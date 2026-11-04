@@ -1,0 +1,232 @@
+/* Layout "shell" styles — scoped under .layout-shell */
+.layout-shell.screen {
+  max-width: none;
+  margin: calc(-1 * var(--spacing-xl));
+  padding: 0;
+  background: var(--color-bg);
+  box-shadow: none;
+  border-radius: 0;
+  min-height: 60vh;
+}
+
+@media (max-width: 768px) {
+  .layout-shell.screen { margin: calc(-1 * var(--spacing-md)); }
+}
+
+/* 最上部の全幅バー */
+.layout-shell .app-header-container,
+.layout-shell .app-navi-container { width: 100%; }
+.layout-shell .app-header-container { margin: 0; padding: 0; }
+
+.layout-shell .shell-body {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 32px 48px;
+  box-sizing: border-box;
+}
+.layout-shell .shell-body-narrow { max-width: 480px; padding-top: 48px; }
+
+/* ページヘッダ */
+.layout-shell .shell-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin: 0 0 20px;
+  padding: 0;
+  border: none;
+}
+.layout-shell .shell-page-header {
+  position: sticky;
+  top: var(--viewer-header-height, 0px);
+  z-index: 5;
+  background: var(--color-bg);
+  padding: 12px 0;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+.layout-shell .shell-page-heading { min-width: 0; }
+.layout-shell .shell-page-header .screen-title {
+  margin: 0;
+  font-size: 1.5rem;
+  line-height: 1.3;
+  color: var(--color-text);
+}
+.layout-shell .shell-page-header .screen-description {
+  margin: 4px 0 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+.layout-shell .shell-page-actions { flex-shrink: 0; }
+.layout-shell .shell-page-actions .actions { gap: 8px; flex-wrap: nowrap; }
+.layout-shell .shell-page-actions .actions .btn-danger { margin-right: 24px; }
+
+.layout-shell .screen-form { gap: 16px; }
+
+/* カード */
+.layout-shell .shell-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+}
+.layout-shell .shell-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+.layout-shell .shell-card-header .section-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.layout-shell .shell-card > .section-fields,
+.layout-shell .shell-single-fields { padding: 20px; }
+
+/* 12 カラムグリッド */
+.layout-shell .shell-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 16px 20px;
+  align-items: start;
+}
+.layout-shell .shell-grid > * { grid-column: span 6; min-width: 0; }
+.layout-shell .shell-grid .field-wrapper { margin-bottom: 0; }
+
+.layout-shell .shell-grid > .field-type-textarea,
+.layout-shell .shell-grid > .field-type-data_table,
+.layout-shell .shell-grid > .field-type-repeater,
+.layout-shell .shell-grid > .field-type-browser,
+.layout-shell .shell-grid > .field-type-timeline,
+.layout-shell .shell-grid > .field-type-information_panel,
+.layout-shell .shell-grid > .field-type-definition_list,
+.layout-shell .shell-grid > .field-type-accordion_panel,
+.layout-shell .shell-grid > .field-type-tabs,
+.layout-shell .shell-grid > .field-type-stepper,
+.layout-shell .shell-grid > .field-type-file_upload,
+.layout-shell .shell-grid > .field-type-image_uploader,
+.layout-shell .shell-grid > .field-type-photo_manager,
+.layout-shell .shell-grid > .field-type-google_map_embed,
+.layout-shell .shell-grid > .field-type-calendar,
+.layout-shell .shell-grid > .heading-field-container,
+.layout-shell .shell-grid > .field-type-notification_bar,
+.layout-shell .shell-grid > .field-type-response_message,
+.layout-shell .shell-grid > .field-type-pagination,
+.layout-shell .shell-grid > .field-type-float_area,
+.layout-shell .shell-grid > .field-type-section_nav,
+.layout-shell .shell-grid > .form-field-inline-group { grid-column: 1 / -1; }
+
+@media (max-width: 900px) {
+  .layout-shell .shell-grid > * { grid-column: 1 / -1; }
+  .layout-shell .shell-body { padding-left: 16px; padding-right: 16px; }
+}
+
+/* フィルタ系セクション（4 カラムはここだけ） */
+.layout-shell .shell-filter { background: var(--color-bg-subtle); }
+.layout-shell .shell-filter .shell-grid > * { grid-column: span 3; }
+.layout-shell .shell-filter .shell-grid > .heading-field-container,
+.layout-shell .shell-filter .shell-grid > .field-type-data_table,
+.layout-shell .shell-filter .shell-grid > .field-type-textarea,
+.layout-shell .shell-filter .shell-grid > .field-type-browser,
+.layout-shell .shell-filter .shell-grid > .field-type-checkbox_group,
+.layout-shell .shell-filter .shell-grid > .field-type-radio_group,
+.layout-shell .shell-filter .shell-grid > .field-type-repeater,
+.layout-shell .shell-filter .shell-grid > .form-field-inline-group { grid-column: 1 / -1; }
+
+@media (max-width: 900px) {
+  .layout-shell .shell-filter .shell-grid > * { grid-column: 1 / -1; }
+}
+
+/* KPI タイル: .form-field-inline-group を全幅セル、中の badge をタイルに */
+.layout-shell .shell-kpi .shell-grid { display: block; }
+.layout-shell .shell-kpi .shell-grid > .heading-field-container { margin-bottom: 12px; }
+.layout-shell .shell-kpi .form-field-inline-group {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  align-items: stretch;
+  width: 100%;
+  margin: 0;
+}
+.layout-shell .shell-kpi .form-field-inline-group > .form-field {
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  padding: 16px 20px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+  justify-content: center;
+  min-width: 0;
+}
+.layout-shell .shell-kpi .form-field-inline-group .field-label {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+  margin: 0;
+}
+/* ピルの背景・枠を消して「ラベル小・数値大」に見せる */
+.layout-shell .shell-kpi .form-field-inline-group .mokkun-badge {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-start;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  color: var(--color-text);
+}
+.layout-shell .shell-kpi .form-field-inline-group .mokkun-badge .badge-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+.layout-shell .shell-kpi .form-field-inline-group .mokkun-badge .badge-content {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-text);
+}
+@media (max-width: 900px) {
+  .layout-shell .shell-kpi .form-field-inline-group { grid-template-columns: 1fr; }
+}
+
+/* テーブルはカード端まで */
+.layout-shell .shell-has-table > .section-fields { padding: 0; gap: 0; }
+.layout-shell .shell-has-table .shell-grid > :not(.field-type-data_table) { margin: 12px 20px; }
+.layout-shell .shell-has-table .shell-grid > .field-type-data_table { margin: 0; }
+.layout-shell .shell-has-table .field-type-data_table .field-label { padding: 12px 20px 0; }
+.layout-shell .shell-has-table .field-type-data_table .field-label:empty { display: none; }
+.layout-shell .shell-has-table .field-type-data_table > * { border-radius: 0; }
+
+/* 単一カード（login など） */
+.layout-shell .shell-single .shell-card-header { flex-direction: column; align-items: flex-start; gap: 4px; padding: 20px; }
+.layout-shell .shell-single .shell-card-header .screen-title { margin: 0; font-size: 1.25rem; }
+.layout-shell .shell-single .shell-card-header .screen-description { margin: 0; font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.layout-shell .shell-single-fields { display: flex; flex-direction: column; gap: 16px; }
+.layout-shell .shell-card-footer { padding: 16px 20px; border-top: 1px solid var(--color-border); background: var(--color-bg-subtle); }
+.layout-shell .shell-card-footer .actions { justify-content: flex-end; gap: 8px; }
+.layout-shell .shell-card-footer .actions .btn-primary:only-child { width: 100%; }
+
+/* セクション既定スタイルの打ち消し */
+.layout-shell .form-section.shell-card { padding-top: 0; margin-bottom: 0; }
+.layout-shell .shell-card-header .section-title { border-bottom: none; padding-bottom: 0; }
+.layout-shell .shell-card-header .section-publish-toggle { margin: 0; padding: 4px 10px; }
+.layout-shell .shell-grid .heading-field-container { margin: 0; }
+.layout-shell .shell-grid .heading-element { margin: 0; font-size: 1rem; font-weight: 700; }
+.layout-shell .shell-grid .heading-field-container + .form-field,
+.layout-shell .shell-grid .heading-field-container { padding-top: 0; }
+.layout-shell .mokkun-app-header {
+  position: sticky;
+  top: var(--viewer-header-height, 0px);
+  z-index: 10;
+}

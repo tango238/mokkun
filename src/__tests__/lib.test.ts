@@ -336,9 +336,29 @@ view:
 `,
       })
 
-      expect(container.querySelector('.screen-with-sections')).not.toBeNull()
+      // 既定レイアウトは shell
+      expect(container.querySelector('.layout-shell')).not.toBeNull()
       expect(container.querySelectorAll('.form-section').length).toBe(2)
 
+      instance.destroy()
+    })
+
+    it('should fall back to light for an unknown theme id', async () => {
+      localStorage.clear()
+      const instance = await Mokkun.init({
+        container: '#test-container',
+        theme: 'lofi',
+        yamlContent: `
+view:
+  s:
+    title: S
+    fields:
+      - id: a
+        type: text
+        label: A
+`,
+      })
+      expect(document.documentElement.getAttribute('data-theme')).toBe('light')
       instance.destroy()
     })
   })

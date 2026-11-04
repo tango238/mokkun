@@ -15,6 +15,7 @@ import {
   escapeHtml,
   createFieldWrapper,
   getOptions,
+  resolveGroupDirection,
 } from '../utils/field-helpers'
 import type { CheckboxField, CheckboxGroupField, InputField } from '../../types/schema'
 
@@ -459,7 +460,7 @@ export class Checkbox {
    */
   private static renderCheckboxGroup(field: CheckboxGroupField): string {
     const options = getOptions(field.options)
-    const direction = field.direction ?? 'vertical'
+    const direction = resolveGroupDirection(field.direction, options)
     const defaultValues = Array.isArray(field.default) ? field.default : []
 
     const optionHtml = options
@@ -484,7 +485,7 @@ export class Checkbox {
       })
       .join('')
 
-    const content = `<div class="checkbox-group direction-${direction}">${optionHtml}</div>`
+    const content = `<div class="checkbox-group direction-${direction}${direction === 'horizontal' ? ' inline' : ''}">${optionHtml}</div>`
     return createFieldWrapper(field, content)
   }
 }

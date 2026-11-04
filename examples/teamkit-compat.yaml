@@ -1,3 +1,4 @@
+# teamkit generate-ui の出力形式（snake_case）。mokkun は後方互換として読み込める。正規形は camelCase（schema.json 参照）。
 # teamkit ui.yml 互換性テスト
 # teamkit の generate-ui コマンドが出力する形式を再現
 # mokkun でのレンダリング動作を検証する

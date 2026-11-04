@@ -18,7 +18,7 @@
  */
 
 import { createElement, generateId } from '../utils/dom'
-import { createFieldWrapper } from '../utils/field-helpers'
+import { createFieldWrapper, escapeHtml } from '../utils/field-helpers'
 import type { InputField } from '../../types/schema'
 
 // =============================================================================
@@ -558,21 +558,70 @@ export class Browser {
   // ===========================================================================
 
   static renderField(field: InputField): string {
+    const f = field as unknown as {
+      items?: BrowserItem[]
+      default?: string
+      maxColumns?: number
+      max_columns?: number
+      height?: string
+    }
+    const items = Array.isArray(f.items) ? f.items : []
+    const maxColumns = f.maxColumns ?? f.max_columns ?? 3
+    const uid = `browser-${field.id}`
+
+    // 選択パス: default があればその経路、なければ先頭アイテムから最初の子を辿る
+    const findPath = (list: BrowserItem[], value: string, acc: string[]): string[] | null => {
+      for (const it of list) {
+        const next = [...acc, it.value]
+        if (it.value === value) return next
+        if (it.children) {
+          const r = findPath(it.children, value, next)
+          if (r) return r
+        }
+      }
+      return null
+    }
+    let path: string[] = f.default ? (findPath(items, f.default, []) ?? []) : []
+    if (path.length === 0 && items.length > 0) {
+      path = []
+      let cur: BrowserItem[] | undefined = items
+      while (cur && cur.length > 0 && path.length < maxColumns) {
+        const first: BrowserItem = cur[0]
+        path.push(first.value)
+        cur = first.children
+      }
+    }
+    const leaf = path[path.length - 1]
+
+    const columns: BrowserItem[][] = []
+    let current: BrowserItem[] | undefined = items
+    for (let i = 0; i < maxColumns && current && current.length > 0; i++) {
+      columns.push(current)
+      const sel: BrowserItem | undefined = current.find(it => it.value === path[i])
+      current = sel?.children
+    }
+
+    const arrow = '<span class="browser-item-arrow" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5V3z"/></svg></span>'
+    const columnsHtml = columns.map((col, ci) => `
+        <div class="browser-column" role="listbox" aria-label="カラム ${ci + 1}" data-column-index="${ci}">
+          ${col.map((it, ii) => {
+            const selected = path.includes(it.value)
+            const cls = ['browser-item']
+            if (selected) cls.push('is-selected')
+            if (it.value === leaf) cls.push('is-leaf-selected')
+            if (it.disabled) cls.push('is-disabled')
+            const hasChildren = !!(it.children && it.children.length > 0)
+            return `<label class="${cls.join(' ')}" data-value="${escapeHtml(it.value)}" data-column="${ci}" data-index="${ii}">
+              <input type="radio" class="browser-item-radio" name="${escapeHtml(uid)}-column-${ci}" value="${escapeHtml(it.value)}" ${selected ? 'checked' : ''} ${it.disabled ? 'disabled' : ''} aria-label="${escapeHtml(it.label)}">
+              <span class="browser-item-content"><span class="browser-item-label">${escapeHtml(it.label)}</span>${hasChildren ? arrow : ''}</span>
+            </label>`
+          }).join('')}
+        </div>`).join('')
+
+    const heightStyle = f.height && f.height !== 'auto' ? ` style="height: ${escapeHtml(f.height)}"` : ''
     const browserHtml = `
-      <div class="mokkun-browser browser-placeholder">
-        <div class="browser-toolbar">
-          <div class="browser-controls">
-            <span class="browser-dot browser-dot-red"></span>
-            <span class="browser-dot browser-dot-yellow"></span>
-            <span class="browser-dot browser-dot-green"></span>
-          </div>
-          <div class="browser-url-bar">
-            <span class="browser-url">https://example.com</span>
-          </div>
-        </div>
-        <div class="browser-content">
-          <p class="browser-placeholder-text">ブラウザコンテンツ</p>
-        </div>
+      <div class="mokkun-browser" role="application" aria-label="階層ブラウザ"${heightStyle}>
+        <div class="browser-columns">${columnsHtml}</div>
       </div>
     `
     return createFieldWrapper(field, browserHtml)

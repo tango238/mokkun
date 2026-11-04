@@ -9,6 +9,7 @@
  * 4. 新しいコンポーネント追加時の漏れを検出
  */
 
+import { normalizeKeysDeep } from '../parser/key-normalizer'
 import { describe, it, expect, beforeAll } from 'vitest'
 import fs from 'fs'
 import path from 'path'
@@ -32,7 +33,8 @@ beforeAll(() => {
  * YAMLファイルからすべてのフィールドを抽出
  */
 function extractFieldsFromYaml(yamlContent: string): InputField[] {
-  const schema = yaml.load(yamlContent) as MokkunSchemaRaw
+  // examples は camelCase が正規形のため、パーサーと同様に内部キー(snake_case)へ正規化してから走査する
+  const schema = normalizeKeysDeep(yaml.load(yamlContent)) as MokkunSchemaRaw
   const fields: InputField[] = []
 
   if (!schema?.view) {

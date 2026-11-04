@@ -579,7 +579,7 @@ describe('Screen Renderer', () => {
       }
       const html = renderScreen(screen)
 
-      expect(html).toContain('class="screen"')
+      expect(html).toContain('class="screen screen--bare layout-shell"')
       expect(html).toContain('Login')
       expect(html).toContain('Please log in')
       expect(html).toContain('Email')
@@ -2336,7 +2336,7 @@ describe('renderDataTableField', () => {
     expect(html).toContain('data-row-id="2"')
   })
 
-  it('should render dummy data when no data provided', () => {
+  it('should render empty_state (no dummy rows) when no data provided', () => {
         const config: DataTableField = {
       id: 'empty_table',
       type: 'data_table',
@@ -2353,9 +2353,11 @@ describe('renderDataTableField', () => {
 
     const html = renderDataTableField(config)
 
-    // ダミーデータが生成されるため、行が表示される
-    expect(html).toContain('data-table-tr')
-    expect(html).toContain('data-row-id')
+    // ダミーは生成せず empty_state を出す
+    expect(html).toContain('empty-state')
+    expect(html).toContain('空です')
+    expect(html).not.toContain('data-row-id')
+    expect(html).not.toContain('data-table-tr')
   })
 })
 

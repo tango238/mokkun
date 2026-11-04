@@ -10,7 +10,7 @@
  */
 
 import { createElement, generateId } from '../utils/dom'
-import { escapeHtml, getDefaultSizeForLevel } from '../utils/field-helpers'
+import { escapeHtml, getDefaultSizeForLevel, safeClassName } from '../utils/field-helpers'
 import type { HeadingField } from '../../types/schema'
 
 // =============================================================================
@@ -276,8 +276,9 @@ export class Heading {
       `heading-color-${color}`,
     ]
 
-    if (field.class) {
-      classes.push(field.class)
+    const safeClass = safeClassName(field.class)
+    if (safeClass) {
+      classes.push(safeClass)
     }
 
     const iconHtml = field.icon ? `<span class="heading-icon">${escapeHtml(field.icon)}</span>` : ''

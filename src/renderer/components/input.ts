@@ -16,6 +16,7 @@ import {
   escapeHtml,
   createFieldWrapper,
   getCommonAttributes,
+  numAttr,
 } from '../utils/field-helpers'
 import type { TextField, NumberField, DatePickerField, TimePickerField } from '../../types/schema'
 
@@ -565,10 +566,10 @@ export class Input {
     const attrs: string[] = [getCommonAttributes(field)]
 
     if (field.min_length !== undefined) {
-      attrs.push(`minlength="${field.min_length}"`)
+      attrs.push(numAttr('minlength', field.min_length))
     }
     if (field.max_length !== undefined) {
-      attrs.push(`maxlength="${field.max_length}"`)
+      attrs.push(numAttr('maxlength', field.max_length))
     }
     if (field.pattern) {
       attrs.push(`pattern="${escapeHtml(field.pattern)}"`)
@@ -589,16 +590,16 @@ export class Input {
     const attrs: string[] = [getCommonAttributes(field)]
 
     if (field.min !== undefined) {
-      attrs.push(`min="${field.min}"`)
+      attrs.push(numAttr('min', field.min))
     }
     if (field.max !== undefined) {
-      attrs.push(`max="${field.max}"`)
+      attrs.push(numAttr('max', field.max))
     }
     if (field.step !== undefined) {
-      attrs.push(`step="${field.step}"`)
+      attrs.push(numAttr('step', field.step))
     }
     if (field.default !== undefined) {
-      attrs.push(`value="${field.default}"`)
+      attrs.push(`value="${escapeHtml(String(field.default))}"`)
     }
 
     let input = `<input type="number" class="form-input" ${attrs.join(' ')} />`
@@ -645,7 +646,7 @@ export class Input {
     const attrs: string[] = [getCommonAttributes(field)]
 
     if (field.minute_step) {
-      attrs.push(`step="${field.minute_step * 60}"`)
+      attrs.push(numAttr('step', Number(field.minute_step) * 60))
     }
     if (field.default !== undefined) {
       attrs.push(`value="${escapeHtml(String(field.default))}"`)

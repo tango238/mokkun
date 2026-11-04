@@ -8,6 +8,7 @@ import {
   type DeleteConfirmDialogConfig,
   type DependencyInfo,
 } from './components/delete-confirm-dialog'
+import { ActionDialog } from './components/dialog/action-dialog'
 
 // =============================================================================
 // Types
@@ -117,6 +118,16 @@ export class ActionHandler {
       return
     }
 
+    // submit は form のネイティブ送信と二重にならないよう、ここで一本化する
+    if (actionType === 'submit') {
+      const form = button.closest('form')
+      if (form && !form.reportValidity()) {
+        e.preventDefault()
+        return
+      }
+      e.preventDefault()
+    }
+
     // 確認不要なら直接実行
     this.executeAction(button, actionId, actionType)
   }
@@ -132,6 +143,40 @@ export class ActionHandler {
     message: string
   ): Promise<void> {
     const extendedConfig = this.deleteConfirmConfigs.get(actionId)
+
+    // 削除確認として登録されていないアクションは汎用の確認ダイアログで開く
+    if (!extendedConfig) {
+      const danger =
+        button.dataset.actionStyle === 'danger' || button.classList.contains('btn-danger')
+      const generic = new ActionDialog(
+        {
+          title,
+          message,
+          icon: 'warning',
+          danger,
+          confirmLabel: button.dataset.confirmLabel,
+          cancelLabel: button.dataset.cancelLabel,
+          onPressEscape: () => {
+            this.callbacks.onCancel?.(actionId)
+            return true
+          },
+          onClickOverlay: () => {
+            this.callbacks.onCancel?.(actionId)
+            return true
+          },
+        },
+        {
+          onConfirm: () => {
+            this.executeAction(button, actionId, actionType)
+          },
+          onCancel: () => {
+            this.callbacks.onCancel?.(actionId)
+          },
+        }
+      )
+      generic.open()
+      return
+    }
 
     // 依存データを取得
     let dependencies: DependencyInfo[] | undefined

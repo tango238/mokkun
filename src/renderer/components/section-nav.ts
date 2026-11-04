@@ -5,6 +5,7 @@
 
 import { createElement, clearElement } from '../utils/dom'
 import { escapeHtml, createFieldWrapper } from '../utils/field-helpers'
+import { resolveIcon } from '../utils/icons'
 import type { InputField } from '../../types/schema'
 
 // =============================================================================
@@ -433,7 +434,7 @@ export class SectionNav {
     if (section.icon) {
       const icon = createElement('span', {
         className: 'section-nav-icon',
-        textContent: section.icon,
+        textContent: resolveIcon(section.icon),
       })
       button.appendChild(icon)
     }
@@ -477,7 +478,7 @@ export class SectionNav {
     if (activeSection?.icon) {
       const icon = createElement('span', {
         className: 'section-nav-icon',
-        textContent: activeSection.icon,
+        textContent: resolveIcon(activeSection.icon),
       })
       trigger.appendChild(icon)
     }
@@ -514,7 +515,7 @@ export class SectionNav {
       if (section.icon) {
         const icon = createElement('span', {
           className: 'section-nav-icon',
-          textContent: section.icon,
+          textContent: resolveIcon(section.icon),
         })
         option.appendChild(icon)
       }
@@ -642,7 +643,7 @@ export class SectionNav {
         labelEl.textContent = activeSection?.label ?? 'セクション選択'
       }
       if (iconEl && activeSection?.icon) {
-        iconEl.textContent = activeSection.icon
+        iconEl.textContent = resolveIcon(activeSection.icon)
       }
     }
 
@@ -666,7 +667,7 @@ export class SectionNav {
 
   static renderField(field: InputField): string {
     const sectionNavHtml = `
-      <nav class="mokkun-section-nav" aria-label="${escapeHtml(field.label)}">
+      <nav class="mokkun-section-nav"${field.label ? ` aria-label="${escapeHtml(field.label)}"` : ''}>
         <ul class="section-nav-list">
           <li class="section-nav-item active">
             <a href="#section1" class="section-nav-link">セクション1</a>

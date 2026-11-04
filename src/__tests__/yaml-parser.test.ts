@@ -611,9 +611,9 @@ view:
       expect(html).toContain('広さ')
       expect(html).toContain('公開ステータス')
 
-      // ダミーデータが生成されて行が表示されていることを確認
-      expect(html).toContain('data-table-tr')
-      expect(html).toContain('data-row-id')
+      // data が無いのでダミー行は出ず、empty_state が表示される
+      expect(html).toContain('empty-state')
+      expect(html).not.toContain('data-row-id')
     }
   })
 })
@@ -708,7 +708,7 @@ describe('Array Format YAML', () => {
 
       const firstAction = listScreen.actions?.[0]
       expect(firstAction?.label).toBe('新規施設登録')
-      expect(firstAction?.type).toBe('submit')
+      expect(firstAction?.type).toBe('custom')
       expect(firstAction?.style).toBe('primary')
 
       const secondAction = listScreen.actions?.[1]

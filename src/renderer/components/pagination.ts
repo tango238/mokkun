@@ -12,7 +12,7 @@
  */
 
 import { createElement, generateId } from '../utils/dom'
-import { createFieldWrapper } from '../utils/field-helpers'
+import { createFieldWrapper, escapeHtml } from '../utils/field-helpers'
 import type { InputField } from '../../types/schema'
 
 // =============================================================================
@@ -523,44 +523,56 @@ export class Pagination {
    * SSR/初期レンダリング用
    */
   static renderField(field: InputField): string {
-    const paginationField = field as InputField & {
-      totalItems?: number
-      pageSize?: number
-      currentPage?: number
-    }
-    const totalItems = paginationField.totalItems ?? 0
-    const pageSize = paginationField.pageSize ?? 10
-    const currentPage = paginationField.currentPage ?? 1
-    const totalPages = Math.ceil(totalItems / pageSize)
+    const f = field as unknown as Record<string, unknown>
+    const pick = <T,>(snake: string, camel: string): T | undefined =>
+      (f[snake] ?? f[camel]) as T | undefined
+    const totalItems = pick<number>('total_items', 'totalItems') ?? 0
+    const pageSize = pick<number>('page_size', 'pageSize') ?? 10
+    const totalPages = Math.max(1, Math.ceil(totalItems / pageSize))
+    const currentPage = Math.min(Math.max(1, pick<number>('current_page', 'currentPage') ?? 1), totalPages)
+    const pageSizeOptions = pick<number[]>('page_size_options', 'pageSizeOptions') ?? [10, 25, 50, 100]
+    const showPageSize = pick<boolean>('show_page_size_selector', 'showPageSizeSelector') ?? true
+    const showItemCount = pick<boolean>('show_item_count', 'showItemCount') ?? true
+    const showJump = pick<boolean>('show_jump_buttons', 'showJumpButtons') ?? true
+    const maxButtons = Math.max(3, pick<number>('max_page_buttons', 'maxPageButtons') ?? 7)
+    const rawAlign = f.align as string | undefined
+    const align = rawAlign && ['left', 'center', 'right'].includes(rawAlign) ? rawAlign : 'center'
 
     const startItem = totalItems > 0 ? (currentPage - 1) * pageSize + 1 : 0
     const endItem = Math.min(currentPage * pageSize, totalItems)
 
+    // 表示するページ番号（現在ページ中心のウィンドウ）
+    const pages: number[] = []
+    let from = Math.max(1, currentPage - Math.floor(maxButtons / 2))
+    const to = Math.min(totalPages, from + maxButtons - 1)
+    from = Math.max(1, to - maxButtons + 1)
+    for (let p = from; p <= to; p++) pages.push(p)
+
+    const atFirst = currentPage === 1
+    const atLast = currentPage === totalPages
+    const sizes = pageSizeOptions.includes(pageSize) ? pageSizeOptions : [...pageSizeOptions, pageSize].sort((x, y) => x - y)
+
     const paginationHtml = `
-      <div class="mokkun-pagination pagination-align-center">
+      <div class="mokkun-pagination pagination-align-${escapeHtml(align)}">
         <div class="pagination-wrapper">
-          <div class="pagination-page-size-selector">
+          ${showPageSize ? `<div class="pagination-page-size-selector">
             <label class="page-size-label">表示件数:</label>
             <select class="page-size-select" aria-label="ページサイズ選択">
-              <option value="10" ${pageSize === 10 ? 'selected' : ''}>10件</option>
-              <option value="25" ${pageSize === 25 ? 'selected' : ''}>25件</option>
-              <option value="50" ${pageSize === 50 ? 'selected' : ''}>50件</option>
-              <option value="100" ${pageSize === 100 ? 'selected' : ''}>100件</option>
+              ${sizes.map(n => `<option value="${n}" ${pageSize === n ? 'selected' : ''}>${n}件</option>`).join('')}
             </select>
-          </div>
+          </div>` : ''}
           <div class="pagination-navigation">
-            <button type="button" class="pagination-button pagination-button-first" ${currentPage === 1 ? 'disabled' : ''} aria-label="最初">最初</button>
-            <button type="button" class="pagination-button pagination-button-prev" ${currentPage === 1 ? 'disabled' : ''} aria-label="前へ">前へ</button>
-            ${Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
-              const page = i + 1
-              return `<button type="button" class="pagination-button pagination-page-button ${page === currentPage ? 'active' : ''}" aria-label="ページ ${page}" ${page === currentPage ? 'aria-current="page"' : ''}>${page}</button>`
-            }).join('')}
-            <button type="button" class="pagination-button pagination-button-next" ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''} aria-label="次へ">次へ</button>
-            <button type="button" class="pagination-button pagination-button-last" ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''} aria-label="最後">最後</button>
+            ${showJump ? `<button type="button" class="pagination-button pagination-button-first" ${atFirst ? 'disabled' : ''} aria-label="最初">最初</button>` : ''}
+            <button type="button" class="pagination-button pagination-button-prev" ${atFirst ? 'disabled' : ''} aria-label="前へ">前へ</button>
+            ${pages.map(page =>
+              `<button type="button" class="pagination-button pagination-page-button ${page === currentPage ? 'active' : ''}" aria-label="ページ ${page}" ${page === currentPage ? 'aria-current="page"' : ''}>${page}</button>`
+            ).join('')}
+            <button type="button" class="pagination-button pagination-button-next" ${atLast ? 'disabled' : ''} aria-label="次へ">次へ</button>
+            ${showJump ? `<button type="button" class="pagination-button pagination-button-last" ${atLast ? 'disabled' : ''} aria-label="最後">最後</button>` : ''}
           </div>
-          <div class="pagination-item-count">
-            <span class="item-count-text" aria-live="polite">${totalItems > 0 ? `${totalItems}件中 ${startItem}-${endItem}件を表示` : '0件'}</span>
-          </div>
+          ${showItemCount ? `<div class="pagination-item-count">
+            <span class="item-count-text" aria-live="polite">${totalItems > 0 ? `${totalItems}件中 ${startItem}-${endItem}件を表示（全${totalPages}ページ）` : '0件'}</span>
+          </div>` : ''}
         </div>
       </div>
     `

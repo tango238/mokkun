@@ -269,6 +269,8 @@ export interface AppHeaderConfigSchema {
   logoAlt?: string
   /** ロゴのリンク先 */
   logoHref?: string
+  /** システム名（既定ロゴのテキスト。logo 指定時は無視） */
+  systemName?: string
   /** アプリ名 */
   appName: string
   /** テナント一覧 */
@@ -1432,12 +1434,27 @@ export interface SegmentedControlField extends BaseInputField {
  */
 export interface TabsField extends BaseInputField {
   type: 'tabs'
-  /** タブアイテム */
-  tabs?: Array<{
-    id: string
-    label: string
-    content?: string
-  }>
+  /** タブアイテム（items と tabs は同義。items を優先） */
+  items?: TabsFieldItem[]
+  tabs?: TabsFieldItem[]
+  /** 初期アクティブタブID */
+  default?: string
+  active?: string
+  /** タブの配置 */
+  position?: 'top' | 'bottom' | 'left' | 'right'
+  /** タブのスタイル */
+  variant?: 'default' | 'pills' | 'underline' | 'bordered' | 'segmented'
+}
+
+export interface TabsFieldItem {
+  id?: string
+  label?: string
+  icon?: string
+  badge?: string | number
+  disabled?: boolean
+  /** プレーンテキスト（エスケープして表示） */
+  content?: string
+  fields?: InputField[]
 }
 
 /**

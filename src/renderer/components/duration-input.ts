@@ -14,6 +14,7 @@ import {
   createFieldWrapper,
   getCommonAttributes,
   unitLabels,
+  escapeHtml,
 } from '../utils/field-helpers'
 import type { DurationInputField } from '../../types/schema'
 
@@ -371,7 +372,7 @@ export class DurationInput {
     attrs.push('min="0"')
 
     if (field.default !== undefined) {
-      attrs.push(`value="${field.default}"`)
+      attrs.push(`value="${escapeHtml(String(field.default))}"`)
     }
 
     const unit = field.display_unit ?? 'minutes'

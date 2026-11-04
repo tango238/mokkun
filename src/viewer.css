@@ -1,0 +1,347 @@
+/* =============================================================================
+   Mokkun Viewer Chrome (ビューアー専用。lib.ts からは import しない)
+   Chrome の見た目はテーマ (data-theme) に依存しない固定値。
+   テーマは .mk-stage の内側にだけ効く。
+   ============================================================================= */
+
+:root {
+  --mk-bar-bg: #1b1f2a;
+  --mk-bar-bg-2: #232838;
+  --mk-bar-fg: #e6e8ef;
+  --mk-bar-muted: #8b92a6;
+  --mk-accent: #7c9cff;
+  --mk-canvas: #d9dce3;
+  --mk-stage-border: #9aa0b0;
+  --mk-source-bg: #0f1218;
+  --mk-source-fg: #d6dae3;
+  --mk-line-no: #5b6275;
+  --mk-key: #7cc7ff;
+  --mk-str: #c3e88d;
+  --mk-num: #f78c6c;
+  --mk-bool: #c792ea;
+  --mk-comment: #6b7385;
+  --mk-anchor: #ffcb6b;
+  --mk-font: var(--font-family);
+  --mk-mono: var(--font-family-mono);
+  /* .app-header(トップバー) の高さ。main.ts が実測値で上書きする */
+  --viewer-header-height: 44px;
+}
+
+/* ---- Layout ---------------------------------------------------------------- */
+
+.mk-viewer {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  font-family: var(--mk-font);
+  color: var(--mk-bar-fg);
+  background: var(--mk-canvas);
+}
+
+.mk-split {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.mk-pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.mk-pane-preview { flex: 1; }
+
+.mk-pane-source {
+  flex: 0 0 auto;
+  width: var(--mk-source-width, 420px);
+  min-width: 280px;
+  max-width: 60vw;
+  background: var(--mk-source-bg);
+}
+
+.mk-viewer.is-source-closed .mk-pane-source,
+.mk-viewer.is-source-closed .mk-gutter { display: none; }
+
+/* ---- Toolbar --------------------------------------------------------------- */
+
+.mk-viewer .app-header.mk-toolbar {
+  position: relative;
+  top: auto;
+  z-index: 100;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: 44px;
+  padding: 0 16px;
+  background: var(--mk-bar-bg);
+  color: var(--mk-bar-fg);
+  border: 0;
+  border-bottom: 1px solid #000;
+  font-family: var(--mk-font);
+  font-size: 13px;
+}
+
+.mk-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mk-wordmark {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--mk-bar-fg);
+}
+
+.mk-tag {
+  padding: 2px 5px;
+  font-size: 10px;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--mk-bar-muted);
+  border: 1px solid var(--mk-bar-muted);
+}
+
+.mk-toolbar-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.mk-file-chip {
+  max-width: 240px;
+  padding: 4px 8px;
+  overflow: hidden;
+  font-family: var(--mk-mono);
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--mk-bar-fg);
+}
+
+.mk-label {
+  font-size: 12px;
+  color: var(--mk-bar-muted);
+}
+
+.mk-btn {
+  padding: 5px 10px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--mk-bar-fg);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  cursor: pointer;
+}
+.mk-btn:hover { background: rgba(255, 255, 255, 0.16); }
+.mk-btn:focus-visible,
+.mk-select:focus-visible { outline: 2px solid var(--mk-accent); outline-offset: 1px; }
+
+.mk-select {
+  max-width: 260px;
+  padding: 4px 6px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--mk-bar-fg);
+  background: #2b3144;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  cursor: pointer;
+}
+.mk-select option { background: #2b3144; color: var(--mk-bar-fg); }
+
+/* ---- Pane head ------------------------------------------------------------- */
+
+.mk-pane-head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+  padding: 0 12px;
+  background: var(--mk-bar-bg-2);
+  color: var(--mk-bar-muted);
+  font-family: var(--mk-font);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.mk-pane-sub {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--mk-bar-fg);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.mk-pane-head-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.mk-pane-head .mk-select,
+.mk-pane-head .mk-btn {
+  padding: 1px 5px;
+  font-size: 11px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* ---- Canvas / Stage -------------------------------------------------------- */
+
+.mk-canvas {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 0; /* padding は sticky の基準領域を縮めるので .mk-canvas-inner に持たせる */
+  background: var(--mk-canvas);
+  /* スクロール領域がキャンバス自身なので、sticky の top はトップバー分を足さない */
+  --viewer-header-height: 0px;
+}
+
+.mk-canvas-inner {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  padding: 20px;
+}
+
+.mk-stage {
+  position: relative;
+  flex: 1;
+  padding: var(--spacing-xl, 24px);
+  overflow: visible; /* sticky 子孫を有効にするため scroll container にしない */
+  background: var(--color-bg);
+  color: var(--color-text);
+  border: 1px solid var(--mk-stage-border);
+  font-family: var(--font-family);
+}
+
+.mk-stage-tag {
+  position: absolute;
+  top: -19px;
+  left: -1px;
+  z-index: 5;
+  padding: 2px 6px;
+  font-family: var(--mk-font);
+  font-size: 10px;
+  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: var(--mk-bar-bg);
+  color: var(--mk-bar-fg);
+  pointer-events: none;
+}
+
+.mk-stage .welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+.mk-stage .welcome h2 { font-size: 2rem; color: var(--color-text); }
+
+/* ---- Gutter ---------------------------------------------------------------- */
+
+.mk-gutter {
+  flex: 0 0 6px;
+  width: 6px;
+  cursor: col-resize;
+  background: var(--mk-bar-bg);
+  touch-action: none;
+  transition: background 0.1s;
+}
+.mk-gutter:hover,
+.mk-gutter.is-dragging { background: var(--mk-accent); }
+
+.mk-viewer.is-resizing { cursor: col-resize; user-select: none; }
+.mk-viewer.is-resizing .mk-canvas,
+.mk-viewer.is-resizing .mk-yaml { pointer-events: none; }
+
+/* ---- YAML source ----------------------------------------------------------- */
+
+.mk-yaml {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 8px 0;
+  overflow: auto;
+  background: var(--mk-source-bg);
+  color: var(--mk-source-fg);
+  font-family: var(--mk-mono);
+  font-size: 12.5px;
+  line-height: 1.6;
+  white-space: pre;
+  tab-size: 2;
+}
+
+.mk-yaml code {
+  display: block;
+  min-width: max-content;
+  font: inherit;
+}
+
+.mk-line {
+  display: inline-block;
+  min-width: 100%;
+  padding-right: 16px;
+  border-left: 2px solid transparent;
+}
+
+.mk-line::before {
+  content: attr(data-line);
+  display: inline-block;
+  width: 4ch;
+  margin-right: 12px;
+  padding-left: 8px;
+  text-align: right;
+  color: var(--mk-line-no);
+  user-select: none;
+}
+
+.mk-line.is-active {
+  background: rgba(124, 156, 255, 0.12);
+  border-left-color: var(--mk-accent);
+}
+
+.mk-key { color: var(--mk-key); }
+.mk-str { color: var(--mk-str); }
+.mk-num { color: var(--mk-num); }
+.mk-bool { color: var(--mk-bool); }
+.mk-comment { color: var(--mk-comment); font-style: italic; }
+.mk-anchor { color: var(--mk-anchor); }
+
+/* ---- Narrow ---------------------------------------------------------------- */
+
+@media (max-width: 768px) {
+  .mk-stage { padding: var(--spacing-md); }
+}
+
+@media (max-width: 899px) {
+  .mk-canvas { overflow: visible; }
+  .mk-viewer { height: auto; min-height: 100vh; overflow: visible; }
+  .mk-split { flex-direction: column; }
+  .mk-pane-preview { min-height: 60vh; }
+  .mk-pane-source { width: auto; min-width: 0; max-width: none; height: 40vh; }
+  .mk-gutter { display: none; }
+  .mk-viewer .app-header.mk-toolbar { flex-wrap: wrap; height: auto; min-height: 44px; padding: 6px 16px; }
+}

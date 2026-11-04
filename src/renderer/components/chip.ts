@@ -2,6 +2,8 @@ import { createElement } from '../utils/dom'
 import { escapeHtml, createFieldWrapper } from '../utils/field-helpers'
 import type { InputField } from '../../types/schema'
 
+const CHIP_COLORS = new Set(['default', 'primary', 'success', 'warning', 'error', 'info'])
+
 /**
  * Chip component state
  */
@@ -315,12 +317,14 @@ export class Chip {
       removable?: boolean
     }
     const variant = chipField.variant ?? 'default'
+    const color = variant === 'danger' ? 'error' : (CHIP_COLORS.has(variant) ? variant : 'default')
     const removable = chipField.removable ?? false
 
+    // インタラクティブ版 (render()) と同じクラス名。
     const chipHtml = `
-      <span class="mokkun-chip chip-${variant}">
-        <span class="chip-label">${escapeHtml(field.label)}</span>
-        ${removable ? '<button type="button" class="chip-remove" aria-label="削除">×</button>' : ''}
+      <span class="mokkun-chip chip chip-medium chip-${color}" data-color="${color}">
+        <span class="chip-content">${field.label ? `<span class="chip-label">${escapeHtml(field.label)}</span>` : ''}</span>
+        ${removable ? '<button type="button" class="chip-delete-button" aria-label="削除"><span class="chip-delete-icon" aria-hidden="true">×</span></button>' : ''}
       </span>
     `
     return createFieldWrapper(field, chipHtml)

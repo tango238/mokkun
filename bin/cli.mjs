@@ -13,8 +13,8 @@ const distDir = resolve(__dirname, '../dist')
 const args = process.argv.slice(2)
 let yamlFile = null
 let port = 3333
-let theme = 'lofi'
-const VALID_THEMES = ['lofi', 'light', 'dark']
+let theme = 'light'
+const VALID_THEMES = ['light', 'dark']
 
 for (let i = 0; i < args.length; i++) {
   if (args[i] === '--port' || args[i] === '-p') {
@@ -33,8 +33,8 @@ for (let i = 0; i < args.length; i++) {
 
 // Validate theme
 if (!VALID_THEMES.includes(theme)) {
-  console.error(`Error: Invalid theme "${theme}". Valid themes: ${VALID_THEMES.join(', ')}`)
-  process.exit(1)
+  console.warn(`Warning: Unknown theme "${theme}". Falling back to light. Valid themes: ${VALID_THEMES.join(', ')}`)
+  theme = 'light'
 }
 
 function printHelp() {
@@ -46,7 +46,7 @@ Usage:
 
 Options:
   -p, --port <port>    Port number (default: 3333)
-  -t, --theme <theme>  Theme: lofi, light, dark (default: lofi)
+  -t, --theme <theme>  Theme: light, dark (default: light)
   -h, --help           Show this help
 
 Examples:
@@ -94,7 +94,7 @@ function generateViewerHtml() {
   if (yamlFile) {
     html = html.replace('/* __YAML_URL__ */ null', JSON.stringify('/__yaml__/' + basename(yamlFile)))
   }
-  html = html.replace('/* __THEME__ */ \'lofi\'', JSON.stringify(theme))
+  html = html.replace('/* __THEME__ */ \'light\'', JSON.stringify(theme))
   return html
 }
 

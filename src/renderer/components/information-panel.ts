@@ -585,15 +585,16 @@ export class InformationPanel {
     const infoField = field as InputField & {
       variant?: 'info' | 'success' | 'warning' | 'error'
     }
-    const variant = infoField.variant ?? 'info'
+    const rawVariant = infoField.variant ?? 'info'
+    const variant = ['info', 'success', 'warning', 'error'].includes(rawVariant) ? rawVariant : 'info'
 
     const infoHtml = `
-      <div class="mokkun-information-panel panel-${variant}">
-        <div class="panel-icon">ℹ️</div>
-        <div class="panel-content">
-          <div class="panel-title">${escapeHtml(field.label)}</div>
-          ${field.description ? `<div class="panel-description">${escapeHtml(field.description)}</div>` : ''}
+      <div class="mokkun-information-panel information-panel-${variant} is-active" data-type="${variant}">
+        <div class="information-panel-header">
+          <span class="information-panel-icon" aria-hidden="true">ℹ️</span>
+          ${field.label ? `<span class="information-panel-title">${escapeHtml(field.label)}</span>` : ''}
         </div>
+        ${field.description ? `<div class="information-panel-content-wrapper is-active"><div class="information-panel-content" role="region">${escapeHtml(field.description)}</div></div>` : ''}
       </div>
     `
     return createFieldWrapper(field, infoHtml)

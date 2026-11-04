@@ -17,6 +17,7 @@ import {
   escapeHtml,
   createFieldWrapper,
   getCommonAttributes,
+  numAttr,
 } from '../utils/field-helpers'
 import type { TextareaField } from '../../types/schema'
 
@@ -511,13 +512,13 @@ export class Textarea {
     const attrs: string[] = [getCommonAttributes(field)]
 
     if (field.rows) {
-      attrs.push(`rows="${field.rows}"`)
+      attrs.push(numAttr('rows', field.rows))
     }
     if (field.min_length !== undefined) {
-      attrs.push(`minlength="${field.min_length}"`)
+      attrs.push(numAttr('minlength', field.min_length))
     }
     if (field.max_length !== undefined) {
-      attrs.push(`maxlength="${field.max_length}"`)
+      attrs.push(numAttr('maxlength', field.max_length))
     }
 
     const resizeClass = field.resizable === false ? 'no-resize' : ''

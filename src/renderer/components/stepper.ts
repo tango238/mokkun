@@ -450,20 +450,20 @@ export class Stepper {
 
   static renderField(field: InputField): string {
     const stepperHtml = `
-      <div class="mokkun-stepper">
+      <div class="mokkun-stepper stepper-list stepper-list-horizontal">
         <div class="stepper-step completed">
-          <div class="step-indicator">1</div>
-          <div class="step-label">ステップ1</div>
+          <span class="stepper-step-circle">1</span>
+          <span class="stepper-label">ステップ1</span>
         </div>
-        <div class="stepper-connector"></div>
-        <div class="stepper-step active">
-          <div class="step-indicator">2</div>
-          <div class="step-label">ステップ2</div>
+        <div class="stepper-line"></div>
+        <div class="stepper-step active current">
+          <span class="stepper-step-circle">2</span>
+          <span class="stepper-label">ステップ2</span>
         </div>
-        <div class="stepper-connector"></div>
+        <div class="stepper-line"></div>
         <div class="stepper-step">
-          <div class="step-indicator">3</div>
-          <div class="step-label">ステップ3</div>
+          <span class="stepper-step-circle">3</span>
+          <span class="stepper-label">ステップ3</span>
         </div>
       </div>
     `

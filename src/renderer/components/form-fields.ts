@@ -193,8 +193,15 @@ export function renderHeadingField(field: HeadingField): string {
 export function renderFileUploadField(field: FileUploadField): string {
   const attrs: string[] = [getCommonAttributes(field)]
 
-  if (field.accept && field.accept.length > 0) {
-    attrs.push(`accept="${field.accept.join(',')}"`)
+  // accept は配列が正だが、文字列（カンマ区切り）でも落ちないようにする
+  const rawAccept: unknown = field.accept
+  const acceptList: string[] = Array.isArray(rawAccept)
+    ? rawAccept.map(String)
+    : typeof rawAccept === 'string'
+      ? rawAccept.split(',').map(t => t.trim()).filter(Boolean)
+      : []
+  if (acceptList.length > 0) {
+    attrs.push(`accept="${escapeHtml(acceptList.join(','))}"`)
   }
   if (field.multiple) {
     attrs.push('multiple')
@@ -280,9 +287,9 @@ export function renderImageUploaderField(field: ImageUploaderField): string {
     <div class="image-uploader-container"
          data-field-id="${escapeHtml(field.id)}"
          data-accepted-formats="${escapeHtml(acceptedFormats.join(','))}"
-         data-max-file-size="${maxFileSize}"
-         data-max-files="${maxFiles}"
-         data-min-files="${field.min_files ?? 0}">
+         data-max-file-size="${Number(maxFileSize) || 0}"
+         data-max-files="${Number(maxFiles) || 0}"
+         data-min-files="${Number(field.min_files ?? 0) || 0}">
       <div class="uploader-wrapper">
         <div class="upload-dropzone">
           <input type="file"
@@ -315,19 +322,61 @@ export function renderImageUploaderField(field: ImageUploaderField): string {
 /**
  * repeater → 静的なリピーターフィールド表示
  */
+const REPEATER_STATIC_MAX_ITEMS = 20
+
+/**
+ * フィールド（と入れ子のフィールド）の id にプレフィックスを付ける
+ */
+function prefixFieldIds(f: InputField, prefix: string): InputField {
+  const copy: Record<string, unknown> = { ...(f as unknown as Record<string, unknown>), id: `${prefix}${f.id}` }
+  const mapList = (list: unknown): unknown =>
+    Array.isArray(list) ? list.map(x => prefixFieldIds(x as InputField, prefix)) : list
+  if (Array.isArray(copy.item_fields)) copy.item_fields = mapList(copy.item_fields)
+  for (const key of ['items', 'tabs'] as const) {
+    if (Array.isArray(copy[key])) {
+      copy[key] = (copy[key] as Record<string, unknown>[]).map(entry =>
+        entry && typeof entry === 'object' && Array.isArray(entry.fields)
+          ? { ...entry, fields: mapList(entry.fields) }
+          : entry
+      )
+    }
+  }
+  return copy as unknown as InputField
+}
+
 export function renderRepeaterFieldStatic(field: RepeaterField): string {
   const itemFields = field.item_fields ?? []
   const maxItems = field.max_items
-  const addLabel = escapeHtml(field.add_button_label ?? 'Add Item')
-
-  // item_fields の各フィールドをレンダリング
-  const itemFieldsHtml = itemFields.map(f => renderField(f)).join('')
+  const addLabel = escapeHtml(field.add_button_label ?? '追加')
+  const itemCount = Math.max(
+    0,
+    Math.min(Number(field.min_items ?? 1) || 0, field.max_items ?? REPEATER_STATIC_MAX_ITEMS, REPEATER_STATIC_MAX_ITEMS)
+  )
 
   const counterText = maxItems
-    ? `1 / ${maxItems}`
-    : '1 items'
+    ? `${itemCount} / ${maxItems} 件`
+    : `${itemCount} 件`
 
   const sortableClass = field.sortable ? 'sortable' : ''
+
+  // item_fields の各フィールドをレンダリング（アイテム数分繰り返す）
+  const itemsHtml = Array.from({ length: itemCount }, (_, i) => {
+    // アイテムごとに id を付け替えて、id / name / label for の重複を避ける
+    const itemFieldsHtml = itemFields
+      .map(f => renderField(prefixFieldIds(f, `${field.id}_${i}_`)))
+      .join('')
+    return `
+          <div class="repeater-item expanded">
+            <div class="repeater-item-header">
+              ${field.sortable ? '<div class="repeater-item-handle"></div>' : ''}
+              <span class="repeater-item-number">#${i + 1}</span>
+              <div class="repeater-item-spacer"></div>
+            </div>
+            <div class="repeater-item-content">
+              ${itemFieldsHtml}
+            </div>
+          </div>`
+  }).join('')
 
   const content = `
     <div class="mokkun-repeater ${sortableClass}">
@@ -335,17 +384,7 @@ export function renderRepeaterFieldStatic(field: RepeaterField): string {
         <div class="repeater-header">
           <span class="repeater-counter">${escapeHtml(counterText)}</span>
         </div>
-        <div class="repeater-items">
-          <div class="repeater-item expanded">
-            <div class="repeater-item-header">
-              ${field.sortable ? '<div class="repeater-item-handle"></div>' : ''}
-              <span class="repeater-item-number">#1</span>
-              <div class="repeater-item-spacer"></div>
-            </div>
-            <div class="repeater-item-content">
-              ${itemFieldsHtml}
-            </div>
-          </div>
+        <div class="repeater-items">${itemsHtml}
         </div>
         <div class="repeater-footer">
           <button type="button" class="repeater-add-btn">${addLabel}</button>
@@ -457,5 +496,21 @@ export function renderField(field: InputField): string {
  * 複数のフィールドをレンダリング
  */
 export function renderFields(fields: InputField[]): string {
-  return fields.map(renderField).join('')
+  const out: string[] = []
+  let i = 0
+  while (i < fields.length) {
+    if (INLINE_GROUP_TYPES.has(fields[i].type)) {
+      let j = i
+      while (j < fields.length && INLINE_GROUP_TYPES.has(fields[j].type)) j++
+      out.push(`<div class="form-field-inline-group">${fields.slice(i, j).map(renderField).join('')}</div>`)
+      i = j
+    } else {
+      out.push(renderField(fields[i]))
+      i++
+    }
+  }
+  return out.join('')
 }
+
+/** 連続すると1行にまとめる表示系タイプ */
+const INLINE_GROUP_TYPES = new Set<string>(['badge', 'chip', 'status_label'])

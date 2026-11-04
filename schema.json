@@ -23,7 +23,7 @@
         }
       ]
     },
-    "common_components": {
+    "commonComponents": {
       "description": "共通コンポーネント定義",
       "oneOf": [
         {
@@ -82,11 +82,11 @@
         "navigation": {
           "$ref": "#/$defs/NavigationSetting"
         },
-        "app_header": {
+        "appHeader": {
           "$ref": "#/$defs/AppHeaderConfig",
           "description": "アプリケーションヘッダー設定"
         },
-        "app_navi": {
+        "appNavi": {
           "$ref": "#/$defs/AppNaviConfig",
           "description": "アプリナビゲーション設定"
         },
@@ -107,14 +107,14 @@
           },
           "description": "入力フィールドのリスト"
         },
-        "input_fields": {
+        "inputFields": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/InputField"
           },
           "description": "入力フィールド（配列形式の別名）"
         },
-        "display_fields": {
+        "displayFields": {
           "type": "array",
           "items": {
             "type": "string"
@@ -142,14 +142,14 @@
           },
           "description": "連携サービス"
         },
-        "related_models": {
+        "relatedModels": {
           "type": "array",
           "items": {
             "type": "string"
           },
           "description": "関連モデル"
         },
-        "related_usecases": {
+        "relatedUsecases": {
           "type": "array",
           "items": {
             "type": "string"
@@ -212,9 +212,9 @@
     },
     "FormSection": {
       "type": "object",
-      "required": ["section_name"],
+      "required": ["sectionName"],
       "properties": {
-        "section_name": {
+        "sectionName": {
           "type": "string",
           "description": "セクション名"
         },
@@ -222,11 +222,11 @@
           "type": "string",
           "description": "アイコン"
         },
-        "publish_toggle": {
+        "publishToggle": {
           "type": "boolean",
           "description": "公開トグル"
         },
-        "input_fields": {
+        "inputFields": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/InputField"
@@ -251,19 +251,19 @@
           "enum": ["horizontal", "vertical"],
           "description": "レイアウトタイプ（水平/垂直）"
         },
-        "validate_on_step": {
+        "validateOnStep": {
           "type": "boolean",
           "description": "ステップ間でのバリデーション"
         },
-        "allow_back": {
+        "allowBack": {
           "type": "boolean",
           "description": "戻るボタンを許可するか"
         },
-        "show_progress": {
+        "showProgress": {
           "type": "boolean",
           "description": "プログレスバーを表示するか"
         },
-        "clickable_steps": {
+        "clickableSteps": {
           "type": "boolean",
           "description": "クリック可能なステップ（過去ステップへの戻り）"
         },
@@ -300,7 +300,7 @@
           },
           "description": "このステップの入力フィールド"
         },
-        "next_condition": {
+        "nextCondition": {
           "$ref": "#/$defs/Condition",
           "description": "次のステップに進む条件"
         },
@@ -355,8 +355,17 @@
       "required": ["type"],
       "allOf": [
         {
-          "if": { "properties": { "type": { "enum": ["badge", "pagination", "float_area"] } }, "required": ["type"] },
-          "then": { "required": ["type", "label"] }
+          "if": {
+            "properties": {
+              "type": {
+                "enum": ["badge", "pagination", "float_area"]
+              }
+            },
+            "required": ["type"]
+          },
+          "then": {
+            "required": ["type", "label"]
+          }
         }
       ],
       "properties": {
@@ -364,7 +373,7 @@
           "type": "string",
           "description": "フィールドID"
         },
-        "field_name": {
+        "fieldName": {
           "type": "string",
           "description": "フィールド名（配列形式のIDとして使用）"
         },
@@ -452,7 +461,7 @@
           ],
           "description": "バリデーションルール"
         },
-        "visible_when": {
+        "visibleWhen": {
           "$ref": "#/$defs/Condition",
           "description": "表示条件"
         },
@@ -460,11 +469,11 @@
           "type": "string",
           "description": "CSSクラス"
         },
-        "min_length": {
+        "minLength": {
           "type": "integer",
           "description": "最小文字数（text, textarea用）"
         },
-        "max_length": {
+        "maxLength": {
           "type": "integer",
           "description": "最大文字数（text, textarea用）"
         },
@@ -472,7 +481,7 @@
           "type": "string",
           "description": "入力パターン（正規表現、text用）"
         },
-        "input_type": {
+        "inputType": {
           "type": "string",
           "enum": ["text", "email", "url", "tel", "password"],
           "description": "入力タイプ（text用）"
@@ -524,11 +533,11 @@
           "type": "boolean",
           "description": "クリア可能か（select用）"
         },
-        "min_selections": {
+        "minSelections": {
           "type": "integer",
           "description": "最小選択数（multi_select, checkbox_group用）"
         },
-        "max_selections": {
+        "maxSelections": {
           "type": "integer",
           "description": "最大選択数（multi_select, checkbox_group用）"
         },
@@ -541,23 +550,23 @@
           "type": "string",
           "description": "フォーマット（date_picker, time_picker, duration_input用）"
         },
-        "min_date": {
+        "minDate": {
           "type": "string",
           "description": "最小日付（date_picker用）"
         },
-        "max_date": {
+        "maxDate": {
           "type": "string",
           "description": "最大日付（date_picker用）"
         },
-        "include_time": {
+        "includeTime": {
           "type": "boolean",
           "description": "時間も含めるか（date_picker用）"
         },
-        "minute_step": {
+        "minuteStep": {
           "type": "integer",
           "description": "分のステップ（time_picker用）"
         },
-        "use_24_hour": {
+        "use24Hour": {
           "type": "boolean",
           "description": "24時間表記か（time_picker用）"
         },
@@ -569,15 +578,15 @@
           },
           "description": "選択可能な単位（duration_picker用）"
         },
-        "min_duration": {
+        "minDuration": {
           "type": "integer",
           "description": "最小期間（秒、duration_picker用）"
         },
-        "max_duration": {
+        "maxDuration": {
           "type": "integer",
           "description": "最大期間（秒、duration_picker用）"
         },
-        "display_unit": {
+        "displayUnit": {
           "type": "string",
           "enum": ["hours", "minutes", "seconds"],
           "description": "表示単位（duration_input用）"
@@ -589,11 +598,11 @@
           },
           "description": "許可するファイルタイプ（file_upload用）"
         },
-        "accepted_types": {
+        "acceptedTypes": {
           "type": "string",
           "description": "許可するファイルタイプ（文字列形式）"
         },
-        "max_size": {
+        "maxSize": {
           "type": "integer",
           "description": "最大ファイルサイズ（バイト、file_upload用）"
         },
@@ -601,11 +610,11 @@
           "type": "boolean",
           "description": "複数ファイル許可（file_upload用）"
         },
-        "max_files": {
+        "maxFiles": {
           "type": "integer",
           "description": "最大ファイル数（file_upload, image_uploader用）"
         },
-        "drag_drop": {
+        "dragDrop": {
           "type": "boolean",
           "description": "ドラッグ&ドロップ許可（file_upload用）"
         },
@@ -613,26 +622,26 @@
           "type": "string",
           "description": "ストレージパス"
         },
-        "item_fields": {
+        "itemFields": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/InputField"
           },
           "description": "繰り返す入力フィールド群（repeater用）"
         },
-        "min_items": {
+        "minItems": {
           "type": "integer",
           "description": "最小アイテム数（repeater用）"
         },
-        "max_items": {
+        "maxItems": {
           "type": "integer",
           "description": "最大アイテム数（repeater用）"
         },
-        "add_button_label": {
+        "addButtonLabel": {
           "type": "string",
           "description": "追加ボタンのラベル（repeater用）"
         },
-        "show_remove_button": {
+        "showRemoveButton": {
           "type": "boolean",
           "description": "削除ボタンを表示（repeater用）"
         },
@@ -648,9 +657,7 @@
                 "$ref": "#/$defs/DataTableColumn"
               }
             },
-            {
-              "type": "integer"
-            }
+            { "type": "integer" }
           ],
           "description": "カラム定義（data_table用）またはカラム数（photo_manager用）"
         },
@@ -666,14 +673,14 @@
           "enum": ["none", "single", "multiple"],
           "description": "行選択モード（data_table用）"
         },
-        "row_actions": {
+        "rowActions": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/DataTableRowAction"
           },
           "description": "行アクション（data_table用）"
         },
-        "default_sort": {
+        "defaultSort": {
           "$ref": "#/$defs/DataTableSortConfig",
           "description": "デフォルトのソート設定（data_table用）"
         },
@@ -685,7 +692,7 @@
           "$ref": "#/$defs/DataTableFilterConfig",
           "description": "フィルター設定（data_table用）"
         },
-        "empty_state": {
+        "emptyState": {
           "$ref": "#/$defs/DataTableEmptyState",
           "description": "空状態の設定（data_table用）"
         },
@@ -717,7 +724,7 @@
           "type": "boolean",
           "description": "レスポンシブモード（data_table用）"
         },
-        "fixed_header": {
+        "fixedHeader": {
           "oneOf": [
             { "$ref": "#/$defs/DataTableFixedHeaderConfig" },
             { "type": "boolean" }
@@ -728,19 +735,19 @@
           "$ref": "#/$defs/DataTableGroupConfig",
           "description": "行グループ化設定（data_table用）"
         },
-        "column_resize": {
+        "columnResize": {
           "oneOf": [
             { "$ref": "#/$defs/DataTableResizeConfig" },
             { "type": "boolean" }
           ],
           "description": "列リサイズ設定（data_table用）"
         },
-        "table_layout": {
+        "tableLayout": {
           "type": "string",
           "enum": ["auto", "fixed"],
           "description": "テーブルのレイアウト（data_table用）"
         },
-        "show_open_link": {
+        "showOpenLink": {
           "type": "boolean",
           "description": "「Googleマップで開く」リンクを表示（google_map_embed用）"
         },
@@ -755,26 +762,26 @@
           },
           "description": "写真リスト（photo_manager用）"
         },
-        "max_photos": {
+        "maxPhotos": {
           "type": "integer",
           "description": "最大写真枚数（photo_manager用）"
         },
-        "max_file_size": {
+        "maxFileSize": {
           "type": "integer",
           "description": "最大ファイルサイズ（MB、photo_manager用）またはバイト（image_uploader用）"
         },
-        "accepted_formats": {
+        "acceptedFormats": {
           "type": "array",
           "items": {
             "type": "string"
           },
           "description": "対応フォーマット（photo_manager, image_uploader用）"
         },
-        "checked_label": {
+        "checkedLabel": {
           "type": "string",
           "description": "チェック時のラベル（toggle用）"
         },
-        "unchecked_label": {
+        "uncheckedLabel": {
           "type": "string",
           "description": "非チェック時のラベル（toggle用）"
         },
@@ -787,7 +794,7 @@
           "type": "string",
           "description": "name属性（toggle用）"
         },
-        "min_files": {
+        "minFiles": {
           "type": "integer",
           "description": "最小ファイル数（image_uploader用）"
         },
@@ -796,27 +803,27 @@
           "enum": ["single", "multi"],
           "description": "選択モード（combobox用）"
         },
-        "async_loader": {
+        "asyncLoader": {
           "type": "string",
           "description": "非同期ローダーエンドポイント（combobox用）"
         },
-        "min_search_length": {
+        "minSearchLength": {
           "type": "integer",
           "description": "最小検索文字数（combobox用）"
         },
-        "debounce_ms": {
+        "debounceMs": {
           "type": "integer",
           "description": "デバウンス遅延（ms、combobox用）"
         },
-        "no_options_message": {
+        "noOptionsMessage": {
           "type": "string",
           "description": "オプションなしメッセージ（combobox用）"
         },
-        "loading_message": {
+        "loadingMessage": {
           "type": "string",
           "description": "ローディングメッセージ（combobox用）"
         },
-        "label_position": {
+        "labelPosition": {
           "type": "string",
           "enum": ["left", "right"],
           "description": "ラベル位置（checkbox, toggle用）"
@@ -834,7 +841,7 @@
           "type": "integer",
           "description": "表示する数値（badge用）"
         },
-        "max_count": {
+        "maxCount": {
           "type": "integer",
           "description": "カウント表示の上限（badge用）"
         },
@@ -865,62 +872,62 @@
           "type": "integer",
           "description": "遅延表示時間（ミリ秒、tooltip用）"
         },
-        "show_arrow": {
+        "showArrow": {
           "type": "boolean",
           "description": "矢印を表示するか（tooltip用）"
         },
-        "is_html": {
+        "isHtml": {
           "type": "boolean",
           "description": "HTMLコンテンツとして解釈するか（tooltip用）"
         },
-        "max_width": {
+        "maxWidth": {
           "type": "string",
           "description": "最大幅（tooltip用）"
         },
-        "total_items": {
+        "totalItems": {
           "type": "integer",
           "description": "総アイテム数（pagination用）"
         },
-        "current_page": {
+        "currentPage": {
           "type": "integer",
           "description": "現在のページ（pagination用）"
         },
-        "page_size": {
+        "pageSize": {
           "type": "integer",
           "description": "1ページあたりのアイテム数（pagination用）"
         },
-        "page_size_options": {
+        "pageSizeOptions": {
           "type": "array",
           "items": {
             "type": "integer"
           },
           "description": "ページサイズの選択肢（pagination用）"
         },
-        "show_page_size_selector": {
+        "showPageSizeSelector": {
           "type": "boolean",
           "description": "ページサイズ選択を表示するか（pagination用）"
         },
-        "show_item_count": {
+        "showItemCount": {
           "type": "boolean",
           "description": "表示件数を表示するか（pagination用）"
         },
-        "show_jump_buttons": {
+        "showJumpButtons": {
           "type": "boolean",
           "description": "最初/最後へのジャンプボタンを表示するか（pagination用）"
         },
-        "max_page_buttons": {
+        "maxPageButtons": {
           "type": "integer",
           "description": "ページ番号ボタンの最大表示数（pagination用）"
         },
-        "show_shadow": {
+        "showShadow": {
           "type": "boolean",
           "description": "影を表示するか（float_area用）"
         },
-        "show_border": {
+        "showBorder": {
           "type": "boolean",
           "description": "ボーダーを表示するか（float_area用）"
         },
-        "z_index": {
+        "zIndex": {
           "type": "integer",
           "description": "z-index（float_area用）"
         },
@@ -928,7 +935,7 @@
           "type": "boolean",
           "description": "sticky配置を使用（float_area用）"
         },
-        "float_align": {
+        "floatAlign": {
           "type": "string",
           "enum": ["left", "center", "right", "space-between"],
           "description": "コンテンツの配置（float_area用）"
@@ -941,16 +948,16 @@
           "type": "string",
           "description": "コンテンツ間のギャップ（float_area用）"
         },
-        "aria_label": {
+        "ariaLabel": {
           "type": "string",
           "description": "アクセシビリティ用ラベル（float_area用）"
         },
-        "loader_size": {
+        "loaderSize": {
           "type": "string",
           "enum": ["small", "medium", "large"],
           "description": "サイズ（loader用）"
         },
-        "loader_type": {
+        "loaderType": {
           "type": "string",
           "enum": ["primary", "light"],
           "description": "カラータイプ（loader用）"
@@ -959,38 +966,38 @@
           "type": "boolean",
           "description": "フルスクリーンオーバーレイ（loader用）"
         },
-        "show_progress": {
+        "showProgress": {
           "type": "boolean",
           "description": "プログレスバーを表示（loader用）"
         },
-        "initial_progress": {
+        "initialProgress": {
           "type": "integer",
           "description": "初期プログレス値（loader用）"
         },
-        "browser_items": {
+        "browserItems": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/BrowserItem"
           },
           "description": "階層データアイテム（browser用）"
         },
-        "max_columns": {
+        "maxColumns": {
           "type": "integer",
           "description": "最大カラム数（browser用、デフォルト: 3）"
         },
-        "default_value": {
+        "defaultValue": {
           "type": "string",
           "description": "初期選択値（browser用）"
         },
-        "calendar_from": {
+        "calendarFrom": {
           "type": "string",
           "description": "選択可能な日付範囲の開始日（calendar用、ISO 8601形式）"
         },
-        "calendar_to": {
+        "calendarTo": {
           "type": "string",
           "description": "選択可能な日付範囲の終了日（calendar用、ISO 8601形式）"
         },
-        "week_starts_on": {
+        "weekStartsOn": {
           "type": "integer",
           "enum": [0, 1],
           "description": "週の開始曜日（calendar用、0: 日曜, 1: 月曜）"
@@ -1112,7 +1119,7 @@
           "enum": ["primary", "secondary", "danger", "link"],
           "description": "スタイル"
         },
-        "disabled_when": {
+        "disabledWhen": {
           "$ref": "#/$defs/Condition",
           "description": "無効化条件"
         },
@@ -1129,11 +1136,11 @@
           "enum": ["GET", "POST", "PUT", "DELETE", "PATCH"],
           "description": "HTTPメソッド（submit用）"
         },
-        "on_success": {
+        "onSuccess": {
           "$ref": "#/$defs/NavigationConfig",
           "description": "成功時の遷移先（submit用）"
         },
-        "on_error": {
+        "onError": {
           "$ref": "#/$defs/ErrorHandlerConfig",
           "description": "失敗時のアクション（submit用）"
         },
@@ -1170,11 +1177,11 @@
           "type": "string",
           "description": "メッセージ"
         },
-        "confirm_label": {
+        "confirmLabel": {
           "type": "string",
           "description": "確認ボタンのラベル"
         },
-        "cancel_label": {
+        "cancelLabel": {
           "type": "string",
           "description": "キャンセルボタンのラベル"
         }
@@ -1236,7 +1243,19 @@
         },
         "operator": {
           "type": "string",
-          "enum": ["eq", "ne", "gt", "gte", "lt", "lte", "in", "not_in", "contains", "empty", "not_empty"],
+          "enum": [
+            "eq",
+            "ne",
+            "gt",
+            "gte",
+            "lt",
+            "lte",
+            "in",
+            "not_in",
+            "contains",
+            "empty",
+            "not_empty"
+          ],
           "description": "演算子"
         },
         "value": {
@@ -1330,9 +1349,9 @@
     },
     "CommonComponentRaw": {
       "type": "object",
-      "required": ["component_name"],
+      "required": ["componentName"],
       "properties": {
-        "component_name": {
+        "componentName": {
           "type": "string",
           "description": "コンポーネント名"
         },
@@ -1340,7 +1359,7 @@
           "type": "string",
           "description": "説明"
         },
-        "used_in": {
+        "usedIn": {
           "type": "array",
           "items": {
             "type": "string"
@@ -1437,11 +1456,11 @@
           "type": "string",
           "description": "カラム幅（px, %、またはauto）"
         },
-        "min_width": {
+        "minWidth": {
           "type": "string",
           "description": "最小カラム幅（リサイズ時、px）"
         },
-        "max_width": {
+        "maxWidth": {
           "type": "string",
           "description": "最大カラム幅（リサイズ時、px）"
         },
@@ -1462,7 +1481,7 @@
           "enum": ["text", "number", "date", "datetime", "currency", "status"],
           "description": "表示フォーマット"
         },
-        "status_map": {
+        "statusMap": {
           "type": "object",
           "additionalProperties": {
             "type": "object",
@@ -1479,7 +1498,7 @@
           },
           "description": "ステータスフォーマット用のマッピング"
         },
-        "currency_format": {
+        "currencyFormat": {
           "type": "object",
           "properties": {
             "locale": {
@@ -1513,14 +1532,13 @@
     },
     "DataTableRow": {
       "type": "object",
-      "required": ["id"],
       "properties": {
         "id": {
           "oneOf": [
             { "type": "string" },
             { "type": "number" }
           ],
-          "description": "行ID（ユニーク）"
+          "description": "行ID（ユニーク）。省略時はパーサーが row-{index} を自動生成"
         }
       },
       "additionalProperties": true
@@ -1578,22 +1596,22 @@
           "type": "boolean",
           "description": "ページネーションを有効にするか"
         },
-        "page_size": {
+        "pageSize": {
           "type": "integer",
           "description": "1ページあたりの行数"
         },
-        "page_size_options": {
+        "pageSizeOptions": {
           "type": "array",
           "items": {
             "type": "integer"
           },
           "description": "ページサイズの選択肢"
         },
-        "current_page": {
+        "currentPage": {
           "type": "integer",
           "description": "現在のページ（0始まり）"
         },
-        "total_count": {
+        "totalCount": {
           "type": "integer",
           "description": "総件数（サーバーサイドページング用）"
         }
@@ -1606,7 +1624,7 @@
           "type": "boolean",
           "description": "フィルターを有効にするか"
         },
-        "show_search": {
+        "showSearch": {
           "type": "boolean",
           "description": "キーワード検索を表示するか"
         },
@@ -1704,7 +1722,7 @@
           "type": "string",
           "description": "代替テキスト"
         },
-        "is_main": {
+        "isMain": {
           "type": "boolean",
           "description": "メイン写真かどうか"
         }
@@ -1738,11 +1756,11 @@
           "type": "string",
           "description": "グループのフィールドキー"
         },
-        "header_renderer": {
+        "headerRenderer": {
           "type": "string",
           "description": "グループヘッダーをカスタマイズする関数名"
         },
-        "default_expanded": {
+        "defaultExpanded": {
           "type": "boolean",
           "description": "グループの初期展開状態"
         },
@@ -1772,15 +1790,15 @@
           "type": "boolean",
           "description": "列リサイズを有効にするか"
         },
-        "min_width": {
+        "minWidth": {
           "type": "integer",
           "description": "最小カラム幅（px）"
         },
-        "max_width": {
+        "maxWidth": {
           "type": "integer",
           "description": "最大カラム幅（px）"
         },
-        "on_resize": {
+        "onResize": {
           "type": "string",
           "description": "リサイズ時のコールバック"
         }
@@ -1788,21 +1806,25 @@
     },
     "AppHeaderConfig": {
       "type": "object",
-      "required": ["app_name", "user_info"],
+      "required": ["appName", "userInfo"],
       "properties": {
         "logo": {
           "type": "string",
           "description": "ロゴ（SVG HTML文字列）"
         },
-        "logo_alt": {
+        "logoAlt": {
           "type": "string",
           "description": "ロゴの代替テキスト"
         },
-        "logo_href": {
+        "logoHref": {
           "type": "string",
           "description": "ロゴのリンク先"
         },
-        "app_name": {
+        "systemName": {
+          "type": "string",
+          "description": "システム名（AppHeader 左上のロゴテキスト）"
+        },
+        "appName": {
           "type": "string",
           "description": "アプリ名"
         },
@@ -1813,11 +1835,11 @@
           },
           "description": "テナント一覧"
         },
-        "current_tenant_id": {
+        "currentTenantId": {
           "type": "string",
           "description": "現在のテナントID"
         },
-        "user_info": {
+        "userInfo": {
           "$ref": "#/$defs/UserInfo",
           "description": "ユーザー情報"
         },
@@ -1828,15 +1850,15 @@
           },
           "description": "ナビゲーション一覧"
         },
-        "help_page_url": {
+        "helpPageUrl": {
           "type": "string",
           "description": "ヘルプページURL"
         },
-        "show_release_note": {
+        "showReleaseNote": {
           "type": "boolean",
           "description": "リリースノート表示"
         },
-        "release_note_text": {
+        "releaseNoteText": {
           "type": "string",
           "description": "リリースノートテキスト"
         }
@@ -1868,7 +1890,7 @@
           "type": "string",
           "description": "メールアドレス"
         },
-        "avatar_url": {
+        "avatarUrl": {
           "type": "string",
           "description": "アバターURL"
         }
@@ -1984,7 +2006,7 @@
           "enum": ["_blank", "_self", "_parent", "_top"],
           "description": "ターゲット属性（anchorタイプ用）"
         },
-        "dropdown_items": {
+        "dropdownItems": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/AppNaviDropdownMenuItem"

@@ -3,6 +3,7 @@
  * データテーブル（一覧表示）コンポーネント
  */
 
+import { renderIconHtml } from '../utils/icons'
 import type {
   DataTableField,
   DataTableColumn,
@@ -13,7 +14,6 @@ import type {
   DataTableCellMerge,
   SelectOption,
 } from '../../types/schema'
-import { generateDataTableDummyData } from '../utils/dummy-data'
 
 // =============================================================================
 // Types
@@ -403,7 +403,7 @@ function renderTableHeader(
     if (stateWidth) {
       widthStyle = `width: ${stateWidth}px; min-width: ${stateWidth}px;`
     } else if (column.width) {
-      widthStyle = `width: ${column.width};`
+      widthStyle = `width: ${escapeHtml(String(column.width))};`
     }
 
     // リサイズハンドル
@@ -669,7 +669,7 @@ function renderRowActions(
 ): string {
   return actions.map(action => {
     const styleClass = action.style ? `btn-${action.style}` : 'btn-link'
-    const iconHtml = action.icon ? `<span class="action-icon">${escapeHtml(action.icon)}</span>` : ''
+    const iconHtml = renderIconHtml(action.icon, 'action-icon')
 
     return `
       <button
@@ -1079,7 +1079,7 @@ export class DataTable {
     // テーブルレイアウト
     if (this.config.layout === 'fixed') classes.push('layout-fixed')
 
-    const heightStyle = this.config.height ? `max-height: ${this.config.height};` : ''
+    const heightStyle = this.config.height ? `max-height: ${escapeHtml(String(this.config.height))};` : ''
 
     const html = `
       <div class="${classes.join(' ')}" data-table-id="${this.tableId}">
@@ -1474,21 +1474,17 @@ export function renderDataTableField(field: DataTableField): string {
 
   const tableId = generateId('data-table')
 
-  // データが空の場合はダミーデータを生成
-  let data = field.data ?? []
-  if (data.length === 0 && field.columns.length > 0) {
-    const dummyRowCount = field.pagination?.page_size ?? 10
-    data = generateDataTableDummyData(field.columns, dummyRowCount) as DataTableRow[]
-  }
+  // データが空の場合は empty_state を表示する（ダミーは生成しない）
+  const data = field.data ?? []
 
-  const heightStyle = field.height ? `max-height: ${field.height};` : ''
+  const heightStyle = field.height ? `max-height: ${escapeHtml(String(field.height))};` : ''
 
   // 簡易的な静的レンダリング（ソート・フィルターはJSで動的に）
   const headerCells = field.columns.map(column => {
     const sortable = column.sortable !== false ? 'sortable' : ''
     const alignClass = column.align ? `align-${column.align}` : ''
     const fixedClass = column.fixed ? `fixed-${column.fixed}` : ''
-    const widthStyle = column.width ? `width: ${column.width};` : ''
+    const widthStyle = column.width ? `width: ${escapeHtml(String(column.width))};` : ''
 
     // リサイズハンドル
     const isResizable = resizeConfig.enabled && (column.resizable !== false)
@@ -1623,7 +1619,7 @@ export function renderDataTableField(field: DataTableField): string {
 
   return `
     <div class="form-field field-type-data_table" data-field-id="${escapeHtml(field.id)}">
-      <label class="field-label">${escapeHtml(field.label)}${requiredMark}</label>
+      ${field.label ? `<div class="field-label">${escapeHtml(field.label)}${requiredMark}</div>` : ''}
       ${description}
       <div class="${classes.join(' ')}" data-table-id="${tableId}">
         <div class="data-table-wrapper" style="${heightStyle}">

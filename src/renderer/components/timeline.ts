@@ -14,7 +14,7 @@
  */
 
 import { createElement, clearElement } from '../utils/dom'
-import { createFieldWrapper } from '../utils/field-helpers'
+import { createFieldWrapper, escapeHtml } from '../utils/field-helpers'
 import type { InputField } from '../../types/schema'
 
 // =============================================================================
@@ -621,29 +621,44 @@ export class Timeline {
   // ===========================================================================
 
   static renderField(field: InputField): string {
+    type StaticItem = { time?: string; title?: string; description?: string; content?: string; current?: boolean }
+    const raw = (field as unknown as { items?: StaticItem[] }).items
+    const items: StaticItem[] = Array.isArray(raw) && raw.length > 0
+      ? raw
+      : [
+          { time: '10:30', title: 'アクティビティ1' },
+          { time: '09:15', title: 'アクティビティ2' },
+          { time: '08:00', title: 'アクティビティ3' },
+        ]
+
+    const itemsHtml = items.map((item, i) => {
+      const isLast = i === items.length - 1
+      const classes = ['timeline-item']
+      if (item.current) classes.push('is-current')
+      if (i === 0) classes.push('is-first')
+      if (isLast) classes.push('is-last')
+      const body = item.description ?? item.content
+      return `
+        <li class="${classes.join(' ')}" role="listitem">
+          <div class="timeline-marker-area">
+            <span class="timeline-icon${item.current ? ' is-current' : ''}" aria-hidden="true">${BUILTIN_ICONS.dot}</span>
+            ${isLast ? '' : '<span class="timeline-line"></span>'}
+          </div>
+          <div class="timeline-content-area">
+            <div class="timeline-header">
+              <div class="timeline-date-area">
+                ${item.time ? `<time class="timeline-date${item.current ? ' is-current' : ''}">${escapeHtml(String(item.time))}</time>` : ''}
+              </div>
+            </div>
+            ${item.title ? `<div class="timeline-title${item.current ? ' is-current' : ''}">${escapeHtml(String(item.title))}</div>` : ''}
+            ${body ? `<div class="timeline-content">${escapeHtml(String(body))}</div>` : ''}
+          </div>
+        </li>`
+    }).join('')
+
     const timelineHtml = `
-      <div class="mokkun-timeline">
-        <div class="timeline-item">
-          <div class="timeline-marker"></div>
-          <div class="timeline-content">
-            <div class="timeline-time">10:30</div>
-            <div class="timeline-title">アクティビティ1</div>
-          </div>
-        </div>
-        <div class="timeline-item">
-          <div class="timeline-marker"></div>
-          <div class="timeline-content">
-            <div class="timeline-time">09:15</div>
-            <div class="timeline-title">アクティビティ2</div>
-          </div>
-        </div>
-        <div class="timeline-item">
-          <div class="timeline-marker"></div>
-          <div class="timeline-content">
-            <div class="timeline-time">08:00</div>
-            <div class="timeline-title">アクティビティ3</div>
-          </div>
-        </div>
+      <div class="mokkun-timeline" role="list" aria-label="${escapeHtml(field.label || 'タイムライン')}">
+        <ol class="timeline-list">${itemsHtml}</ol>
       </div>
     `
     return createFieldWrapper(field, timelineHtml)

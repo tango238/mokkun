@@ -756,7 +756,8 @@ export class ResponseMessage {
     const messageField = field as InputField & {
       variant?: 'success' | 'error' | 'warning' | 'info'
     }
-    const variant = messageField.variant ?? 'success'
+    const rawVariant = messageField.variant ?? 'success'
+    const variant = ['success', 'error', 'warning', 'info'].includes(rawVariant) ? rawVariant : 'success'
 
     const iconMap: Record<string, string> = {
       success: '✓',
@@ -766,9 +767,11 @@ export class ResponseMessage {
     }
 
     const messageHtml = `
-      <div class="mokkun-response-message response-${variant}" role="status">
-        <span class="response-icon">${iconMap[variant]}</span>
-        <span class="response-text">${escapeHtml(field.description ?? field.label)}</span>
+      <div class="mokkun-response-message response-message-${variant}" role="status">
+        <span class="response-message-icon" aria-hidden="true">${iconMap[variant]}</span>
+        <div class="response-message-content">
+          <span class="response-message-text">${escapeHtml(field.description ?? field.label)}</span>
+        </div>
       </div>
     `
     return createFieldWrapper(field, messageHtml)

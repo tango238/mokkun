@@ -246,9 +246,13 @@ export class Select {
       const blankOption = createElement('option', {
         textContent: this.config.placeholder ??
                      this.config.blankLabel ??
-                     'Select...',
+                     '選択してください',
       })
       blankOption.value = ''
+      // 必須の場合、空オプションは初期表示のみで選択不可にする
+      if (this.config.required) {
+        blankOption.disabled = true
+      }
       if (this.state.value === null || this.state.value === '') {
         blankOption.selected = true
       }
@@ -399,10 +403,20 @@ export class Select {
       .join('')
 
     // プレースホルダーまたは空オプション
-    const hasBlank = !field.required || field.clearable
-    const blankOption = hasBlank
-      ? `<option value="">${escapeHtml(field.placeholder ?? 'Select...')}</option>`
-      : ''
+    // 空オプションは原則出す。required かつ clearable でない場合は選択不可の初期表示にする。
+    // options 自体に value "" の項目があるときはプレースホルダーを重ねて出さない。
+    const blankDisabled = Boolean(field.required) && !field.clearable
+    const hasEmptyOption = options.some(opt => String(opt.value) === '')
+    const hasDefault =
+      field.default !== undefined &&
+      options.some(opt => String(opt.value) !== '' && opt.value === field.default)
+    const blankAttrs = [
+      blankDisabled ? 'disabled' : '',
+      !hasDefault ? 'selected' : '',
+    ].filter(Boolean).join(' ')
+    const blankOption = hasEmptyOption
+      ? ''
+      : `<option value="" ${blankAttrs}>${escapeHtml(field.placeholder ?? '選択してください')}</option>`
 
     const select = `
       <select class="field-select ${sizeClass}" ${attrs.join(' ')}>
