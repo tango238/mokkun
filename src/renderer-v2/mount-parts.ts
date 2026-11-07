@@ -5,9 +5,16 @@
 import { sortIcons } from './icons'
 
 // ---- switch ----
+/** switch の状態を aria-checked と、フォーム送信用の hidden input の両方へ反映する */
+export function setSwitch(button: HTMLElement, on: boolean): void {
+  button.setAttribute('aria-checked', on ? 'true' : 'false')
+  const hidden = button.parentElement?.querySelector<HTMLInputElement>('input[data-switch-value]')
+  if (hidden) hidden.value = on ? 'true' : 'false'
+}
+
 export function toggleSwitch(button: HTMLElement): void {
   if ((button as HTMLButtonElement).disabled) return
-  button.setAttribute('aria-checked', button.getAttribute('aria-checked') === 'true' ? 'false' : 'true')
+  setSwitch(button, button.getAttribute('aria-checked') !== 'true')
   button.dispatchEvent(new Event('change', { bubbles: true }))
 }
 

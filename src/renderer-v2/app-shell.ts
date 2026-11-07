@@ -5,7 +5,7 @@
 import type { NoticeV2, NoticeVariantV2 } from '../types/schema-v2'
 import type { ViewContext } from './context'
 import { bannerIcons, breadcrumbSeparator, chevronDown, closeIcon } from './icons'
-import { attrs, esc } from './util'
+import { attrs, esc, safeUrl } from './util'
 
 const USER_ICON =
   '<svg class="dads-utility-link__lead-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentcolor" aria-hidden="true"><path d="M12 12c2.2 0 4-1.8 4-4s-1.8-4-4-4-4 1.8-4 4 1.8 4 4 4Zm0 2c-2.7 0-8 1.3-8 4v2h16v-2c0-2.7-5.3-4-8-4Z"/></svg>'
@@ -94,7 +94,7 @@ export function renderHeader(ctx: ViewContext): string {
     h.userName ? meta(USER_ICON, h.userName, h.userEmail) : '',
     h.tenantName ? meta(TENANT_ICON, h.tenantName) : '',
     h.helpUrl
-      ? `<a class="dads-utility-link" href="${esc(h.helpUrl)}" target="_blank" rel="noopener noreferrer"><span class="dads-utility-link__label">ヘルプ</span> ${EXTERNAL_ICON}</a>`
+      ? `<a class="dads-utility-link" href="${esc(safeUrl(h.helpUrl))}" target="_blank" rel="noopener noreferrer"><span class="dads-utility-link__label">ヘルプ</span> ${EXTERNAL_ICON}</a>`
       : '',
   ].join('')
   return `<header class="mk2-header">

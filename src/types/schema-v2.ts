@@ -98,7 +98,7 @@ export type ViewLayoutV2 = 'stack' | 'tabs' | 'sectioned'
 
 export type ActionKindV2 = 'submit' | 'navigate' | 'custom' | 'reset'
 export type ActionPlacementV2 = 'header' | 'footer' | 'sticky'
-export type ActionStyleV2 = 'primary' | 'secondary' | 'danger'
+export type ActionStyleV2 = 'primary' | 'secondary' | 'tertiary' | 'danger'
 
 export interface ActionConfirmV2 {
   message: string
@@ -250,6 +250,9 @@ export const VALID_COMPONENTS_V2: readonly ComponentV2[] = [
   'map',
 ]
 
+/** 入力欄の幅（xs ≈ 6rem / sm ≈ 10rem / md ≈ 20rem / lg ≈ 30rem / full = 100%）。旧レンダラーでは無視 */
+export type FieldWidthV2 = 'xs' | 'sm' | 'md' | 'lg' | 'full'
+
 export interface OptionV2 {
   value: string | number | boolean
   label: string
@@ -286,6 +289,8 @@ export interface FieldV2 {
   /** 文字列は rules のキー */
   rules?: Array<string | RuleV2>
   visibleWhen?: ConditionV2
+  /** 入力欄の幅 */
+  width?: FieldWidthV2
   /** component 固有の追加設定（旧フィールド属性をそのまま渡す） */
   props?: Record<string, unknown>
 }

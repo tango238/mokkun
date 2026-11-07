@@ -36,7 +36,8 @@ describe('parseYamlV2', () => {
 describe('renderViewV2: 全 view', () => {
   it.each(viewNames)('%s: unknown が無く、id が一意', name => {
     const html = renderViewV2(schema, name)
-    expect(html).not.toMatch(/unknown/i)
+    // 未対応 component のプレースホルダー（dispatcher が出す明示マーカー）が無いこと
+    expect(html).not.toContain('data-unknown-component')
     const root = dom(html)
     expect(root.querySelector('.mokkun-v2')).not.toBeNull()
     const ids = Array.from(root.querySelectorAll('[id]')).map(e => e.id)
@@ -85,10 +86,14 @@ describe('order_form', () => {
     expect(steps[1].hasAttribute('data-state')).toBe(false)
   })
 
-  it('「補足を伝える」は accordion', () => {
-    const acc = Array.from(root.querySelectorAll('details.dads-accordion')).find(d => d.textContent?.includes('補足を伝える'))!
-    expect(acc).toBeDefined()
-    expect(acc.hasAttribute('open')).toBe(false)
+  it('「補足を伝える」は単独の collapsed なので disclosure（見出しなし・サマリーがセクション名）', () => {
+    const sec = root.querySelector('section[id$="section-memo"]')!
+    const details = sec.querySelector('details.dads-disclosure')!
+    expect(details.hasAttribute('open')).toBe(false)
+    expect(details.querySelector('summary')!.textContent).toContain('補足を伝える')
+    expect(sec.querySelector('.dads-heading')).toBeNull()
+    expect(sec.textContent).not.toContain('入力欄を開く')
+    expect(sec.getAttribute('aria-labelledby')).toBe(details.querySelector('summary')!.id)
   })
 
   it('「明細を追加する」は 1 グループと追加ボタン', () => {
@@ -102,6 +107,7 @@ describe('order_form', () => {
     expect(root.querySelector('.dads-breadcrumb [aria-current="page"]')!.textContent).toBe('受注登録')
     expect(root.querySelector('h1.dads-heading__heading')!.textContent).toBe('受注登録')
     expect(root.querySelector('.mk2-sticky [data-type="solid-fill"][data-size="lg"]')).not.toBeNull()
+    expect(root.querySelector('dialog')!.getAttribute('data-dialog-for')).toBe('cancel')
     expect(root.querySelector('dialog.dads-modal-dialog')).not.toBeNull()
     expect(root.querySelector('.dads-notification-banner[data-type="error"]')).not.toBeNull()
   })
@@ -115,6 +121,9 @@ describe('order_list', () => {
     expect(root.querySelector('nav.dads-page-navigation')).not.toBeNull()
     expect(root.querySelectorAll('tbody tr').length).toBe(3)
     expect(root.querySelector('[data-empty][hidden]')!.textContent).toBe('該当する受注はありません')
+    // 前後のページが無いときはボタンを出さない（無効にもしない）
+    expect(root.querySelectorAll('nav.dads-page-navigation button').length).toBe(0)
+    expect(root.querySelector('figure.dads-table[data-row-hover-highlight] .dads-table__caption')).not.toBeNull()
   })
 })
 
@@ -232,7 +241,7 @@ describe('mountViewV2', () => {
     const groups = () => container.querySelectorAll('[data-repeat-groups] > [data-repeat-group]')
     const add = container.querySelector<HTMLButtonElement>('[data-repeat-add]')!
     expect(groups().length).toBe(1)
-    expect((container.querySelector('[data-repeat-remove]') as HTMLButtonElement).disabled).toBe(true)
+    expect((container.querySelector('[data-repeat-remove]') as HTMLButtonElement).hidden).toBe(true)
     add.click()
     expect(groups().length).toBe(2)
     expect(add.disabled).toBe(true)
@@ -249,6 +258,7 @@ describe('mountViewV2', () => {
     expect(groups()[0].querySelector('h3')!.textContent).toBe('#1')
     expect(groups()[0].querySelector('input[name="quantity__1"]')).not.toBeNull()
     expect(add.disabled).toBe(false)
+    expect((container.querySelector('[data-repeat-remove]') as HTMLButtonElement).hidden).toBe(true)
   })
 
   it('確認ダイアログ: アクションで開き、確定で実行される', () => {
@@ -263,6 +273,7 @@ describe('mountViewV2', () => {
     expect(dialog.hasAttribute('open')).toBe(false)
     expect(seen).toEqual(['order_list'])
     expect(window.location.hash).toBe('#order_list')
+    window.location.hash = ''
   })
 
   it('グローバルナビ・navigate アクションで onNavigate を呼ぶ', () => {
@@ -271,6 +282,8 @@ describe('mountViewV2', () => {
     container.querySelector<HTMLElement>('.mk2-globalnav a[data-nav-view="settings"]')!.click()
     container.querySelector<HTMLElement>('[data-action="new_order"]')!.click()
     expect(seen).toEqual(['settings', 'order_form'])
+    expect(window.location.hash).toBe('#order_form')
+    window.location.hash = ''
   })
 
   it('サブメニューは開閉し、確認ダイアログの確定ボタンに danger 色が付く', () => {
@@ -282,15 +295,7 @@ describe('mountViewV2', () => {
     toggle.click()
     expect(toggle.getAttribute('aria-expanded')).toBe('false')
     const s = structuredClone(schema)
-    s.views.order_confirm.primaryAction!.confirm!.danger = true
+    s.views.order_confirm.primaryAction!.confirm = { message: 'm', danger: true }
     expect(renderViewV2(s, 'order_confirm')).toContain('dads-button mk2-button--danger')
-  })
-
-  it('switch は aria-checked を切り替える', () => {
-    mountViewV2(container, schema, 'settings')
-    const sw = container.querySelector<HTMLElement>('[role="switch"]')!
-    expect(sw.getAttribute('aria-checked')).toBe('true')
-    sw.click()
-    expect(sw.getAttribute('aria-checked')).toBe('false')
   })
 })

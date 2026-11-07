@@ -18,6 +18,32 @@
   display: none !important;
 }
 
+/*
+ * v1 の style.css は p / h1-h6 / input[type=number] に非スコープの規則を持つ。
+ * v2 の領域では DADS のクラスが決めるため、要素セレクタ由来の見た目をここで打ち消す。
+ * :where() でスコープの詳細度を 0 にし、DADS のクラス規則・mk2-* の規則がこの打ち消しに負けないようにする
+ * （v1 の p / h* と同じ詳細度で、後から挿入される v2 の <style> が勝つ）。
+ */
+:where(.mokkun-v2) p {
+  margin: 0;
+  color: inherit;
+}
+
+:where(.mokkun-v2) :is(h1, h2, h3, h4, h5, h6) {
+  margin: 0;
+  font-weight: inherit;
+  line-height: inherit;
+}
+
+.mokkun-v2 .dads-input-text__input[type="number"] {
+  font-family: var(--font-family-sans);
+}
+
+.mokkun-v2 .dads-form-control-label__support-text,
+.mokkun-v2 .mk2-section__purpose {
+  color: var(--color-neutral-solid-gray-600);
+}
+
 /* ---- App: ヘッダー / グローバルナビ ---- */
 .mk2-header {
   border-bottom: 1px solid var(--color-neutral-solid-gray-420);
@@ -105,10 +131,8 @@
   max-width: 1120px;
 }
 
-.mk2-main > .dads-notification-banner,
-.mk2-main > .dads-step-navigation,
-.mk2-main > .mk2-form > .dads-notification-banner {
-  margin-bottom: 16px;
+.mk2-main > .dads-notification-banner {
+  margin-bottom: 24px;
 }
 
 .mk2-main > .dads-breadcrumb {
@@ -122,11 +146,12 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 16px 24px;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 
 .mk2-view-description {
   margin: 0 0 24px;
+  color: var(--color-neutral-solid-gray-800);
 }
 
 .mk2-main > .dads-step-navigation {
@@ -137,11 +162,17 @@
   margin: 0;
 }
 
+/* 並び順は DOM が決める（tertiary → secondary → primary）。右寄せで primary が右端、tertiary は左端へ */
 .mk2-actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   flex-wrap: wrap;
   gap: 16px;
+}
+
+.mk2-actions > .mk2-action--tertiary {
+  margin-right: auto;
 }
 
 .mk2-actions[data-placement="footer"] {
@@ -153,10 +184,10 @@
   position: sticky;
   bottom: 0;
   z-index: 10;
-  margin-top: 40px;
-  border-top: 1px solid var(--color-neutral-solid-gray-420);
+  margin-top: 24px;
   background-color: var(--color-neutral-white);
-  padding-block: 16px;
+  box-shadow: var(--elevation-1);
+  padding: 16px;
 }
 
 /* danger: button.css の --button-color を error のセマンティックトークンに差し替える */
@@ -333,4 +364,64 @@
 /* 行高の異なる項目が並んでも、入力欄が上端から詰まって並ぶようにする */
 .mk2-fields > .dads-form-control-label {
   align-content: start;
+}
+
+/* 入力欄は列幅いっぱいに広げる。field.width があればその幅（xs ≈ 6rem / sm ≈ 10rem / md ≈ 20rem / lg ≈ 30rem） */
+.mk2-fields :is(.dads-input-text__input, .dads-textarea__textarea, .dads-select, .dads-select__select) {
+  width: 100%;
+}
+
+.mk2-fields > [data-width="xs"] {
+  --mk2-field-width: 6rem;
+}
+
+.mk2-fields > [data-width="sm"] {
+  --mk2-field-width: 10rem;
+}
+
+.mk2-fields > [data-width="md"] {
+  --mk2-field-width: 20rem;
+}
+
+.mk2-fields > [data-width="lg"] {
+  --mk2-field-width: 30rem;
+}
+
+.mk2-fields > [data-width="full"] {
+  --mk2-field-width: 100%;
+}
+
+/* width 指定は 100% の規則より優先（詳細度を上げて上書き） */
+.mk2-fields > [data-width] :is(.dads-input-text, .dads-textarea, .dads-select) {
+  display: block;
+  max-width: 100%;
+  width: var(--mk2-field-width);
+}
+
+.mk2-fields > [data-width] :is(.dads-input-text__input, .dads-textarea__textarea, .dads-select__select) {
+  width: 100%;
+}
+
+.mk2-with-unit {
+  display: flex;
+}
+
+.mk2-with-unit > .dads-input-text {
+  flex: 1;
+}
+
+/* ---- 折りたたみ ---- */
+.mk2-accordion-group {
+  margin-top: 32px;
+}
+
+.mk2-accordion-group > .dads-accordion.mk2-section {
+  margin-top: 0;
+  border-top: 0;
+  padding-top: 0;
+}
+
+.mk2-section .dads-disclosure__content,
+.mk2-accordion-group .dads-accordion__content {
+  padding-top: 8px;
 }

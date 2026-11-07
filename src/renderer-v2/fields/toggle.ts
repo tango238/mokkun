@@ -18,7 +18,7 @@ export function renderToggle(c: Ctl): string {
     'aria-describedby': c.describedBy,
     disabled: c.f.readonly === true,
     'data-js-toggle': true,
-    'data-name': c.name,
+    'data-initial-checked': on ? 'true' : 'false',
   })}>
         <span class="dads-switch-on-off__track" aria-hidden="true">
           <span class="dads-switch-on-off__thumb">
@@ -30,6 +30,7 @@ export function renderToggle(c: Ctl): string {
     c,
     `<dads-switch-on-off class="dads-switch-on-off">
       ${button}
+      <input type="hidden" name="${esc(c.name)}" value="${on ? 'true' : 'false'}" data-switch-value>
     </dads-switch-on-off>${c.error ? `<p id="${esc(c.errorId)}" class="dads-form-control-label__error-text">${esc(c.error)}</p>` : ''}`,
   )
 }

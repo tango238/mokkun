@@ -2,6 +2,9 @@
  * repeatable: グループの追加・削除、添字の再採番、min / max の反映
  */
 
+/** 添字トークン `__<n>`。id / name の末尾か、`-` / 空白の直前にあるものだけを対象にする */
+const INDEX_TOKEN = /__\d+(?=$|[-\s])/
+const INDEX_TOKEN_G = /__\d+(?=$|[-\s])/g
 const INDEX_ATTRS = ['id', 'for', 'name', 'list', 'aria-describedby', 'aria-labelledby', 'aria-controls']
 
 /** DOM id / name に付く `__<n>` を新しい番号へ置き換え、見出しの番号も更新する */
@@ -10,7 +13,7 @@ function reindex(group: HTMLElement, n: number): void {
   for (const el of nodes) {
     for (const name of INDEX_ATTRS) {
       const v = el.getAttribute(name)
-      if (v && /__\d+/.test(v)) el.setAttribute(name, v.replace(/__\d+/g, `__${n}`))
+      if (v && INDEX_TOKEN.test(v)) el.setAttribute(name, v.replace(INDEX_TOKEN_G, `__${n}`))
     }
   }
   group.querySelectorAll('[data-group-no]').forEach(el => {
@@ -23,14 +26,14 @@ function groupsOf(rep: HTMLElement): HTMLElement[] {
   return list ? Array.from(list.children).filter((c): c is HTMLElement => c instanceof HTMLElement && c.hasAttribute('data-repeat-group')) : []
 }
 
-/** 追加ボタンは max で、削除ボタンは min で無効にする */
+/** 追加ボタンは max で無効に、削除ボタンは min 件のときは隠す（DADS: 使えない操作は出さない） */
 function sync(rep: HTMLElement): void {
   const count = groupsOf(rep).length
   const max = rep.dataset.max ? Number(rep.dataset.max) : Infinity
   const min = Number(rep.dataset.min ?? 0)
   rep.querySelector<HTMLButtonElement>('[data-repeat-add]')!.disabled = count >= max
   rep.querySelectorAll<HTMLButtonElement>('[data-repeat-remove]').forEach(b => {
-    b.disabled = count <= min
+    b.hidden = count <= min
   })
 }
 
@@ -62,4 +65,15 @@ export function handleRepeatClick(target: Element): boolean {
   }
   sync(rep)
   return true
+}
+
+/** フォームのリセット後: 繰り返しグループを min 件に戻す（超過分は削除） */
+export function resetRepeatables(root: ParentNode): void {
+  root.querySelectorAll<HTMLElement>('[data-repeatable]').forEach(rep => {
+    const min = Number(rep.dataset.min ?? 0)
+    groupsOf(rep)
+      .slice(min)
+      .forEach(g => g.remove())
+    sync(rep)
+  })
 }

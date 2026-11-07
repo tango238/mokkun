@@ -5,8 +5,8 @@
 
 import './style.css'
 import './viewer.css'
-import { getScreenNames, getScreen, isV2Yaml, parseYamlV2 } from './parser'
-import { mountViewV2, type V2Controller } from './renderer-v2'
+import { getScreenNames, getScreen } from './parser'
+import { mountViewV2, holdV2Styles, type V2Controller } from './renderer-v2'
 import { renderScreen, renderWizardScreen, mountAppChrome, attachActionHandler, attachTabsBehavior, type AppChromeController, type ActionHandler } from './renderer'
 import {
   loadFromUrl,
@@ -101,12 +101,12 @@ function syncViewerHeaderHeight(): void {
 /**
  * 画面選択プルダウンを生成
  */
-function renderScreenSelector(schema: MokkunSchema): string {
-  const screenNames = getScreenNames(schema)
+function renderScreenSelector(schema: MokkunSchema | null): string {
+  // v2 文書は view 名・タイトルを v2 スキーマから取る（旧フォーマットへ変換できなくても動く）
+  const screenNames = currentSchemaV2 ? Object.keys(currentSchemaV2.views) : schema ? getScreenNames(schema) : []
 
   const options = screenNames.map(name => {
-    const screen = getScreen(schema, name)
-    const title = screen?.title ?? name
+    const title = (currentSchemaV2 ? currentSchemaV2.views[name]?.title : schema ? getScreen(schema, name)?.title : undefined) ?? name
     const selected = name === currentScreenName ? 'selected' : ''
 
     return `<option value="${escapeHtml(name)}" ${selected}>${escapeHtml(title)} (${escapeHtml(name)})</option>`
@@ -270,7 +270,17 @@ function attachGutter(): void {
 /**
  * アプリケーション全体をレンダリング
  */
-function renderApp(schema: MokkunSchema, screenName: string | null): void {
+function renderApp(schema: MokkunSchema | null, screenName: string | null): void {
+  // 前の v2 view を teardown する間も DADS の <style> を保持する（遷移ごとの外し付け直しを避ける）
+  const release = currentSchemaV2 ? holdV2Styles() : null
+  try {
+    renderAppInner(schema, screenName)
+  } finally {
+    release?.()
+  }
+}
+
+function renderAppInner(schema: MokkunSchema | null, screenName: string | null): void {
   const app = document.querySelector<HTMLDivElement>('#app')
   if (!app) return
 
@@ -282,7 +292,7 @@ function renderApp(schema: MokkunSchema, screenName: string | null): void {
   let screenContentHtml = ''
 
   if (screenName) {
-    const screen = getScreen(schema, screenName)
+    const screen = schema ? getScreen(schema, screenName) : undefined
     if (currentSchemaV2 && Object.hasOwn(currentSchemaV2.views, screenName)) {
       // v2 は専用レンダラー。コンテナだけ出力し、app.innerHTML の後で mount する
       screenContentHtml = '<div id="mk-v2-root"></div>'
@@ -373,7 +383,7 @@ function renderApp(schema: MokkunSchema, screenName: string | null): void {
   }
 
   // AppHeader / AppNavi をマウント
-  if (screenName) {
+  if (screenName && schema) {
     const screen = getScreen(schema, screenName)
     const mainContent = app.querySelector<HTMLElement>('.main-content')
     // AppHeader / AppNavi を初期化（コンテナは renderScreen が出力済み）
@@ -457,17 +467,13 @@ function handleFileLoad(result: FileLoadResult): void {
   }
 
   currentSchema = result.schema
-  // v2 文書は検証済みの v2 スキーマを保持して、変換を経ずに描画する
-  currentSchemaV2 = null
-  if (isV2Yaml(result.content)) {
-    const v2 = parseYamlV2(result.content)
-    if (v2.success) currentSchemaV2 = v2.data
-  }
+  // v2 文書はローダーが検証済みの v2 スキーマを返す（変換を経ずに描画する。currentSchema は変換できたときのみ）
+  currentSchemaV2 = result.schemaV2 ?? null
   currentFileName = result.fileName
   currentYamlText = result.content
   lastScrolledScreen = null
   sourcePaneState = loadSourcePaneState()
-  const screenNames = getScreenNames(currentSchema)
+  const screenNames = currentSchemaV2 ? Object.keys(currentSchemaV2.views) : currentSchema ? getScreenNames(currentSchema) : []
   const urlScreen = new URLSearchParams(window.location.search).get('screen')
   currentScreenName = (urlScreen && screenNames.includes(urlScreen) ? urlScreen : screenNames[0]) ?? null
   renderApp(currentSchema, currentScreenName)
@@ -535,7 +541,7 @@ function attachEventListeners(): void {
   if (selector) {
     selector.addEventListener('change', () => {
       const screenName = selector.value
-      if (screenName && currentSchema) {
+      if (screenName && (currentSchema || currentSchemaV2)) {
         currentScreenName = screenName
         updateUrlParam('screen', screenName)
         renderApp(currentSchema, currentScreenName)
@@ -548,7 +554,7 @@ function attachEventListeners(): void {
   themeSelector?.addEventListener('change', () => {
     applyTheme(themeSelector.value)
     updateUrlParam('theme', themeSelector.value)
-    if (currentSchema) renderApp(currentSchema, currentScreenName)
+    if (currentSchema || currentSchemaV2) renderApp(currentSchema, currentScreenName)
   })
 
   // YAML ペインの開閉
@@ -691,7 +697,7 @@ function renderError(message: string, showBackButton = false): void {
     const backBtn = app.querySelector('#error-back-btn')
     if (backBtn) {
       backBtn.addEventListener('click', () => {
-        if (currentSchema) {
+        if (currentSchema || currentSchemaV2) {
           renderApp(currentSchema, currentScreenName)
         } else {
           renderFileLoaderScreen()

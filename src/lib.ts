@@ -24,7 +24,7 @@ import {
   getAvailableThemes,
   getCurrentTheme,
 } from './theme'
-import { mountViewV2, renderViewV2, type V2Controller, type V2Callbacks } from './renderer-v2'
+import { mountViewV2, renderViewV2, holdV2Styles, type V2Controller, type V2Callbacks } from './renderer-v2'
 import type { MokkunSchema, ScreenDefinition, BuiltInThemeId } from './types'
 import type { MokkunV2Schema } from './types/schema-v2'
 
@@ -108,6 +108,8 @@ interface InternalState {
 function createInstance(state: InternalState): MokkunInstance {
   /** v2 文書: 専用レンダラーで描画（v1 のコントローラーは使わない） */
   const renderCurrentV2 = (schemaV2: MokkunV2Schema, name: string): void => {
+    // 古い view を外す間も <style> を保持し、遷移のたびに外れて付け直されないようにする
+    const release = holdV2Styles()
     state.v2Controller?.destroy()
     const callbacks: V2Callbacks = {
       onNavigate: to => {
@@ -121,7 +123,11 @@ function createInstance(state: InternalState): MokkunInstance {
         if (formData) state.options.onSubmit?.(name, formData)
       },
     }
-    state.v2Controller = mountViewV2(state.container, schemaV2, name, callbacks)
+    try {
+      state.v2Controller = mountViewV2(state.container, schemaV2, name, callbacks)
+    } finally {
+      release()
+    }
   }
 
   const renderCurrentScreen = (): void => {
@@ -342,8 +348,8 @@ async function init(options: MokkunInitOptions): Promise<MokkunInstance> {
       if (!result.success) {
         throw new Error(`[Mokkun] Failed to load YAML: ${result.error.message}`)
       }
-      if (isV2Yaml(result.content)) {
-        loadV2(state, result.content)
+      if (result.schemaV2) {
+        state.schemaV2 = result.schemaV2
       } else {
         state.schema = result.schema
       }

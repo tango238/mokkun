@@ -60,6 +60,7 @@ views:
             label: "キーワード"
             component: text
             example: "受注ID、顧客名"
+            width: md
           - item: status
             label: "ステータス"
             component: select
@@ -110,7 +111,7 @@ views:
         label: "やめる"
         kind: navigate
         to: order_list
-        style: secondary
+        style: tertiary
         confirm: { message: "入力内容は保存されません。受注一覧に戻りますか？" }
     states:
       error: { message: "入力内容に誤りがあります。赤字の項目を確認してください" }
@@ -130,6 +131,12 @@ views:
             options:
               - { value: c1, label: "株式会社サンプル" }
               - { value: c2, label: "テスト企業" }
+              - { value: c3, label: "有限会社みどり商事" }
+              - { value: c4, label: "東都物産株式会社" }
+              - { value: c5, label: "北斗フーズ株式会社" }
+              - { value: c6, label: "ひかり電機株式会社" }
+              - { value: c7, label: "さくら運輸株式会社" }
+              - { value: c8, label: "あおぞら工業株式会社" }
           - item: contactName
             label: "担当者名"
             component: text
@@ -153,15 +160,18 @@ views:
             component: text
             format: "ハイフンなし7桁"
             example: "1000001"
+            width: sm
             visibleWhen: { item: deliveryType, equals: other }
           - item: address
             label: "住所"
             component: text
+            width: full
             visibleWhen: { item: deliveryType, equals: other }
           - item: desiredDate
             label: "配達希望日"
             component: date
-            help: "最短で翌営業日です"
+            help: "西暦で入力してください。例）2026年11月14日"
+            props: { calendar: true }
       - id: lines
         title: "明細を追加する"
         purpose: "何をいくつ注文するかを明らかにする"
@@ -180,10 +190,12 @@ views:
             component: number
             required: true
             default: 1
+            width: xs
           - item: unitPrice
             label: "単価"
             component: number
             readonly: true
+            help: "商品を選ぶと自動で入ります"
       - id: memo
         title: "補足を伝える"
         reveal: collapsed
@@ -202,7 +214,6 @@ views:
       label: "確定する"
       kind: submit
       placement: sticky
-      confirm: { message: "確定すると出荷指示が作成されます。よろしいですか？" }
     secondaryActions:
       - id: back
         label: "入力に戻る"
@@ -256,7 +267,7 @@ views:
         fields:
           - item: emailNotify
             label: "メール通知を受け取る"
-            component: toggle
+            component: checkbox
             default: true
 
 patterns: {}

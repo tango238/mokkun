@@ -7,7 +7,7 @@ import type { InputField } from '../types/schema'
 import type { ListColumnV2, SectionV2 } from '../types/schema-v2'
 import { generateDummyData } from '../renderer/utils/dummy-data'
 import { domId, type ViewContext } from './context'
-import { pageNavNext, pageNavPrev, sortIcons, sortSvg } from './icons'
+import { sortIcons, sortSvg } from './icons'
 import { attrs, esc } from './util'
 
 const DUMMY_ROWS = 3
@@ -62,7 +62,7 @@ function headerCell(col: ListColumnV2): string {
 
 function selectCell(kind: 'single' | 'multiple', name: string, label: string): string {
   const type = kind === 'single' ? 'radio' : 'checkbox'
-  return `<span class="dads-${type}" data-size="md"><span class="dads-${type}__${type}"><input${attrs({ class: `dads-${type}__input`, type, name, 'aria-label': label })}></span></span>`
+  return `<label class="dads-${type}" data-size="md"><span class="dads-${type}__${type}"><input${attrs({ class: `dads-${type}__input`, type, name, 'aria-label': label })}></span></label>`
 }
 
 export function renderList(section: SectionV2, ctx: ViewContext): string {
@@ -108,9 +108,9 @@ export function renderList(section: SectionV2, ctx: ViewContext): string {
   const pageSize = list.paging?.pageSize
   return `<div class="mk2-list" data-list="${esc(section.id)}"${attrs({ 'data-page-size': pageSize })}>
 ${search}
-<div class="dads-table">
-  <table class="dads-table__table" data-width="full" data-border data-row-hover-highlight>
-    <caption class="dads-u-visually-hidden">${esc(section.title)}</caption>
+<figure class="dads-table" data-row-hover-highlight${selection ? ' data-selectable' : ''}>
+  <figcaption class="dads-table__caption dads-u-visually-hidden">${esc(section.title)}</figcaption>
+  <table class="dads-table__table" data-width="full" data-border>
     <thead>
       <tr>
         ${heads}
@@ -120,12 +120,10 @@ ${search}
       ${rows}
     </tbody>
   </table>
-</div>
+</figure>
 ${empty ? `<p class="dads-form-control-label__support-text mk2-empty" data-empty hidden>${esc(empty)}</p>` : ''}
 <nav class="dads-page-navigation" aria-label="ページ">
-  <button class="dads-button" type="button" data-type="text" data-size="md" data-control="prev" disabled>${pageNavPrev}前のページ</button>
   <span class="dads-page-navigation__counter">1 / 1</span>
-  <button class="dads-button" type="button" data-type="text" data-size="md" data-control="next" disabled>次のページ${pageNavNext}</button>
 </nav>
 </div>`
 }

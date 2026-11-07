@@ -104,6 +104,12 @@ interface V2Controller { destroy(): void }
 `parseV2Document(yamlText)` が検証済みの `MokkunV2Schema` を返す。`lib.ts` の `Mokkun.init` と `main.ts` のビューアーは、
 文書が v2 なら v2 レンダラーを使う。画面切替セレクタはそのまま使える。
 
+## CSS の読み込み方
+
+- DADS の `global.css` は `html` / `a` / `:focus-visible` などの要素セレクタと `:root` のトークンを含む。ライブラリの `mokkun.css` に含めると v1 画面まで再スタイルされるため、`dads.css` と `mokkun-v2.css` は `?inline` で文字列として取り込み、v2 を mount している間だけ `<style id="mokkun-v2-styles">` として挿入する（最後の view を destroy すると外れる。画面遷移では古い view を外す間も保持し、付け直さない）。
+- `dads.css` の先頭は Google Fonts（Noto Sans JP）の `@import url(...)`。mount 時にこの外部 URL へ接続するため、CSP を設定する環境では `style-src` に `https://fonts.googleapis.com`、`font-src` に `https://fonts.gstatic.com` が必要。取得できなければ OS のサンセリフにフォールバックする。
+- v1 の `style.css` には `p` / `h1-h6` / `input[type=number]` などの非スコープ規則がある。`mokkun-v2.css` は `.mokkun-v2` 配下でそれらを打ち消す。
+
 ## 判断の記録
 
 - v1 のテーマ機構は v2 では使わない。見た目は DADS のトークンで決まる。

@@ -305,6 +305,7 @@
           "enum": [
             "primary",
             "secondary",
+            "tertiary",
             "danger"
           ]
         },
@@ -549,6 +550,15 @@
         },
         "visibleWhen": {
           "$ref": "#/definitions/Condition"
+        },
+        "width": {
+          "enum": [
+            "xs",
+            "sm",
+            "md",
+            "lg",
+            "full"
+          ]
         },
         "props": {
           "type": "object"

@@ -12,7 +12,7 @@ import type { MokkunV2Schema } from '../types/schema-v2'
 import { renderBreadcrumb, renderHeader, renderNotifications } from './app-shell'
 import { createContext } from './context'
 import { attachV2Behavior } from './mount'
-import { ensureV2Styles, removeV2Styles } from './styles'
+import { holdV2Styles } from './styles'
 import { renderViewBody } from './view'
 import { esc } from './util'
 
@@ -49,7 +49,7 @@ ${renderViewBody(ctx)}
 
 /**
  * container に view を描画して振る舞いを結線する。
- * destroy() でイベントを外し、DADS の CSS 注入も解除する。
+ * destroy() でイベントを外し、DADS の CSS 注入も解除する（二重に呼んでも何も起きない）。
  */
 export function mountViewV2(
   container: HTMLElement,
@@ -57,14 +57,26 @@ export function mountViewV2(
   viewName: string,
   callbacks: V2Callbacks = {},
 ): V2Controller {
-  ensureV2Styles()
   container.innerHTML = renderViewV2(schema, viewName)
-  const detach = attachV2Behavior(container, callbacks)
+  // 描画が成功してからスタイルを保持する（描画が例外なら何も保持しない）
+  const release = holdV2Styles()
+  let detach: () => void
+  try {
+    detach = attachV2Behavior(container, callbacks)
+  } catch (error) {
+    release()
+    throw error
+  }
+  let destroyed = false
   return {
     destroy() {
+      if (destroyed) return
+      destroyed = true
       detach()
       container.innerHTML = ''
-      removeV2Styles()
+      release()
     },
   }
 }
+
+export { holdV2Styles } from './styles'

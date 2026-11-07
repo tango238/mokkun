@@ -1,6 +1,7 @@
 /**
  * アクションボタンと確認ダイアログ（modal-dialog）
- * primaryAction: solid-fill lg / secondary: outline md / danger: --button-color を error 色に（mokkun-v2.css の .mk2-button--danger）
+ * primaryAction: solid-fill lg / secondary: outline md / tertiary: text md / danger: --button-color を error 色に（mokkun-v2.css の .mk2-button--danger）
+ * 並び順（DADS）: tertiary が左端、secondary、primary が右端。DOM の順序をそのまま見た目にする（CSS で並べ替えない）
  */
 
 import type { ActionPlacementV2, ActionV2 } from '../types/schema-v2'
@@ -28,12 +29,19 @@ export function dialogId(ctx: ViewContext, action: ActionV2): string {
   return domId(ctx, 'dialog', action.id)
 }
 
-function renderButton(ctx: ViewContext, { action, primary }: PlacedAction): string {
-  const danger = action.style === 'danger'
+function buttonType(a: PlacedAction): 'solid-fill' | 'outline' | 'text' {
+  if (a.primary) return 'solid-fill'
+  return a.action.style === 'tertiary' ? 'text' : 'outline'
+}
+
+function renderButton(ctx: ViewContext, placed: PlacedAction): string {
+  const { action, primary } = placed
+  const type = buttonType(placed)
+  const classes = ['dads-button', action.style === 'danger' ? 'mk2-button--danger' : '', type === 'text' ? 'mk2-action--tertiary' : ''].filter(Boolean)
   return `<button${attrs({
     type: 'button',
-    class: danger ? 'dads-button mk2-button--danger' : 'dads-button',
-    'data-type': primary ? 'solid-fill' : 'outline',
+    class: classes.join(' '),
+    'data-type': type,
     'data-size': primary ? 'lg' : 'md',
     'data-action': action.id,
     'data-action-kind': action.kind ?? 'submit',
@@ -43,9 +51,18 @@ function renderButton(ctx: ViewContext, { action, primary }: PlacedAction): stri
   })}>${esc(action.label)}</button>`
 }
 
+/** tertiary → secondary → primary の順（元の順序は各グループ内で保つ） */
+function rank(a: PlacedAction): number {
+  return a.primary ? 2 : a.action.style === 'tertiary' ? 0 : 1
+}
+
 /** 指定した配置のアクション群。無ければ空文字 */
 export function renderActions(ctx: ViewContext, placement: ActionPlacementV2): string {
-  const buttons = collectActions(ctx).filter(a => a.placement === placement)
+  const buttons = collectActions(ctx)
+    .filter(a => a.placement === placement)
+    .map((a, i) => ({ a, i }))
+    .sort((x, y) => rank(x.a) - rank(y.a) || x.i - y.i)
+    .map(x => x.a)
   if (buttons.length === 0) return ''
   return `<div class="mk2-actions" data-placement="${placement}">\n${buttons.map(b => renderButton(ctx, b)).join('\n')}\n</div>`
 }

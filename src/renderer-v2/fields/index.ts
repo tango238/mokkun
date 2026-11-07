@@ -70,6 +70,6 @@ export function renderFieldV2(field: FieldV2, opts: FieldOpts): string {
       return renderMap(c)
     default:
       // パーサーが component を検証済みのため通常は到達しない
-      return `<p class="dads-form-control-label__error-text">未対応の component: ${esc((field as { component: string }).component)}</p>`
+      return `<p class="dads-form-control-label__error-text" data-unknown-component="${esc((field as { component: string }).component)}">未対応の component: ${esc((field as { component: string }).component)}</p>`
   }
 }

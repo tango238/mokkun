@@ -59,3 +59,9 @@ export const calendarNext =
 
 export const switchCheck =
   '<svg class="dads-switch-on-off__icon" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="m10.4 16.3-4.1-4.1 1.2-1.3 2.9 2.9 6-6.1 1.3 1.2z" fill="currentcolor"/></svg>'
+
+export const disclosureIcon =
+  '<svg class="dads-disclosure__icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="currentcolor"/><circle class="dads-disclosure__icon-circle" cx="12" cy="12" r="8" fill="currentcolor"/><path class="dads-disclosure__icon-triangle" d="M17 10H7L12 15L17 10Z" fill="Canvas"/></svg>'
+
+export const calendarButtonIcon =
+  '<svg class="dads-date-picker__calendar-icon" width="24" height="24" viewBox="0 0 24 24" role="img" aria-label="カレンダー"><rect x="5" y="10" width="14" height="10" fill="Canvas"/><path d="M9 16.5C7.62 16.5 6.5 15.38 6.5 14C6.5 12.62 7.62 11.5 9 11.5C10.38 11.5 11.5 12.62 11.5 14C11.5 15.38 10.38 16.5 9 16.5ZM5 22C3.9 22 3 21.09 3 20V6C3 4.91 3.91 4 5 4H6V2H8V4H16V2H18V4H19C20.09 4 21 4.91 21 6V20C21 21.09 20.09 22 19 22H5ZM5 20H19V10H5V20Z" fill="currentcolor"/></svg><svg class="dads-date-picker__calendar-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17.1L3 8L4 7L12 15L20 7L21 8L12 17.1Z" fill="currentcolor" /></svg>'

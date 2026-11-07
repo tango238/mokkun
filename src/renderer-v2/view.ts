@@ -6,7 +6,7 @@ import { renderActions, renderDialogs } from './actions'
 import { renderBanner } from './app-shell'
 import { domId, findFlow, type ViewContext } from './context'
 import { stepCompleted } from './icons'
-import { renderSection, sectionDomId } from './section'
+import { renderSection, renderSections, sectionDomId } from './section'
 import { attrs, esc } from './util'
 
 /** flow の手順ナビ（step-navigation, horizontal）。前の step は completed、現在の step は reached */
@@ -32,7 +32,7 @@ export function renderStepNavigation(ctx: ViewContext): string {
     </li>`
     })
     .join('\n    ')
-  return `<div class="dads-step-navigation" data-orientation="horizontal" data-size="normal" aria-label="${esc(flow.name)}の進行状況">
+  return `<div class="dads-step-navigation" data-orientation="horizontal" data-size="normal">
   <p class="dads-u-visually-hidden">全${total}ステップ中、${index + 1}ステップ目まで到達済み</p>
   <ul>
     ${steps}
@@ -88,10 +88,10 @@ function renderToc(ctx: ViewContext): string {
 </nav>`
 }
 
-function renderSections(ctx: ViewContext): string {
+function renderLayout(ctx: ViewContext): string {
   const { layout, sections } = ctx.view
   if (layout === 'tabs' && sections.length > 0) return renderTabs(ctx)
-  const body = sections.map(s => renderSection(s, ctx)).join('\n')
+  const body = renderSections(sections, ctx)
   return layout === 'sectioned' && sections.length > 0 ? `${renderToc(ctx)}\n${body}` : body
 }
 
@@ -113,7 +113,7 @@ ${renderStates(ctx)}
 ${view.description ? `<p class="mk2-view-description">${esc(view.description)}</p>` : ''}
 <form class="mk2-form" novalidate data-view-form>
 <div class="mk2-sections" data-layout="${view.layout ?? 'stack'}">
-${renderSections(ctx)}
+${renderLayout(ctx)}
 </div>
 ${footer}
 ${sticky ? `<div class="mk2-sticky">\n${sticky}\n</div>` : ''}

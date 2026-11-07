@@ -13,13 +13,13 @@ function findField(scope: ParentNode, item: string): HTMLElement | undefined {
   return Array.from(scope.querySelectorAll<HTMLElement>('[data-field]')).find(el => el.dataset.field === item)
 }
 
-/** 項目の現在値。チェックボックスが複数あれば選択値の配列、単一なら 'true' / 'false' */
+/** 項目の現在値。複数選択（data-multiple）は選択値の配列、単一 checkbox / switch は 'true' / 'false' */
 function readValue(field: HTMLElement): string | string[] {
   const radios = Array.from(field.querySelectorAll<HTMLInputElement>('input[type="radio"]'))
   if (radios.length > 0) return radios.find(r => r.checked)?.value ?? ''
   const checks = Array.from(field.querySelectorAll<HTMLInputElement>('input[type="checkbox"]'))
-  if (checks.length === 1) return String(checks[0].checked)
-  if (checks.length > 1) return checks.filter(c => c.checked).map(c => c.value)
+  if (field.hasAttribute('data-multiple')) return checks.filter(c => c.checked).map(c => c.value)
+  if (checks.length > 0) return String(checks[0].checked)
   const sw = field.querySelector('[role="switch"]')
   if (sw) return sw.getAttribute('aria-checked') === 'true' ? 'true' : 'false'
   const control = field.querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('select, textarea, input')

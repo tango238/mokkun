@@ -49,3 +49,26 @@ export function propNumber(props: Record<string, unknown> | undefined, key: stri
   const v = props?.[key]
   return typeof v === 'number' && Number.isFinite(v) ? v : undefined
 }
+
+/**
+ * リンク・画像の URL を http / https / mailto に限る（javascript: などは '#' に置き換える）。
+ * 相対 URL は許可する。
+ */
+export function safeUrl(url: unknown): string {
+  const text = typeof url === 'string' ? url.trim() : ''
+  if (!text) return '#'
+  try {
+    const parsed = new URL(text, 'https://mokkun.invalid/')
+    return ['http:', 'https:', 'mailto:'].includes(parsed.protocol) ? text : '#'
+  } catch {
+    return '#'
+  }
+}
+
+/** props の配列から、指定キーが文字列のオブジェクトだけを取り出す */
+export function objectItems<T extends object>(value: unknown, requiredStringKey: string): T[] {
+  if (!Array.isArray(value)) return []
+  return value.filter(
+    (v): v is T => typeof v === 'object' && v !== null && typeof (v as Record<string, unknown>)[requiredStringKey] === 'string',
+  )
+}

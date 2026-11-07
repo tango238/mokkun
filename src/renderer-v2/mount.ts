@@ -7,8 +7,8 @@
 
 import type { V2Callbacks } from './index'
 import { evaluateVisibility } from './mount-visibility'
-import { handleRepeatClick, syncAllRepeatables } from './mount-repeat'
-import { closeAllSubmenus, closeDialog, moveTabFocus, openDialog, selectTab, setSubmenu, sortTable, toggleSwitch, updateFileList } from './mount-parts'
+import { handleRepeatClick, resetRepeatables, syncAllRepeatables } from './mount-repeat'
+import { closeAllSubmenus, closeDialog, moveTabFocus, openDialog, selectTab, setSubmenu, setSwitch, sortTable, toggleSwitch, updateFileList } from './mount-parts'
 
 function findDialog(root: HTMLElement, id: string | undefined): HTMLDialogElement | undefined {
   return Array.from(root.querySelectorAll<HTMLDialogElement>('dialog')).find(d => d.id === id)
@@ -22,6 +22,14 @@ function updateEmptyStates(root: HTMLElement): void {
     const table = list.querySelector<HTMLElement>('.dads-table')
     if (table) table.hidden = rows === 0
   })
+}
+
+/** フォームのリセット後に、ネイティブの reset では戻らない状態（switch / ファイル一覧 / 繰り返し / 表示条件）を戻す */
+function restoreAfterReset(root: HTMLElement): void {
+  root.querySelectorAll<HTMLElement>('[data-initial-checked]').forEach(b => setSwitch(b, b.dataset.initialChecked === 'true'))
+  root.querySelectorAll<HTMLInputElement>('input[type="file"]').forEach(updateFileList)
+  resetRepeatables(root)
+  evaluateVisibility(root)
 }
 
 /** イベントを結線する。戻り値で解除 */
@@ -46,7 +54,7 @@ export function attachV2Behavior(root: HTMLElement, callbacks: V2Callbacks): () 
     if (kind === 'navigate' && to) return navigate(to, true)
     if (kind === 'reset') {
       root.querySelector('form')?.reset()
-      setTimeout(() => evaluateVisibility(root), 0)
+      restoreAfterReset(root)
     }
     callbacks.onAction?.(button.dataset.action ?? '', kind)
   }
@@ -61,7 +69,7 @@ export function attachV2Behavior(root: HTMLElement, callbacks: V2Callbacks): () 
       if (navLink) {
         ev.preventDefault()
         closeAllSubmenus(root)
-        callbacks.onNavigate?.(navLink.dataset.navView!)
+        navigate(navLink.dataset.navView!, true)
         return
       }
       const toggle = target.closest<HTMLElement>('[data-submenu-toggle]')
@@ -119,7 +127,7 @@ export function attachV2Behavior(root: HTMLElement, callbacks: V2Callbacks): () 
       if (toc) {
         ev.preventDefault()
         const id = toc.getAttribute('href')?.slice(1)
-        Array.from(root.querySelectorAll<HTMLElement>('section')).find(s => s.id === id)?.scrollIntoView?.({ behavior: 'smooth' })
+        Array.from(root.querySelectorAll<HTMLElement>('[id]')).find(s => s.id === id)?.scrollIntoView?.({ behavior: 'smooth' })
         return
       }
       const banner = target.closest<HTMLElement>('[data-banner-close]')
@@ -137,7 +145,29 @@ export function attachV2Behavior(root: HTMLElement, callbacks: V2Callbacks): () 
     { signal },
   )
   root.addEventListener('input', () => evaluateVisibility(root), { signal })
-  root.addEventListener('reset', () => setTimeout(() => evaluateVisibility(root), 0), { signal })
+  root.addEventListener('reset', () => setTimeout(() => restoreAfterReset(root), 0), { signal })
+  // file-upload: ドラッグ＆ドロップ（preventDefault で既定のファイルオープンを止め、input.files に入れる）
+  root.addEventListener(
+    'dragover',
+    ev => {
+      if (ev.target instanceof Element && ev.target.closest('[data-js-drop-area]')) ev.preventDefault()
+    },
+    { signal },
+  )
+  root.addEventListener(
+    'drop',
+    ev => {
+      const area = ev.target instanceof Element ? ev.target.closest('[data-js-drop-area]') : null
+      if (!area) return
+      ev.preventDefault()
+      const input = area.closest('.dads-file-upload')?.querySelector<HTMLInputElement>('input[type="file"]')
+      const files = ev.dataTransfer?.files
+      if (!input || !files || files.length === 0) return
+      input.files = files
+      input.dispatchEvent(new Event('change', { bubbles: true }))
+    },
+    { signal },
+  )
   root.addEventListener('submit', ev => ev.preventDefault(), { signal })
   root.addEventListener(
     'keydown',

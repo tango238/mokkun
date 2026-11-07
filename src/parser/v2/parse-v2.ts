@@ -41,7 +41,8 @@ const SECTION_KINDS = ['form', 'list', 'readonly', 'summary']
 const REVEALS = ['open', 'collapsed']
 const ACTION_KINDS = ['submit', 'navigate', 'custom', 'reset']
 const ACTION_PLACEMENTS = ['header', 'footer', 'sticky']
-const ACTION_STYLES = ['primary', 'secondary', 'danger']
+const ACTION_STYLES = ['primary', 'secondary', 'tertiary', 'danger']
+const FIELD_WIDTHS = ['xs', 'sm', 'md', 'lg', 'full']
 const SELECTIONS = ['none', 'single', 'multiple']
 const NOTICE_VARIANTS = ['info', 'success', 'warning', 'error']
 const PATTERN_KEYS = ['fields', 'note']
@@ -226,6 +227,7 @@ function validateV2(data: Obj): ParseError[] {
     if (!(typeof field.component === 'string' && (VALID_COMPONENTS_V2 as readonly string[]).includes(field.component))) {
       add('INVALID_FIELD_TYPE', `Invalid component "${String(field.component)}"`, `${path}.component`)
     }
+    checkEnum(field.width, FIELD_WIDTHS, `${path}.width`, 'width')
     if (field.options !== undefined) {
       if (!Array.isArray(field.options)) {
         add('INVALID_VALUE', 'options must be an array', `${path}.options`)
@@ -378,6 +380,11 @@ function validateV2(data: Obj): ParseError[] {
       }
       if (section.repeatable !== undefined && !isObject(section.repeatable)) {
         add('INVALID_VALUE', 'repeatable must be an object', `${sp}.repeatable`)
+      } else if (isObject(section.repeatable)) {
+        const { min, max } = section.repeatable
+        if (typeof min === 'number' && typeof max === 'number' && min > max) {
+          add('INVALID_VALUE', `repeatable.min (${min}) must not be greater than max (${max})`, `${sp}.repeatable.min`)
+        }
       }
 
       if (section.use !== undefined && !(isNonEmptyString(section.use) && Object.hasOwn(patterns, section.use))) {
@@ -445,6 +452,24 @@ function validateV2(data: Obj): ParseError[] {
           conditions.push({ item: cond.item, path: ef.fromPattern ? `${sp}.use` : `${fp.replace(/\.item$/, '')}.visibleWhen.item` })
         }
       })
+    })
+
+    // action id は view 内で一意（primary / secondary / rowActions。data-action での識別に使う）
+    const actionIds = new Map<string, string>()
+    const claim = (action: unknown, path: string) => {
+      if (!isObject(action) || !isNonEmptyString(action.id)) return
+      if (actionIds.has(action.id)) {
+        add('INVALID_VALUE', `Duplicate action id "${action.id}" in view "${viewName}" (also at ${actionIds.get(action.id)})`, `${path}.id`)
+      } else {
+        actionIds.set(action.id, path)
+      }
+    }
+    if (isObject(view.primaryAction)) claim(view.primaryAction, `${vp}.primaryAction`)
+    if (Array.isArray(view.secondaryActions)) view.secondaryActions.forEach((a, i) => claim(a, `${vp}.secondaryActions[${i}]`))
+    view.sections.forEach((section, si) => {
+      if (isObject(section) && isObject(section.list) && Array.isArray(section.list.rowActions)) {
+        section.list.rowActions.forEach((a, i) => claim(a, `${vp}.sections[${si}].list.rowActions[${i}]`))
+      }
     })
 
     for (const c of conditions) {

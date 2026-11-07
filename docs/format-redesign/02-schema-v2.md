@@ -84,7 +84,7 @@ steps:
 | kind | `submit` \| `navigate` \| `custom` \| `reset` | 既定 `submit` |
 | to | string | navigate の遷移先 view |
 | placement | `header` \| `footer` \| `sticky` | 既定 `footer`。sticky は float_area |
-| style | `primary` \| `secondary` \| `danger` | primaryAction の既定は `primary` |
+| style | `primary` \| `secondary` \| `tertiary` \| `danger` | primaryAction の既定は `primary`。`tertiary` は中止などのテキストボタン（旧レンダラーへは secondary として変換） |
 | confirm | `{ message, danger? }` | 実行前の確認（Flow の判断） |
 
 ## Section
@@ -99,7 +99,7 @@ steps:
 | repeatable | `{ min?, max?, addLabel? }` | | 繰り返し可能なまとまり |
 | note | string | | 補足説明（information_panel） |
 | columns | 1 \| 2 \| 3 | | 項目の配置 |
-| visibleWhen | Condition | | 表示条件。**セクション内のフィールドに適用される**（セクション単位の表示制御ではない） |
+| visibleWhen | Condition | | 表示条件。v2 レンダラーではセクション全体（見出しごと）の表示を切り替える。旧フォーマットへの変換ではセクション内の各フィールドの条件になる（見出しは隠れない） |
 | use | string | | patterns のキー。fields を継承 |
 | fields | Field[] | | kind が form / readonly / summary のとき |
 | list | List | | kind が list のとき |
@@ -139,13 +139,14 @@ list:
 | options | `{ value, label }[]` | | select / radio / checkbox / combobox / browser |
 | multiple | boolean | | select / checkbox で複数 |
 | variant | string | | component ごとの表示 variant |
-| inline | boolean | | date のカレンダー表示 |
+| inline | boolean | | date のカレンダー表示（月表示をそのまま出す） |
+| width | `xs` \| `sm` \| `md` \| `lg` \| `full` | | 入力欄の幅（約 6 / 10 / 20 / 30rem / 100%）。v2 レンダラーのみ。旧フォーマットへは出力しない |
 | accept | string | | file の種別。`image` で画像 |
 | value | any | | 表示系 component の表示値 |
 | readonly | boolean | | |
 | rules | string[] \| Rule[] | | バリデーション。文字列は rules のキー |
 | visibleWhen | Condition | | |
-| props | object | | component 固有の追加設定（既存フィールド属性をそのまま渡す） |
+| props | object | | component 固有の追加設定（既存フィールド属性をそのまま渡す）。`date` の `props.calendar: true` はカレンダーボタン（v2 レンダラー: 静的ボタン、ポップオーバーなし）を入力欄の横に付ける |
 
 ### Component と旧タイプの対応
 

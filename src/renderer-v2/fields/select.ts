@@ -3,7 +3,7 @@
  */
 
 import type { OptionV2 } from '../../types/schema-v2'
-import { attrs, esc, str } from '../util'
+import { attrs, esc, objectItems, str } from '../util'
 import { chevronDown } from '../icons'
 import { ariaAttrs, wrapSingle, type Ctl } from './control-label'
 import { renderCheckboxGroup, renderRadio } from './choice'
@@ -48,13 +48,13 @@ export function renderSelect(c: Ctl): string {
 
 /** 階層を持つ項目は optgroup、持たない項目は option（props.items は { value, label, children? }） */
 export function renderBrowser(c: Ctl): string {
-  const items = Array.isArray(c.f.props?.items) ? (c.f.props.items as BrowserItem[]) : []
+  const items = objectItems<BrowserItem>(c.f.props?.items, 'label')
   const source: BrowserItem[] = items.length > 0 ? items : (c.f.options ?? []).map(o => ({ value: str(o.value), label: o.label }))
   const current = str(c.value)
   const body = source
     .map(item =>
-      item.children && item.children.length > 0
-        ? `<optgroup label="${esc(item.label)}">${item.children.map(ch => option(ch, current)).join('')}</optgroup>`
+      Array.isArray(item.children) && item.children.length > 0
+        ? `<optgroup label="${esc(item.label)}">${objectItems<BrowserItem>(item.children, 'label').map(ch => option(ch, current)).join('')}</optgroup>`
         : option(item, current),
     )
     .join('\n          ')

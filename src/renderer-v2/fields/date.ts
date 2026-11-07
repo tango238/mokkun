@@ -4,8 +4,8 @@
  */
 
 import { attrs, esc } from '../util'
-import { calendarNext, calendarPrev } from '../icons'
-import { ariaAttrs, wrapGroup, type Ctl } from './control-label'
+import { calendarButtonIcon, calendarNext, calendarPrev } from '../icons'
+import { wrapGroup, type Ctl } from './control-label'
 
 interface YMD {
   y: string
@@ -32,14 +32,20 @@ function dateInput(c: Ctl, part: 'year' | 'month' | 'day', label: string, value:
               readonly: c.f.readonly === true,
               required: c.f.required === true,
               [`data-js-${part}-input`]: true,
-            })}${ariaAttrs(c)}>
+            })}${attrs({ 'aria-invalid': c.error ? 'true' : undefined, 'aria-describedby': c.errorId })}>
           </label>`
 }
 
+/** 上流の date-picker/error.html に従う: fieldset はサポートテキストだけ、各入力はエラーだけを参照する */
 function renderPicker(c: Ctl): string {
   const ymd = parseDate(c.value)
   const inputs = attrs({ 'data-error': !!c.error, 'data-readonly': c.f.readonly === true })
   const error = c.error ? `\n      <p id="${esc(c.errorId)}" class="dads-date-picker__error-text">${esc(c.error)}</p>` : ''
+  // props.calendar: 静的なカレンダーボタン（ポップオーバーは出さない）
+  const calendar =
+    c.f.props?.calendar === true
+      ? `\n        <button${attrs({ class: 'dads-date-picker__calendar-button', type: 'button', 'aria-haspopup': 'dialog', 'aria-expanded': 'false', disabled: c.f.readonly === true, 'data-js-calendar-button': true })}>${calendarButtonIcon}</button>`
+      : ''
   return wrapGroup(
     c,
     `<dads-date-picker class="dads-date-picker" data-type="consolidated">
@@ -48,9 +54,11 @@ function renderPicker(c: Ctl): string {
           ${dateInput(c, 'year', '年', ymd?.y ?? '')}
           ${dateInput(c, 'month', '月', ymd?.m ?? '')}
           ${dateInput(c, 'day', '日', ymd?.d ?? '')}
-        </div>
+        </div>${calendar}
       </div>${error}
     </dads-date-picker>`,
+    { 'aria-describedby': c.supportId },
+    { skipError: true },
   )
 }
 

@@ -2,8 +2,8 @@
  * 表示系: badge / chip / status → chip-label、timeline → list、map → image 枠
  */
 
-import { esc, str } from '../util'
-import { wrapDisplay, type Ctl } from './control-label'
+import { esc, objectItems, str } from '../util'
+import { wrapDisplay, wrapInline, type Ctl } from './control-label'
 
 /** variant / color → chip-label の data-color */
 const CHIP_COLORS: Record<string, string> = {
@@ -27,9 +27,9 @@ function chipLabel(c: Ctl): string {
   return `<span class="dads-chip-label" data-style="outlined" data-color="${color}">${esc(text)}</span>`
 }
 
-/** badge / chip / status。値があれば項目名 + チップ、無ければチップのみ */
+/** badge / chip / status。値があれば項目名 + チップ、無ければチップのみ（ラベルを二重に出さない） */
 export function renderChip(c: Ctl): string {
-  return wrapDisplay(c, chipLabel(c))
+  return c.f.value !== undefined ? wrapDisplay(c, chipLabel(c)) : wrapInline(c, chipLabel(c))
 }
 
 interface TimelineItem {
@@ -40,11 +40,11 @@ interface TimelineItem {
 
 /** 日時とタイトルの順序なしリスト（props.items: [{ time, title, description }]） */
 export function renderTimeline(c: Ctl): string {
-  const items = Array.isArray(c.f.props?.items) ? (c.f.props.items as TimelineItem[]) : []
+  const items = objectItems<TimelineItem>(c.f.props?.items, 'title')
   const rows = items
     .map(
       it =>
-        `<li><time>${esc(it.time)}</time> <strong>${esc(it.title)}</strong>${it.description ? `<br><span>${esc(it.description)}</span>` : ''}</li>`,
+        `<li><time>${esc(typeof it.time === 'string' ? it.time : '')}</time> <strong>${esc(it.title)}</strong>${it.description ? `<br><span>${esc(it.description)}</span>` : ''}</li>`,
     )
     .join('\n      ')
   return wrapDisplay(c, `<ol class="dads-list" data-spacing="8" aria-labelledby="${esc(c.domId)}-label">\n      ${rows}\n    </ol>`)

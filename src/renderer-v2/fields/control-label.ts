@@ -85,6 +85,8 @@ function rootAttrs(c: Ctl): string {
     'data-size': 'md',
     'data-field': c.f.item,
     'data-component': c.f.component,
+    'data-multiple': c.f.multiple === true,
+    'data-width': c.f.width,
     'data-visible-when': cond ? JSON.stringify({ item: cond.item, equals: cond.equals }) : undefined,
     hidden: c.hidden,
   })
@@ -109,7 +111,12 @@ export function wrapSingle(c: Ctl, control: string): string {
 }
 
 /** グループ: <fieldset> + <legend>。aria-describedby は fieldset に付ける */
-export function wrapGroup(c: Ctl, control: string, extra: Record<string, string | boolean | undefined> = {}): string {
+export function wrapGroup(
+  c: Ctl,
+  control: string,
+  extra: Record<string, string | boolean | undefined> = {},
+  opts: { skipError?: boolean } = {},
+): string {
   return `<fieldset class="dads-form-control-label"${rootAttrs(c)}${attrs({ 'aria-describedby': c.describedBy, ...extra })}>
   <legend class="dads-form-control-label__legend">
     <span class="dads-form-control-label__label">
@@ -119,7 +126,7 @@ export function wrapGroup(c: Ctl, control: string, extra: Record<string, string 
   </legend>${support(c)}
   <div class="dads-form-control-label__field">
     ${control}
-    ${groupError(c)}
+    ${opts.skipError ? '' : groupError(c)}
   </div>
 </fieldset>`
 }

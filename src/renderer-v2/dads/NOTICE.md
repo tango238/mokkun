@@ -22,6 +22,7 @@ mokkun 側の都合によるスタイルは `../mokkun-v2.css` に書き、こ�
 | date-picker.css | components/date-picker/date-picker.css |
 | description-list.css | components/description-list/description-list.css |
 | divider.css | components/divider/divider.css |
+| disclosure.css | components/disclosure/disclosure.css |
 | file-upload.css | components/file-upload/file-upload.css |
 | form-control-label.css | components/form-control-label/form-control-label.css |
 | heading.css | components/heading/heading.css |

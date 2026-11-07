@@ -314,7 +314,7 @@ function compileAction(a: ActionV2, defaultStyle: 'primary' | 'secondary'): Acti
     id: a.id,
     label: a.label,
     // 破壊的な確認（confirm.danger）は danger スタイルで表す
-    style: a.confirm?.danger ? ('danger' as const) : (a.style ?? defaultStyle),
+    style: a.confirm?.danger ? ('danger' as const) : (a.style === 'tertiary' ? 'secondary' : (a.style ?? defaultStyle)),
     ...(a.confirm
       ? { confirm: { title: a.label, message: a.confirm.message, confirm_label: a.label, cancel_label: 'キャンセル' } }
       : {}),

@@ -3,7 +3,7 @@
  * DADS の file-upload は JS（カスタム要素）で一覧を更新する。選択ボタンと一覧更新は mount.ts で行う。
  */
 
-import { attrs, esc, propNumber } from '../util'
+import { attrs, esc, propNumber, safeUrl } from '../util'
 import { wrapSingle, type Ctl } from './control-label'
 
 function acceptFor(accept: string | undefined): string | undefined {
@@ -67,7 +67,7 @@ export function renderPhotoGrid(c: Ctl): string {
   const cols = propNumber(c.f.props, 'columns') ?? 3
   const items = photos
     .filter(p => typeof p?.src === 'string')
-    .map(p => `<li class="mk2-photo"><img src="${esc(p.src)}" alt="${esc(p.alt ?? '')}"></li>`)
+    .map(p => `<li class="mk2-photo"><img src="${esc(safeUrl(p.src))}" alt="${esc(p.alt ?? '')}"></li>`)
     .join('')
   const grid = `<ul class="mk2-photo-grid" data-columns="${cols}" aria-label="${esc(c.f.label)}の一覧">${items}</ul>`
   const html = wrapSingle(c, `${grid}${uploader(c, 'image', true)}`)

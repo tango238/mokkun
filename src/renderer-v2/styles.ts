@@ -10,11 +10,10 @@ import dadsCss from './dads.css?inline'
 import v2Css from './mokkun-v2.css?inline'
 
 const STYLE_ID = 'mokkun-v2-styles'
-/** mount 中のインスタンス数（最後の destroy で <style> を外す） */
-let users = 0
+/** スタイルを必要としている保持者の数（0 になったら <style> を外す） */
+let holders = 0
 
-export function ensureV2Styles(): void {
-  users += 1
+function insertStyle(): void {
   if (typeof document === 'undefined' || document.getElementById(STYLE_ID)) return
   const style = document.createElement('style')
   style.id = STYLE_ID
@@ -22,8 +21,19 @@ export function ensureV2Styles(): void {
   document.head.appendChild(style)
 }
 
-export function removeV2Styles(): void {
-  users = Math.max(0, users - 1)
-  if (users > 0 || typeof document === 'undefined') return
-  document.getElementById(STYLE_ID)?.remove()
+/**
+ * スタイルを 1 つ保持する。戻り値の release で解放する（二重に呼んでも 1 回分しか減らない）。
+ * 画面遷移で「古い view を destroy → 新しい view を mount」する間に <style> が外れて付け直されないよう、
+ * 呼び出し側は destroy の前に hold し、mount の後に release する。
+ */
+export function holdV2Styles(): () => void {
+  holders += 1
+  insertStyle()
+  let released = false
+  return () => {
+    if (released) return
+    released = true
+    holders = Math.max(0, holders - 1)
+    if (holders === 0 && typeof document !== 'undefined') document.getElementById(STYLE_ID)?.remove()
+  }
 }

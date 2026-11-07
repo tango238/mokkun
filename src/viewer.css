@@ -22,7 +22,8 @@
   --mk-comment: #6b7385;
   --mk-anchor: #ffcb6b;
   --mk-font: var(--font-family);
-  --mk-mono: var(--font-family-mono);
+  /* DADS（v2）の global.css も --font-family-mono を再定義するため、参照せずリテラルで固定する */
+  --mk-mono: 'Roboto Mono', ui-monospace, 'SF Mono', Menlo, Consolas, 'Courier New', monospace;
   /* .app-header(トップバー) の高さ。main.ts が実測値で上書きする */
   --viewer-header-height: 44px;
 }
@@ -344,4 +345,9 @@
   .mk-pane-source { width: auto; min-width: 0; max-width: none; height: 40vh; }
   .mk-gutter { display: none; }
   .mk-viewer .app-header.mk-toolbar { flex-wrap: wrap; height: auto; min-height: 44px; padding: 6px 16px; }
+}
+
+/* v2（DADS の global.css は html に scrollbar-gutter: stable を指定する）との切替でレイアウトがずれないよう揃える */
+html {
+  scrollbar-gutter: stable;
 }

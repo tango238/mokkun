@@ -14,9 +14,8 @@ export const GROUP_SEP = '__'
 function expandedFields(section: SectionV2, ctx: ViewContext): FieldV2[] {
   return expandSectionFields(section, ctx.schema.patterns).map(ef => ({
     ...ef.field,
-    // pattern 由来は id を `<section.id>_<item>` に前置済み。section.visibleWhen は自身の条件がない項目に適用
+    // pattern 由来は id を `<section.id>_<item>` に前置済み（section.visibleWhen はセクション要素自身が持つ）
     item: ef.id,
-    visibleWhen: ef.field.visibleWhen ?? section.visibleWhen,
   }))
 }
 
