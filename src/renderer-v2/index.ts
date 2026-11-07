@@ -10,17 +10,25 @@
 
 import type { MokkunV2Schema } from '../types/schema-v2'
 import { renderBreadcrumb, renderHeader, renderNotifications } from './app-shell'
-import { createContext } from './context'
+import { createContext, V2_VIEW_STATES, type V2RenderOptions, type V2ViewState } from './context'
 import { attachV2Behavior } from './mount'
 import { holdV2Styles } from './styles'
 import { renderViewBody } from './view'
 import { esc } from './util'
 
+/** onAction の付随情報 */
+export interface V2ActionPayload {
+  /** Section.actions / list.bulkActions のとき、操作が属する Section の id */
+  section?: string
+  /** list.bulkActions のとき、選択されている行の ID（行の `id`、なければ先頭列の値、なければ 1 始まりの通し番号） */
+  selectedRows?: string[]
+}
+
 export interface V2Callbacks {
   /** グローバルナビ・パンくず・navigate アクションで遷移先 view を通知する */
   onNavigate?: (view: string) => void
-  /** navigate 以外のアクション（submit / custom / reset）を実行したとき */
-  onAction?: (actionId: string, kind: string) => void
+  /** navigate 以外のアクション（submit / custom / reset）を実行したとき。Section 内の操作は payload を持つ */
+  onAction?: (actionId: string, kind: string, payload?: V2ActionPayload) => void
   /** true のとき、遷移時に location.hash も書き換える（既定 false） */
   syncHash?: boolean
 }
@@ -33,13 +41,13 @@ export interface V2Controller {
  * view を HTML 文字列にする。出力は `.mokkun-v2` ルート要素で包まれる。
  * view 名が存在しないときは空のルートにエラー文を入れて返す。
  */
-export function renderViewV2(schema: MokkunV2Schema, viewName: string): string {
-  const ctx = createContext(schema, viewName)
+export function renderViewV2(schema: MokkunV2Schema, viewName: string, options: V2RenderOptions = {}): string {
+  const ctx = createContext(schema, viewName, options)
   if (!ctx) {
     return `<div class="mokkun-v2"><main class="mk2-main"><p class="dads-form-control-label__error-text">画面が見つかりません: ${esc(viewName)}</p></main></div>`
   }
   const plain = schema.app.layout === 'plain'
-  return `<div class="mokkun-v2" data-view="${esc(viewName)}" data-app-layout="${plain ? 'plain' : 'shell'}">
+  return `<div class="mokkun-v2" data-view="${esc(viewName)}" data-state="${ctx.state}" data-app-layout="${plain ? 'plain' : 'shell'}">
 ${plain ? '' : renderHeader(ctx)}
 <main class="mk2-main">
 ${renderNotifications(ctx)}
@@ -57,9 +65,16 @@ export function mountViewV2(
   container: HTMLElement,
   schema: MokkunV2Schema,
   viewName: string,
-  callbacks: V2Callbacks = {},
+  callbacks: V2Callbacks & V2RenderOptions = {},
+  options: V2RenderOptions = {},
 ): V2Controller {
-  container.innerHTML = renderViewV2(schema, viewName)
+  // 描画オプションは 5 番目の引数が正。callbacks にまとめて渡しても受け付ける
+  container.innerHTML = renderViewV2(schema, viewName, {
+    state: callbacks.state,
+    role: callbacks.role,
+    today: callbacks.today,
+    ...options,
+  })
   // 描画が成功してからスタイルを保持する（描画が例外なら何も保持しない）
   const release = holdV2Styles()
   let detach: () => void
@@ -82,3 +97,6 @@ export function mountViewV2(
 }
 
 export { holdV2Styles } from './styles'
+export { V2_VIEW_STATES }
+export { availableStates, V2_STATE_LABELS } from './view-state'
+export type { V2RenderOptions, V2ViewState }

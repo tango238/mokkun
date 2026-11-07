@@ -12,7 +12,8 @@ export function renderTextarea(c: Ctl): string {
     class: 'dads-textarea__textarea',
     name: c.name,
     rows: propNumber(c.f.props, 'rows'),
-    required: c.f.required === true,
+    autocomplete: c.f.autocomplete,
+    required: c.required,
     readonly: c.f.readonly === true,
   })}${ariaAttrs(c)}>${esc(value)}</textarea>`
   const error = c.error ? `\n      <span id="${esc(c.errorId)}" class="dads-textarea__error-text">${esc(c.error)}</span>` : ''

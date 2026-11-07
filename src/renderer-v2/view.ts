@@ -3,10 +3,10 @@
  */
 
 import { renderActions, renderDialogs } from './actions'
-import { renderBanner } from './app-shell'
 import { domId, findFlow, type ViewContext } from './context'
 import { stepCompleted } from './icons'
 import { renderSection, renderSections, sectionDomId } from './section'
+import { renderLoading, renderStates } from './view-state'
 import { attrs, esc } from './util'
 
 /** flow の手順ナビ（step-navigation, horizontal）。前の step は completed、現在の step は reached */
@@ -38,15 +38,6 @@ export function renderStepNavigation(ctx: ViewContext): string {
     ${steps}
   </ul>
 </div>`
-}
-
-/** states.success / error はバナー（loading は静的な描画対象外、empty は list 側で使う） */
-function renderStates(ctx: ViewContext): string {
-  const s = ctx.view.states
-  const out: string[] = []
-  if (s?.success) out.push(renderBanner(domId(ctx, 'state', 'success'), 'success', s.success.message))
-  if (s?.error) out.push(renderBanner(domId(ctx, 'state', 'error'), 'error', s.error.message))
-  return out.join('\n')
 }
 
 function renderTabs(ctx: ViewContext): string {
@@ -95,6 +86,16 @@ function renderLayout(ctx: ViewContext): string {
   return layout === 'sectioned' && sections.length > 0 ? `${renderToc(ctx)}\n${body}` : body
 }
 
+function renderForm(ctx: ViewContext, footer: string, sticky: string): string {
+  return `<form class="mk2-form" novalidate data-view-form>
+<div class="mk2-sections" data-layout="${ctx.view.layout ?? 'stack'}">
+${renderLayout(ctx)}
+</div>
+${footer}
+${sticky ? `<div class="mk2-sticky">\n${sticky}\n</div>` : ''}
+</form>`
+}
+
 /** View 本体（main の中身）: パンくずは app-shell 側で前置する */
 export function renderViewBody(ctx: ViewContext): string {
   const { view } = ctx
@@ -111,12 +112,6 @@ export function renderViewBody(ctx: ViewContext): string {
 ${renderStepNavigation(ctx)}
 ${renderStates(ctx)}
 ${view.description ? `<p class="mk2-view-description">${esc(view.description)}</p>` : ''}
-<form class="mk2-form" novalidate data-view-form>
-<div class="mk2-sections" data-layout="${view.layout ?? 'stack'}">
-${renderLayout(ctx)}
-</div>
-${footer}
-${sticky ? `<div class="mk2-sticky">\n${sticky}\n</div>` : ''}
-</form>
+${ctx.state === 'loading' ? renderLoading(ctx) : renderForm(ctx, footer, sticky)}
 ${renderDialogs(ctx)}`
 }

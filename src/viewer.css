@@ -160,6 +160,7 @@
   cursor: pointer;
 }
 .mk-select option { background: #2b3144; color: var(--mk-bar-fg); }
+.mk-select option:disabled { color: var(--mk-bar-muted); }
 
 /* ---- Pane head ------------------------------------------------------------- */
 

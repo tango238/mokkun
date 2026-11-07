@@ -26,7 +26,7 @@ function radioItems(c: Ctl, options: OptionV2[]): string {
         name: c.name,
         value: str(o.value),
         checked: current !== '' && str(o.value) === current,
-        required: c.f.required === true && i === 0,
+        required: c.required && i === 0,
         disabled: c.f.readonly === true,
         'aria-invalid': c.error ? 'true' : undefined,
       })}>`
@@ -79,14 +79,14 @@ export function renderCheckbox(c: Ctl): string {
     name: c.name,
     value: 'true',
     checked,
-    required: c.f.required === true,
+    required: c.required,
     disabled: c.f.readonly === true,
     'aria-invalid': c.error ? 'true' : undefined,
     'aria-describedby': c.describedBy,
   })}>`
   const control = `<label class="dads-checkbox" data-size="md">
       <span class="dads-checkbox__checkbox">${input}</span>
-      <span class="dads-checkbox__label">${esc(c.f.label)} ${requirementHtml(c.f)}</span>
+      <span class="dads-checkbox__label">${esc(c.f.label)} ${requirementHtml(c)}</span>
     </label>`
   return wrapInline(c, control)
 }

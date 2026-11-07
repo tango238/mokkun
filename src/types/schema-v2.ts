@@ -49,9 +49,14 @@ export interface NavItemV2 {
   icon?: string
 }
 
+/** ロール指定（文字列または配列。省略は全ロール） */
+export type RoleSpecV2 = string | string[]
+
 export interface NavGroupV2 {
   group: string
   items: NavItemV2[]
+  /** このロールにだけ表示する（省略は全ロール）。app.roles の値 */
+  role?: RoleSpecV2
 }
 
 export type NoticeVariantV2 = 'info' | 'success' | 'warning' | 'error'
@@ -60,6 +65,10 @@ export interface NoticeV2 {
   variant?: NoticeVariantV2
   message: string
   dismissible?: boolean
+  /** このロールにだけ表示する（省略は全ロール）。app.roles の値 */
+  role?: RoleSpecV2
+  /** 掲示期限（ISO 日付 YYYY-MM-DD）。今日がこれより後なら表示しない */
+  until?: string
 }
 
 export interface AppV2 {
@@ -114,6 +123,8 @@ export interface ActionV2 {
   placement?: ActionPlacementV2
   style?: ActionStyleV2
   confirm?: ActionConfirmV2
+  /** このロールにだけ表示する（省略は全ロール）。app.roles の値 */
+  role?: RoleSpecV2
 }
 
 export interface StateMessageV2 {
@@ -152,16 +163,38 @@ export interface RepeatableV2 {
   addLabel?: string
 }
 
-/** 表示条件（item の値が equals と等しいとき表示） */
+/** 条件で使える値 */
+export type ConditionValueV2 = string | number | boolean
+
+/**
+ * 条件（visibleWhen / requiredWhen）。equals / notEquals / in のうち 1 つだけを書く。
+ * - equals: item の値が等しい
+ * - notEquals: item の値が等しくない
+ * - in: item の値が配列のどれかと等しい
+ */
 export interface ConditionV2 {
   item: string
-  equals: string | number | boolean
+  equals?: ConditionValueV2
+  notEquals?: ConditionValueV2
+  in?: ConditionValueV2[]
 }
+
+/** 一覧セルの型（既定 text） */
+export type ListColumnTypeV2 = 'text' | 'status' | 'date' | 'number'
+
+/** 一覧セルに置ける入力（item / label は持たない）。text / number / select / checkbox のみ */
+export type ListColumnFieldV2 = Omit<FieldV2, 'item' | 'label'>
 
 export interface ListColumnV2 {
   id: string
   label: string
   sortable?: boolean
+  /** セルの型。status はチップ、date は日本語の日付、number は右寄せ */
+  type?: ListColumnTypeV2
+  /** セルを遷移リンクにする view 名（rows 内の値がリンクの文言になる） */
+  to?: string
+  /** セルに入力欄を置く（list.rows が必要。name は `<rowKey>.<columnId>`） */
+  field?: ListColumnFieldV2
 }
 
 export interface ListRowActionV2 {
@@ -178,6 +211,10 @@ export interface ListV2 {
   paging?: { pageSize?: number }
   selection?: 'none' | 'single' | 'multiple'
   empty?: string
+  /** 選択した行への操作（selection が multiple のときだけ）。行 ID は onAction の payload.selectedRows */
+  bulkActions?: ActionV2[]
+  /** 代表行（キーは列 id）。あればダミー行の代わりに使う */
+  rows?: Array<Record<string, unknown>>
 }
 
 export interface SectionV2 {
@@ -194,6 +231,8 @@ export interface SectionV2 {
   use?: string
   fields?: FieldV2[]
   list?: ListV2
+  /** 見出し行に置く操作（primary は不可）。確認画面の修正する、絞り込みの検索・リセットなど */
+  actions?: ActionV2[]
 }
 
 /** patterns の値（fields と note のみ。use のネストは非対応） */
@@ -268,6 +307,23 @@ export interface RuleV2 {
   message?: string
 }
 
+/** file の accept（キーワードまたは拡張子・MIME タイプの配列） */
+export type FileAcceptV2 = 'image' | 'pdf' | 'document' | string | string[]
+
+export type DatePrecisionV2 = 'day' | 'month'
+
+export interface FieldLinkV2 {
+  label: string
+  href: string
+}
+
+/** timeline の構造化された値 */
+export interface TimelineEntryV2 {
+  at: string
+  label: string
+  text?: string
+}
+
 export interface FieldV2 {
   /** 業務の名詞。id として使う */
   item: string
@@ -283,7 +339,22 @@ export interface FieldV2 {
   multiple?: boolean
   variant?: string
   inline?: boolean
-  accept?: string
+  /** file の種別。image / pdf / document、または拡張子・MIME タイプの配列 */
+  accept?: FileAcceptV2
+  /** file の 1 ファイルあたりの上限（例 "10MB"。KB / MB / GB） */
+  maxSize?: string
+  /** 入力欄の後ろに付ける単位（円・件など） */
+  unit?: string
+  /** date の精度。month は年月だけ（visibleWhen の値は `y-m`） */
+  precision?: DatePrecisionV2
+  /** HTML の autocomplete トークン。date では `bday` が bday-year/month/day になる */
+  autocomplete?: string
+  /** サポートテキストの後ろに出すリンク */
+  links?: FieldLinkV2[]
+  /** この条件が成り立つときだけ必須（required: true とは併用しない） */
+  requiredWhen?: ConditionV2
+  /** summary / readonly の値を遷移リンクにする view 名 */
+  to?: string
   value?: unknown
   readonly?: boolean
   /** 文字列は rules のキー */

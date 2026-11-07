@@ -109,22 +109,28 @@ describe('order_form', () => {
     expect(root.querySelector('.mk2-sticky [data-type="solid-fill"][data-size="lg"]')).not.toBeNull()
     expect(root.querySelector('dialog')!.getAttribute('data-dialog-for')).toBe('cancel')
     expect(root.querySelector('dialog.dads-modal-dialog')).not.toBeNull()
-    expect(root.querySelector('.dads-notification-banner[data-type="error"]')).not.toBeNull()
+    // 状態バナーは選んだ状態だけ描画する（既定の通常では出さない）
+    expect(root.querySelector('.dads-notification-banner[data-type="error"]')).toBeNull()
+    const error = dom(renderViewV2(schema, 'order_form', { state: 'error' }))
+    expect(error.querySelector('.dads-notification-banner[data-type="error"]')).not.toBeNull()
   })
 })
 
 describe('order_list', () => {
   const root = dom(renderViewV2(schema, 'order_list'))
-  it('table は 5 見出し、page-navigation あり', () => {
+  it('table は 5 見出し、行は list.rows。page-navigation はページが複数のときだけ', () => {
     expect(root.querySelectorAll('thead th').length).toBe(5 + 1)
     expect(root.querySelectorAll('thead th[aria-sort]').length).toBe(2)
-    expect(root.querySelector('nav.dads-page-navigation')).not.toBeNull()
-    expect(root.querySelectorAll('tbody tr').length).toBe(3)
-    expect(root.querySelector('[data-empty][hidden]')!.textContent).toBe('該当する受注はありません')
-    // pageSize があれば 1 ページ目の見え方（カウンターと「次のページ」のみ。前のページは出さない）
-    expect(root.querySelector('.dads-page-navigation__counter')!.textContent).toBe('1 / 5')
-    expect(root.querySelectorAll('nav.dads-page-navigation button').length).toBe(1)
-    expect(root.querySelector('nav.dads-page-navigation [data-control="prev"]')).toBeNull()
+    // list.rows の代表行が出る（ダミー行ではない）
+    expect(root.querySelectorAll('tbody tr').length).toBe(5)
+    expect(root.querySelector('[data-empty][hidden]')!.textContent).toBe('受注はまだありません。「新規受注」から登録できます')
+    // 行が pageSize に収まるのでページ送りは出ない（DADS: ページが 1 つなら出さない）。ダミー行のときは 1 ページ目の見え方を示す
+    expect(root.querySelector('nav.dads-page-navigation')).toBeNull()
+    const dummy = dom(renderViewV2({ ...schema, views: { v: { ...schema.views.order_list, sections: [{ ...schema.views.order_list.sections[1], list: { ...schema.views.order_list.sections[1].list!, rows: undefined } }] } } }, 'v'))
+    expect(dummy.querySelectorAll('tbody tr').length).toBe(3)
+    expect(dummy.querySelector('.dads-page-navigation__counter')!.textContent).toBe('1 / 5')
+    expect(dummy.querySelectorAll('nav.dads-page-navigation button').length).toBe(1)
+    expect(dummy.querySelector('nav.dads-page-navigation [data-control="prev"]')).toBeNull()
     expect(root.querySelector('figure.dads-table[data-row-hover-highlight] .dads-table__caption')).not.toBeNull()
   })
 })

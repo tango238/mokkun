@@ -35,6 +35,7 @@ mokkun 側の都合によるスタイルは `../mokkun-v2.css` に書き、こ�
 | modal-dialog.css | components/modal-dialog/modal-dialog.css |
 | notification-banner.css | components/notification-banner/notification-banner.css |
 | page-navigation.css | components/page-navigation/page-navigation.css |
+| progress-indicator.css | components/progress-indicator/progress-indicator.css |
 | radio.css | components/radio/radio.css |
 | select.css | components/select/select.css |
 | step-navigation.css | components/step-navigation/step-navigation.css |

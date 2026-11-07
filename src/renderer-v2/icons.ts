@@ -65,3 +65,7 @@ export const disclosureIcon =
 
 export const calendarButtonIcon =
   '<svg class="dads-date-picker__calendar-icon" width="24" height="24" viewBox="0 0 24 24" role="img" aria-label="カレンダー"><rect x="5" y="10" width="14" height="10" fill="Canvas"/><path d="M9 16.5C7.62 16.5 6.5 15.38 6.5 14C6.5 12.62 7.62 11.5 9 11.5C10.38 11.5 11.5 12.62 11.5 14C11.5 15.38 10.38 16.5 9 16.5ZM5 22C3.9 22 3 21.09 3 20V6C3 4.91 3.91 4 5 4H6V2H8V4H16V2H18V4H19C20.09 4 21 4.91 21 6V20C21 21.09 20.09 22 19 22H5ZM5 20H19V10H5V20Z" fill="currentcolor"/></svg><svg class="dads-date-picker__calendar-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17.1L3 8L4 7L12 15L20 7L21 8L12 17.1Z" fill="currentcolor" /></svg>'
+
+/** 新規タブで開くリンクのアイコン（上流 link/new-tab.html） */
+export const externalIcon =
+  '<svg class="dads-link__icon" width="16" height="16" viewBox="0 0 48 48" role="img" aria-label="新規タブで開きます"><path d="M22 6V9H9V39H39V26H42V42H6V6H22ZM42 6V20H39V11.2L21 29L19 27L36.8 9H28V6H42Z" fill="currentcolor"/></svg>'

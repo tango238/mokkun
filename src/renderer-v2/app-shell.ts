@@ -2,9 +2,10 @@
  * App 層: ヘッダー、グローバルナビ、パンくず、通知
  */
 
-import type { NoticeV2, NoticeVariantV2 } from '../types/schema-v2'
+import type { NavGroupV2, NoticeVariantV2 } from '../types/schema-v2'
 import type { ViewContext } from './context'
 import { bannerIcons, breadcrumbSeparator, chevronDown, closeIcon } from './icons'
+import { isExpired, visibleForRole } from './role'
 import { attrs, esc, safeUrl } from './util'
 
 const USER_ICON =
@@ -38,9 +39,18 @@ export function renderBanner(id: string, variant: NoticeVariantV2, message: stri
 </div>`
 }
 
+/** 共通通知。現在のロールに向けたもので、掲示期限（until）が今日より前でないものだけ。id は定義順の通し番号 */
 export function renderNotifications(ctx: ViewContext): string {
-  const list: NoticeV2[] = ctx.schema.app.notifications ?? []
-  return list.map((n, i) => renderBanner(`${ctx.viewName}-notice-${i + 1}`, n.variant ?? 'info', n.message, n.dismissible === true)).join('\n')
+  return (ctx.schema.app.notifications ?? [])
+    .map((n, i) => ({ n, i }))
+    .filter(({ n }) => visibleForRole(n.role, ctx.role) && !isExpired(n.until, ctx.today))
+    .map(({ n, i }) => renderBanner(`${ctx.viewName}-notice-${i + 1}`, n.variant ?? 'info', n.message, n.dismissible === true))
+    .join('\n')
+}
+
+/** 現在のロールに表示するナビ group */
+function navGroups(ctx: ViewContext): NavGroupV2[] {
+  return (ctx.schema.app.navigation ?? []).filter(g => visibleForRole(g.role, ctx.role))
 }
 
 function viewLabel(ctx: ViewContext, view: string, label?: string): string {
@@ -53,7 +63,7 @@ function navLink(ctx: ViewContext, cls: string, view: string, label: string | un
 
 /** グローバルナビ: group が 1 項目ならリンク、複数ならサブメニューボタン + menu-list。現在地は aria-current="page" */
 export function renderGlobalNav(ctx: ViewContext): string {
-  const groups = ctx.schema.app.navigation ?? []
+  const groups = navGroups(ctx)
   if (groups.length === 0) return ''
   const current = ctx.view.nav
   const items = groups.map((g, gi) => {
@@ -115,7 +125,8 @@ export function renderBreadcrumb(ctx: ViewContext): string {
   const groups = app.navigation ?? []
   const target = ctx.view.nav ?? ctx.viewName
   const group = groups.find(g => g.items.some(it => it.view === target))
-  const first = groups[0]?.items[0]?.view
+  // アプリ名のリンク先は、現在のロールに見える最初の group の先頭
+  const first = navGroups(ctx)[0]?.items[0]?.view
   const crumbs: Array<{ label: string; view?: string }> = [{ label: app.name, view: first }]
   if (group) crumbs.push({ label: group.group, view: group.items[0].view })
   const item = (label: string, view?: string) => {

@@ -435,13 +435,14 @@ describe('v2 compile (order-entry)', () => {
     expect(name.id).toBe('customerName')
     expect(name.type).toBe('combobox')
     expect(name.required).toBe(true)
-    expect(name.placeholder).toBe('株式会社サンプル')
-    expect(name.description).toBe('登録済みの顧客から選べます。請求先の特定に必要です')
+    // example は placeholder ではなく description の「例: …」に入る
+    expect(name.placeholder).toBeUndefined()
+    expect(name.description).toBe('登録済みの顧客から選べます。請求先の特定に必要です。例: 株式会社サンプル')
 
     const delivery = fieldsOf(section(schema.view.order_form, '配送先を指定する'))
     expect(delivery[0].type).toBe('information_panel')
     const postal = delivery.find((f) => f.id === 'postalCode') as any
-    expect(postal.description).toBe('入力形式: ハイフンなし7桁')
+    expect(postal.description).toBe('入力形式: ハイフンなし7桁。例: 1000001')
     expect(postal.visible_when).toEqual({ field: 'deliveryType', operator: 'eq', value: 'other' })
     expect(delivery.find((f) => f.id === 'deliveryType')!.type).toBe('radio_group')
     expect(delivery.find((f) => f.id === 'desiredDate')!.type).toBe('date_picker')
@@ -698,8 +699,10 @@ describe('v2 render (order-entry)', () => {
 
   it('order_list: states.empty / list.empty reaches the rendered data_table empty state', () => {
     const table = fieldsOf(section(schema.view.order_list, '受注を選ぶ'))[0] as any
-    expect(table.empty_state.title).toBe('該当する受注はありません')
-    expect(renderScreen(schema.view.order_list)).toContain('該当する受注はありません')
+    expect(table.empty_state.title).toBe('受注はまだありません。「新規受注」から登録できます')
+    // list.rows は旧 data_table の静的データになる（行があるので空表示は出ない）
+    expect(table.data).toHaveLength(5)
+    expect(renderScreen(schema.view.order_list)).toContain('株式会社サンプル')
     // list.empty が無ければ view.states.empty が使われる
     const r = parseV2(mk({}, {
       states: { empty: { message: '空です' } },

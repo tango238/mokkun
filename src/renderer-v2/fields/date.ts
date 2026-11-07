@@ -13,9 +13,15 @@ interface YMD {
   d: string
 }
 
+/** YYYY-MM-DD / YYYY-MM（年月だけの値。day は空） */
 function parseDate(value: unknown): YMD | undefined {
-  const m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(typeof value === 'string' ? value : '')
-  return m ? { y: m[1], m: m[2].padStart(2, '0'), d: m[3].padStart(2, '0') } : undefined
+  const m = /^(\d{4})-(\d{1,2})(?:-(\d{1,2}))?/.exec(typeof value === 'string' ? value : '')
+  return m ? { y: m[1], m: m[2].padStart(2, '0'), d: m[3] ? m[3].padStart(2, '0') : '' } : undefined
+}
+
+/** autocomplete: bday のとき、3 つの入力にそれぞれ bday-year / bday-month / bday-day を付ける */
+function birthdayToken(c: Ctl, part: 'year' | 'month' | 'day'): string | undefined {
+  return c.f.autocomplete === 'bday' ? `bday-${part}` : undefined
 }
 
 function dateInput(c: Ctl, part: 'year' | 'month' | 'day', label: string, value: string): string {
@@ -28,9 +34,10 @@ function dateInput(c: Ctl, part: 'year' | 'month' | 'day', label: string, value:
               name: `${c.name}.${part}`,
               value: value || undefined,
               inputmode: 'numeric',
+              autocomplete: birthdayToken(c, part),
               pattern: '[0-9]+',
               readonly: c.f.readonly === true,
-              required: c.f.required === true,
+              required: c.required,
               [`data-js-${part}-input`]: true,
             })}${attrs({ 'aria-invalid': c.error ? 'true' : undefined, 'aria-describedby': c.errorId })}>
           </label>`
@@ -39,11 +46,12 @@ function dateInput(c: Ctl, part: 'year' | 'month' | 'day', label: string, value:
 /** 上流の date-picker/error.html に従う: fieldset はサポートテキストだけ、各入力はエラーだけを参照する */
 function renderPicker(c: Ctl): string {
   const ymd = parseDate(c.value)
+  const month = c.f.precision === 'month'
   const inputs = attrs({ 'data-error': !!c.error, 'data-readonly': c.f.readonly === true })
   const error = c.error ? `\n      <p id="${esc(c.errorId)}" class="dads-date-picker__error-text">${esc(c.error)}</p>` : ''
   // props.calendar: 静的なカレンダーボタン（モック。ポップオーバーは出さず aria-disabled、上流のクラスは維持）
   const calendar =
-    c.f.props?.calendar === true
+    c.f.props?.calendar === true && !month
       ? `\n        <button${attrs({ class: 'dads-date-picker__calendar-button', type: 'button', 'aria-disabled': 'true', 'data-js-calendar-button': true })}>${calendarButtonIcon}</button>`
       : ''
   return wrapGroup(
@@ -52,8 +60,7 @@ function renderPicker(c: Ctl): string {
       <div class="dads-date-picker__controls" data-size="md">
         <div class="dads-date-picker__inputs"${inputs}>
           ${dateInput(c, 'year', '年', ymd?.y ?? '')}
-          ${dateInput(c, 'month', '月', ymd?.m ?? '')}
-          ${dateInput(c, 'day', '日', ymd?.d ?? '')}
+          ${dateInput(c, 'month', '月', ymd?.m ?? '')}${month ? '' : `\n          ${dateInput(c, 'day', '日', ymd?.d ?? '')}`}
         </div>${calendar}
       </div>${error}
     </dads-date-picker>`,

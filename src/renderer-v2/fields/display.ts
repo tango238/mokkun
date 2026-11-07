@@ -2,6 +2,7 @@
  * 表示系: badge / chip / status → chip-label、timeline → list、map → image 枠
  */
 
+import type { FieldV2 } from '../../types/schema-v2'
 import { esc, objectItems, str } from '../util'
 import { wrapDisplay, wrapInline, type Ctl } from './control-label'
 
@@ -32,22 +33,44 @@ export function renderChip(c: Ctl): string {
   return c.f.value !== undefined ? wrapDisplay(c, chipLabel(c)) : wrapInline(c, chipLabel(c))
 }
 
-interface TimelineItem {
+export interface TimelineRow {
   time: string
   title: string
   description?: string
 }
 
-/** 日時とタイトルの順序なしリスト（props.items: [{ time, title, description }]） */
-export function renderTimeline(c: Ctl): string {
-  const items = objectItems<TimelineItem>(c.f.props?.items, 'title')
-  const rows = items
+/**
+ * timeline の行。value（{ at, label, text? }[]）を優先し、なければ props.items（{ time, title, description? }[]）
+ */
+export function timelineRows(f: FieldV2): TimelineRow[] {
+  if (Array.isArray(f.value)) {
+    return objectItems<{ at?: unknown; label: string; text?: unknown }>(f.value, 'label').map(e => ({
+      time: e.at === undefined || e.at === null ? '' : str(e.at),
+      title: e.label,
+      description: typeof e.text === 'string' && e.text ? e.text : undefined,
+    }))
+  }
+  return objectItems<TimelineRow>(f.props?.items, 'title').map(it => ({
+    time: typeof it.time === 'string' ? it.time : '',
+    title: it.title,
+    description: it.description,
+  }))
+}
+
+/** 日時・ラベル・本文の順序なしリスト。readonly の値としても使う */
+export function timelineList(f: FieldV2, labelledBy?: string): string {
+  const rows = timelineRows(f)
     .map(
-      it =>
-        `<li><time>${esc(typeof it.time === 'string' ? it.time : '')}</time> <strong>${esc(it.title)}</strong>${it.description ? `<br><span>${esc(it.description)}</span>` : ''}</li>`,
+      r =>
+        `<li class="mk2-timeline__item">${r.time ? `<time class="mk2-timeline__time">${esc(r.time)}</time> ` : ''}<strong class="mk2-timeline__label">${esc(r.title)}</strong>${r.description ? `<br><span class="mk2-timeline__text">${esc(r.description)}</span>` : ''}</li>`,
     )
     .join('\n      ')
-  return wrapDisplay(c, `<ol class="dads-list" data-spacing="8" aria-labelledby="${esc(c.domId)}-label">\n      ${rows}\n    </ol>`)
+  return `<ol class="dads-list" data-spacing="8"${labelledBy ? ` aria-labelledby="${esc(labelledBy)}"` : ''}>\n      ${rows}\n    </ol>`
+}
+
+/** timeline（value の { at, label, text? }[]、または props.items） */
+export function renderTimeline(c: Ctl): string {
+  return wrapDisplay(c, timelineList(c.f, `${c.domId}-label`))
 }
 
 /** 地図は image の枠に「地図」プレースホルダー */

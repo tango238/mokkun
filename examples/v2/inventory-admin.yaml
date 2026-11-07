@@ -1,0 +1,306 @@
+# mokkun v2 フォーマットのサンプル: 小売チェーンの在庫管理（業務システム）
+# docs/format-redesign/04-yaml-authoring-rules.md（第 2 版）に沿った書き方。ロールは 店舗担当者 / 本部管理者 の 2 つ。
+# 使っている新しいキー: Action.role / NavGroup.role / Notice.role・until / list.bulkActions / Section.actions（検索・リセット）/
+#   summary 項目の to / 固定行の表（list.rows + columns[].field）/ list の columns[].type・to と rows /
+#   Field.unit / visibleWhen の notEquals / file の accept・maxSize / timeline の value
+mokkun: 2
+
+app:
+  name: "在庫管理"
+  layout: shell
+  header:
+    systemName: "店舗在庫管理システム"
+    userName: "佐藤 花子"
+    tenantName: "みどりマート"
+  roles: ["店舗担当者", "本部管理者"]
+  navigation:
+    - group: "在庫"
+      items:
+        - view: dashboard
+        - view: stock_list
+    - group: "棚卸し"
+      role: "店舗担当者"
+      items:
+        - view: count_form
+    - group: "本部管理"
+      role: "本部管理者"
+      items:
+        - view: deadline_alert
+  notifications:
+    - variant: info
+      message: "2026年11月10日 22:00 に在庫データの夜間バッチを実行します。実行中は在庫数が更新されません"
+      until: "2026-11-10"
+    - variant: warning
+      message: "2026年11月20日までに全店舗の棚卸しを完了してください"
+      role: "本部管理者"
+      until: "2026-11-20"
+
+views:
+  dashboard:
+    title: "在庫ダッシュボード"
+    goal: "欠品の兆しを把握する"
+    nav: dashboard
+    description: "欠品間近の商品を見つけたら、在庫一覧から発注候補に追加します"
+    sections:
+      - id: kpi
+        title: "今日の状況"
+        kind: summary
+        fields:
+          - { item: lowStockCount, label: "欠品間近の商品数", component: number, value: 12, unit: "件", to: stock_list }
+          - { item: outOfStockCount, label: "欠品中の商品数", component: number, value: 3, unit: "件", to: stock_list }
+          - { item: pendingCounts, label: "未処理の棚卸し", component: number, value: 3, unit: "件", to: count_form }
+      - id: lowStock
+        title: "欠品間近の商品"
+        kind: list
+        list:
+          columns:
+            - { id: productName, label: "商品名", to: product_detail }
+            - { id: storeName, label: "店舗" }
+            - { id: stock, label: "在庫数", type: number, sortable: true }
+            - { id: safetyStock, label: "安全在庫", type: number }
+            - { id: stockStatus, label: "状態", type: status }
+          rows:
+            - { productName: "有機緑茶 100g", storeName: "新宿店", stock: 6, safetyStock: 24, stockStatus: "欠品間近" }
+            - { productName: "ドリップコーヒー 10袋", storeName: "渋谷店", stock: 0, safetyStock: 12, stockStatus: "欠品" }
+            - { productName: "食器用洗剤 500ml", storeName: "横浜店", stock: 8, safetyStock: 20, stockStatus: "欠品間近" }
+            - { productName: "トイレットペーパー 12ロール", storeName: "新宿店", stock: 2, safetyStock: 30, stockStatus: "欠品間近" }
+          paging: { pageSize: 10 }
+          empty: "欠品間近の商品はありません。在庫は適正です"
+
+  stock_list:
+    title: "在庫一覧"
+    goal: "欠品しそうな商品を探して発注候補に加える"
+    nav: stock_list
+    description: "条件で絞り込み、発注したい商品の行を選んで「発注候補に追加する」を押します"
+    secondaryActions:
+      - id: download_csv
+        label: "絞り込み結果を CSV でダウンロードする"
+        kind: custom
+        style: secondary
+        role: "本部管理者"
+    states:
+      success: { message: "選んだ 3 件の商品を発注候補に追加しました" }
+      error: { message: "発注候補に追加する商品が選ばれていません。一覧の左端で商品を選んでください" }
+    sections:
+      - id: filter
+        title: "条件で絞り込む"
+        columns: 3
+        actions:
+          - { id: search, label: "検索する", kind: custom, style: secondary }
+          - { id: reset_filter, label: "条件をリセットする", kind: reset, style: tertiary }
+        fields:
+          - item: keyword
+            label: "キーワード"
+            component: text
+            required: false
+            example: "有機緑茶"
+            help: "商品名か SKU で探せます"
+            width: lg
+          - item: store
+            label: "店舗"
+            component: select
+            required: false
+            width: md
+            default: all
+            options:
+              - { value: all, label: "すべての店舗" }
+              - { value: s1, label: "新宿店" }
+              - { value: s2, label: "渋谷店" }
+              - { value: s3, label: "横浜店" }
+              - { value: s4, label: "大宮店" }
+              - { value: s5, label: "千葉店" }
+              - { value: s6, label: "川崎店" }
+          - item: stockStatus
+            label: "状態"
+            component: radio
+            required: false
+            default: all
+            options:
+              - { value: all, label: "すべて" }
+              - { value: ok, label: "適正" }
+              - { value: low, label: "欠品間近" }
+              - { value: out, label: "欠品" }
+      - id: results
+        title: "在庫"
+        kind: list
+        list:
+          columns:
+            - { id: productName, label: "商品名", sortable: true, to: product_detail }
+            - { id: sku, label: "SKU", sortable: true }
+            - { id: storeName, label: "店舗", sortable: true }
+            - { id: stock, label: "在庫数", type: number, sortable: true }
+            - { id: safetyStock, label: "安全在庫", type: number, sortable: true }
+            - { id: stockStatus, label: "状態", type: status }
+          rows:
+            - { id: TEA-0100, productName: "有機緑茶 100g", sku: "TEA-0100", storeName: "新宿店", stock: 6, safetyStock: 24, stockStatus: "欠品間近" }
+            - { id: COF-0010, productName: "ドリップコーヒー 10袋", sku: "COF-0010", storeName: "渋谷店", stock: 0, safetyStock: 12, stockStatus: "欠品" }
+            - { id: DET-0500, productName: "食器用洗剤 500ml", sku: "DET-0500", storeName: "横浜店", stock: 8, safetyStock: 20, stockStatus: "欠品間近" }
+            - { id: PAP-0012, productName: "トイレットペーパー 12ロール", sku: "PAP-0012", storeName: "新宿店", stock: 64, safetyStock: 30, stockStatus: "適正" }
+            - { id: SOY-0500, productName: "濃口しょうゆ 500ml", sku: "SOY-0500", storeName: "大宮店", stock: 41, safetyStock: 18, stockStatus: "適正" }
+          selection: multiple
+          bulkActions:
+            - { id: add_to_order, label: "発注候補に追加する", kind: custom }
+            - id: mark_checked
+              label: "確認済みにする"
+              kind: custom
+              role: "店舗担当者"
+          paging: { pageSize: 20 }
+          empty: "該当する在庫はありません。条件を変えて検索してください"
+
+  product_detail:
+    title: "商品詳細"
+    goal: "商品の在庫状況と入出庫の経緯を確かめる"
+    nav: stock_list
+    primaryAction:
+      id: to_edit
+      label: "商品を編集する"
+      kind: navigate
+      to: product_edit
+      role: "本部管理者"
+    secondaryActions:
+      - id: discontinue
+        label: "この商品を廃番にする"
+        kind: custom
+        style: danger
+        role: "本部管理者"
+        confirm: { message: "有機緑茶 100g を廃番にします。全店舗で入出庫の登録ができなくなり、元に戻せません。" }
+    states:
+      success: { message: "商品マスタ「有機緑茶 100g」を保存しました" }
+    sections:
+      - id: basic
+        title: "基本情報"
+        kind: readonly
+        fields:
+          - { item: productName, label: "商品名", component: text, value: "有機緑茶 100g" }
+          - { item: sku, label: "SKU", component: text, value: "TEA-0100" }
+          - { item: unitPrice, label: "単価（税込）", component: number, value: 480, unit: "円" }
+          - { item: safetyStock, label: "安全在庫", component: number, value: 24, unit: "個" }
+          - { item: salesStatus, label: "販売状態", component: status, value: "販売中", variant: success }
+      - id: history
+        title: "入出庫の履歴"
+        kind: readonly
+        fields:
+          - item: movements
+            label: "履歴"
+            component: timeline
+            value:
+              - { at: "2026年11月6日", label: "入庫 +48", text: "新宿店" }
+              - { at: "2026年11月5日", label: "出庫 -6", text: "渋谷店" }
+              - { at: "2026年11月3日", label: "入庫 +24", text: "横浜店" }
+
+  product_edit:
+    title: "商品マスタの編集"
+    goal: "商品の情報を正しく保つ"
+    nav: stock_list
+    role: "本部管理者"
+    description: "保存すると全店舗の商品情報に反映されます"
+    primaryAction: { id: save, label: "保存する", kind: navigate, to: product_detail, placement: sticky }
+    secondaryActions:
+      - id: cancel
+        label: "キャンセル"
+        kind: navigate
+        to: product_detail
+        style: tertiary
+        confirm: { message: "編集内容は保存されません。商品詳細に戻りますか？" }
+    states:
+      error: { message: "＊2件の項目を確認してください。商品名、SKU" }
+    sections:
+      - id: basic
+        title: "商品の基本情報を入力する"
+        fields:
+          - { item: productName, label: "商品名（50文字以内）", component: text, required: true, width: lg, rules: [maxLen50] }
+          - { item: sku, label: "SKU", component: text, required: true, whyRequired: "入出庫と棚卸しで商品を一意に特定するため", format: "半角英数字とハイフン（全角でも可）", example: "TEA-0100", width: md }
+          - { item: unitPrice, label: "単価（税込）", component: number, required: true, unit: "円", width: sm, rules: [positive] }
+          - { item: safetyStock, label: "安全在庫", component: number, required: true, unit: "個", width: xs, help: "この数を下回ると欠品間近になります" }
+      - id: image
+        title: "商品画像を登録する"
+        fields:
+          - { item: productImage, label: "商品画像", component: file, required: false, accept: image, maxSize: "5MB" }
+      - id: sales
+        title: "販売状態を設定する"
+        fields:
+          - item: salesStatus
+            label: "販売状態"
+            component: radio
+            required: true
+            default: onSale
+            help: "「販売中」以外を選ぶと理由の入力欄が表示されます"
+            options:
+              - { value: onSale, label: "販売中" }
+              - { value: paused, label: "休止" }
+              - { value: discontinued, label: "廃番" }
+          - item: pausedReason
+            label: "販売状態を変える理由（200文字以内）"
+            component: textarea
+            required: true
+            visibleWhen: { item: salesStatus, notEquals: onSale }
+
+  count_form:
+    title: "棚卸しの実数入力"
+    goal: "商品の実数を数えて入力する"
+    nav: count_form
+    role: "店舗担当者"
+    description: "新宿店の棚卸しです。差異がある商品は理由も選んでください"
+    primaryAction: { id: submit, label: "棚卸しを確定する", kind: submit, placement: sticky }
+    secondaryActions:
+      - { id: save_draft, label: "下書き保存する", kind: custom, style: secondary }
+    states:
+      success: { message: "新宿店の棚卸しを確定しました。差異 2 件を在庫数に反映しました" }
+    sections:
+      - id: items
+        title: "実数を入力する"
+        kind: list
+        list:
+          columns:
+            - { id: sku, label: "SKU" }
+            - { id: productName, label: "商品名" }
+            - { id: bookStock, label: "帳簿の在庫数", type: number }
+            - id: actualStock
+              label: "実数"
+              field: { component: number, unit: "個", width: xs }
+            - id: diffReason
+              label: "差異の理由"
+              field:
+                component: select
+                width: md
+                options:
+                  - { value: none, label: "差異なし" }
+                  - { value: loss, label: "破損・廃棄" }
+                  - { value: missing, label: "入庫の登録漏れ" }
+                  - { value: other, label: "その他" }
+          rows:
+            - { sku: "TEA-0100", productName: "有機緑茶 100g", bookStock: 36, actualStock: 34, diffReason: loss }
+            - { sku: "COF-0010", productName: "ドリップコーヒー 10袋", bookStock: 12, actualStock: 12, diffReason: none }
+            - { sku: "DET-0500", productName: "食器用洗剤 500ml", bookStock: 20, actualStock: 21, diffReason: missing }
+            - { sku: "PAP-0012", productName: "トイレットペーパー 12ロール", bookStock: 64 }
+
+  deadline_alert:
+    title: "棚卸し締切が近い店舗"
+    goal: "締切が近い店舗を見つけて声をかける"
+    nav: deadline_alert
+    role: "本部管理者"
+    description: "棚卸しの締切まで 3 日以内の店舗を表示します"
+    sections:
+      - id: stores
+        title: "締切が近い店舗"
+        kind: list
+        list:
+          columns:
+            - { id: storeName, label: "店舗" }
+            - { id: deadline, label: "締切日", type: date, sortable: true }
+            - { id: remaining, label: "未入力の商品数", type: number }
+            - { id: progress, label: "進み具合", type: status }
+          rows:
+            - { storeName: "渋谷店", deadline: "2026-11-09", remaining: 18, progress: "要対応" }
+            - { storeName: "大宮店", deadline: "2026-11-10", remaining: 5, progress: "処理中" }
+          paging: { pageSize: 20 }
+          empty: "締切が近い店舗はありません"
+
+patterns: {}
+rules:
+  positive:
+    min: 1
+    message: "＊1 以上の数を入力してください"
+  maxLen50:
+    max: 50
+    message: "＊50文字以内で入力してください"

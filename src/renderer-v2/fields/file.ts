@@ -3,15 +3,12 @@
  * DADS の file-upload は JS（カスタム要素）で一覧を更新する。選択ボタンと一覧更新は mount.ts で行う。
  */
 
+import type { FieldV2 } from '../../types/schema-v2'
 import { attrs, esc, propNumber, safeUrl } from '../util'
 import { wrapSingle, type Ctl } from './control-label'
+import { acceptAttr, isMultiple } from './file-support'
 
-function acceptFor(accept: string | undefined): string | undefined {
-  if (!accept) return undefined
-  return accept === 'image' ? 'image/*' : accept
-}
-
-function uploader(c: Ctl, accept: string | undefined, multiple: boolean): string {
+function uploader(c: Ctl, accept: FieldV2['accept'], multiple: boolean): string {
   const inputId = c.domId
   const selectedId = `${c.domId}-selected`
   const labelId = `${c.domId}-label`
@@ -23,7 +20,8 @@ function uploader(c: Ctl, accept: string | undefined, multiple: boolean): string
         type: 'file',
         name: c.name,
         multiple,
-        accept: acceptFor(accept),
+        accept: acceptAttr(accept),
+        'data-max-size': c.f.maxSize,
         'data-js-input': true,
       })}>
       <div class="dads-file-upload__inner">
@@ -52,7 +50,7 @@ function uploader(c: Ctl, accept: string | undefined, multiple: boolean): string
 
 /** file-upload は label が for で input を指す。ボタンのラベル参照用に label へ id を付ける */
 export function renderFile(c: Ctl): string {
-  const html = wrapSingle(c, uploader(c, typeof c.f.accept === 'string' ? c.f.accept : undefined, c.f.multiple === true))
+  const html = wrapSingle(c, uploader(c, c.f.accept, isMultiple(c.f)))
   return html.replace('<label class="dads-form-control-label__label"', `<label id="${esc(c.domId)}-label" class="dads-form-control-label__label"`)
 }
 

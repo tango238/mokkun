@@ -7,6 +7,8 @@
  */
 
 import type { SectionV2 } from '../types/schema-v2'
+import { renderSectionButton, sectionActions } from './actions'
+import { serializeCondition } from './condition'
 import { domId, isInitiallyVisible, type ViewContext } from './context'
 import { accordionChevron, disclosureIcon } from './icons'
 import { renderFieldGrid, renderRepeatable } from './section-fields'
@@ -38,13 +40,20 @@ function renderLead(section: SectionV2, ctx: ViewContext): string {
     .join('\n')
 }
 
+/** Section.actions（見出し行・折りたたみでは中身の先頭に置く操作）。無ければ空文字 */
+function renderSectionActions(section: SectionV2, ctx: ViewContext): string {
+  const buttons = sectionActions(section, ctx).map(a => renderSectionButton(ctx, a, section.id))
+  return buttons.length > 0 ? `<div class="mk2-section__actions">\n${buttons.join('\n')}\n</div>` : ''
+}
+
 /** セクション共通の属性（id / 種別 / 表示条件）。表示条件は既定値で評価した初期状態を hidden で持つ */
 function commonAttrs(section: SectionV2, ctx: ViewContext, extra: Record<string, string | boolean | undefined>): string {
   const cond = section.visibleWhen
   return attrs({
     id: sectionDomId(ctx, section),
+    'data-section-id': section.id,
     'data-kind': section.kind ?? 'form',
-    'data-visible-when': cond ? JSON.stringify({ item: cond.item, equals: cond.equals }) : undefined,
+    'data-visible-when': cond ? serializeCondition(cond) : undefined,
     hidden: !isInitiallyVisible(cond, ctx),
     ...extra,
   })
@@ -58,6 +67,7 @@ function renderAccordionItem(section: SectionV2, ctx: ViewContext): string {
     <h2 id="${esc(titleId)}">${esc(section.title)}</h2>
   </summary>
   <div class="dads-accordion__content">
+${renderSectionActions(section, ctx)}
 ${renderLead(section, ctx)}
 ${renderBody(section, ctx)}
   </div>
@@ -73,6 +83,7 @@ function renderDisclosure(section: SectionV2, ctx: ViewContext): string {
     ${esc(section.title)}
   </summary>
   <div class="dads-disclosure__content">
+${renderSectionActions(section, ctx)}
 ${renderLead(section, ctx)}
 ${renderBody(section, ctx)}
   </div>
@@ -85,7 +96,10 @@ export function renderSection(section: SectionV2, ctx: ViewContext): string {
   if (section.reveal === 'collapsed') return renderDisclosure(section, ctx)
   const titleId = `${sectionDomId(ctx, section)}-title`
   return `<section class="mk2-section"${commonAttrs(section, ctx, { 'aria-labelledby': titleId })}>
+<div class="mk2-section__head">
 <div class="dads-heading" data-size="28"><h2 id="${esc(titleId)}" class="dads-heading__heading">${esc(section.title)}</h2></div>
+${renderSectionActions(section, ctx)}
+</div>
 ${renderLead(section, ctx)}
 ${renderBody(section, ctx)}
 </section>`

@@ -14,17 +14,20 @@ interface BrowserItem {
   children?: BrowserItem[]
 }
 
-function option(o: OptionV2 | BrowserItem, current: string): string {
+export function option(o: OptionV2 | BrowserItem, current: string): string {
   return `<option${attrs({ value: str(o.value), selected: current !== '' && str(o.value) === current })}>${esc(o.label)}</option>`
 }
 
-function selectControl(c: Ctl, body: string): string {
+/** select 1 つ（form-control-label の外側）。一覧セルの入力欄からも使う */
+export function selectControl(c: Ctl, body: string, ariaLabel?: string): string {
   const select = `<select${attrs({
     id: c.domId,
     class: 'dads-select__select',
     name: c.name,
     'data-size': 'md',
-    required: c.f.required === true,
+    autocomplete: c.f.autocomplete,
+    'aria-label': ariaLabel,
+    required: c.required,
     disabled: c.f.readonly === true,
   })}${ariaAttrs(c)}>
           <option value="">選択してください</option>

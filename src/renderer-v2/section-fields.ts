@@ -3,7 +3,7 @@
  */
 
 import type { FieldV2, SectionV2 } from '../types/schema-v2'
-import { expandSectionFields } from '../parser/v2/compile-v2'
+import { expandSectionFields } from '../parser/v2/compile-expand'
 import { domId, isInitiallyVisible, type ViewContext } from './context'
 import { renderFieldV2 } from './fields'
 import { attrs, esc } from './util'
@@ -28,6 +28,8 @@ export function renderFieldGrid(section: SectionV2, ctx: ViewContext, group?: nu
         domId: `${domId(ctx, f.item)}${suffix}`,
         name: `${f.item}${suffix}`,
         hidden: !isInitiallyVisible(f.visibleWhen, ctx),
+        // requiredWhen は既定値で評価した初期状態。mount 後は変更に追随する
+        required: f.requiredWhen ? isInitiallyVisible(f.requiredWhen, ctx) : f.required === true,
       }),
     )
     .join('\n')

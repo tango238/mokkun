@@ -5,9 +5,10 @@
  * - visibleWhen / repeatable / accordion 以外の DADS 部品の最小限の JS
  */
 
-import type { V2Callbacks } from './index'
-import { evaluateVisibility } from './mount-visibility'
+import type { V2ActionPayload, V2Callbacks } from './index'
+import { evaluateConditions } from './mount-visibility'
 import { handleRepeatClick, resetRepeatables, syncAllRepeatables } from './mount-repeat'
+import { resetSection, selectedRowIds } from './mount-section'
 import { closeAllSubmenus, closeDialog, moveTabFocus, openDialog, selectTab, setSubmenu, setSwitch, sortTable, toggleSwitch, updateFileList } from './mount-parts'
 
 function findDialog(root: HTMLElement, id: string | undefined): HTMLDialogElement | undefined {
@@ -29,7 +30,7 @@ function restoreAfterReset(root: HTMLElement): void {
   root.querySelectorAll<HTMLElement>('[data-initial-checked]').forEach(b => setSwitch(b, b.dataset.initialChecked === 'true'))
   root.querySelectorAll<HTMLInputElement>('input[type="file"]').forEach(updateFileList)
   resetRepeatables(root)
-  evaluateVisibility(root)
+  evaluateConditions(root)
 }
 
 /** イベントを結線する。戻り値で解除 */
@@ -48,15 +49,30 @@ export function attachV2Behavior(root: HTMLElement, callbacks: V2Callbacks): () 
     callbacks.onNavigate?.(view)
   }
 
+  /** Section 内の操作は payload を持つ（一括操作は選択行の ID も） */
+  const payloadOf = (button: HTMLElement): V2ActionPayload | undefined => {
+    const section = button.dataset.section
+    if (section === undefined) return undefined
+    return button.hasAttribute('data-bulk') ? { section, selectedRows: selectedRowIds(root, section) } : { section }
+  }
+
   const run = (button: HTMLElement) => {
     const kind = button.dataset.actionKind ?? 'custom'
     const to = button.dataset.navigateTo
     if (kind === 'navigate' && to) return navigate(to)
     if (kind === 'reset') {
-      root.querySelector('form')?.reset()
-      restoreAfterReset(root)
+      // Section の reset はその Section の項目だけ。View の reset はフォーム全体
+      if (button.dataset.section !== undefined) {
+        resetSection(root, button.dataset.section)
+        evaluateConditions(root)
+      } else {
+        root.querySelector('form')?.reset()
+        restoreAfterReset(root)
+      }
     }
-    callbacks.onAction?.(button.dataset.action ?? '', kind)
+    const payload = payloadOf(button)
+    if (payload) callbacks.onAction?.(button.dataset.action ?? '', kind, payload)
+    else callbacks.onAction?.(button.dataset.action ?? '', kind)
   }
 
   root.addEventListener(
@@ -106,7 +122,7 @@ export function attachV2Behavior(root: HTMLElement, callbacks: V2Callbacks): () 
       if (action) return run(action)
 
       if (handleRepeatClick(target)) {
-        evaluateVisibility(root)
+        evaluateConditions(root)
         return
       }
       const sw = target.closest<HTMLElement>('[data-js-toggle]')
@@ -139,12 +155,12 @@ export function attachV2Behavior(root: HTMLElement, callbacks: V2Callbacks): () 
   root.addEventListener(
     'change',
     ev => {
-      evaluateVisibility(root)
+      evaluateConditions(root)
       if (ev.target instanceof HTMLInputElement && ev.target.type === 'file') updateFileList(ev.target)
     },
     { signal },
   )
-  root.addEventListener('input', () => evaluateVisibility(root), { signal })
+  root.addEventListener('input', () => evaluateConditions(root), { signal })
   root.addEventListener('reset', () => setTimeout(() => restoreAfterReset(root), 0), { signal })
   // file-upload: ドラッグ＆ドロップ（preventDefault で既定のファイルオープンを止め、input.files に入れる）
   root.addEventListener(
@@ -180,7 +196,7 @@ export function attachV2Behavior(root: HTMLElement, callbacks: V2Callbacks): () 
     { signal },
   )
 
-  evaluateVisibility(root)
+  evaluateConditions(root)
   syncAllRepeatables(root)
   updateEmptyStates(root)
   return () => ac.abort()

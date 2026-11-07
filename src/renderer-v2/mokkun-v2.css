@@ -433,3 +433,109 @@
 .mk2-accordion-group .dads-accordion__content {
   padding-top: 8px;
 }
+
+/* ---- Section.actions（見出し行の操作）---- */
+.mk2-section__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+}
+
+.mk2-section__actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+}
+
+.mk2-section__actions + .mk2-section__purpose,
+.mk2-section .dads-disclosure__content > .mk2-section__actions,
+.mk2-accordion-group .dads-accordion__content > .mk2-section__actions {
+  margin-top: 8px;
+}
+
+/* ---- list: 検索と一括操作 / 型ごとのセル / 入力欄セル ---- */
+.mk2-list__controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  margin-bottom: 16px;
+}
+
+.mk2-list__controls > .mk2-list__search {
+  margin-bottom: 0;
+  flex: 1 1 auto;
+}
+
+.mk2-list__bulk {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  margin-left: auto;
+}
+
+.mk2-list .dads-table__table :is(td, th).mk2-cell--number {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.mk2-cell-input {
+  min-width: calc(88 / 16 * 1rem);
+}
+
+.mk2-cell-input[data-width="xs"] {
+  width: 6rem;
+}
+
+.mk2-cell-input[data-width="sm"] {
+  width: 10rem;
+}
+
+.mk2-cell-input[data-width="md"] {
+  width: 14rem;
+}
+
+.mk2-cell-input[data-width="lg"],
+.mk2-cell-input[data-width="full"] {
+  width: 100%;
+}
+
+.mk2-cell-input .dads-input-text,
+.mk2-cell-input .dads-select {
+  width: 100%;
+}
+
+/* ---- Field.links（サポートテキストの後ろ）/ timeline ---- */
+.mk2-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 24px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mk2-timeline__time {
+  color: var(--color-neutral-solid-gray-600);
+}
+
+/* ---- 状態: 読み込み中 ---- */
+.mk2-loading {
+  padding-block: 64px;
+}
+
+/* 数値列の見出し（並べ替えボタン付き）も値に合わせて右寄せ */
+.mk2-list .dads-table__sort-header.mk2-cell--number .dads-table__sort-inner {
+  justify-content: flex-end;
+}
+
+/* 行選択のチェックボックス / ラジオを行の中央に合わせる */
+.mk2-list td > :is(.dads-checkbox, .dads-radio) {
+  display: inline-flex;
+  vertical-align: middle;
+}
