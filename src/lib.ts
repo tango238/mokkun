@@ -7,7 +7,7 @@
 import './style.css'
 
 // Import core modules
-import { parseYaml, getScreen, getScreenNames, findFieldById } from './parser'
+import { parseYaml, parseYamlV2, isV2Yaml, parseV2Document, isV2Document, getScreen, getScreenNames, findFieldById } from './parser'
 import {
   renderScreen,
   mountAppChrome,
@@ -24,7 +24,10 @@ import {
   getAvailableThemes,
   getCurrentTheme,
 } from './theme'
+import { mountViewV2, renderViewV2, holdV2Styles, availableStates, parseViewState, resolveRole, resolveViewState, V2_STATE_LABELS, type V2Controller, type V2Callbacks, type V2ViewState } from './renderer-v2'
+import { compileV2Warnings } from './parser/v2/compile-warnings'
 import type { MokkunSchema, ScreenDefinition, BuiltInThemeId } from './types'
+import type { MokkunV2Schema } from './types/schema-v2'
 
 // ============================================================================
 // Types
@@ -42,8 +45,14 @@ export interface MokkunInitOptions {
   yamlContent?: string
   /** Initial theme ('light' | 'dark') */
   theme?: BuiltInThemeId | string
+  /** v2 文書で、画面遷移時に location.hash も書き換える（既定 false） */
+  syncHash?: boolean
   /** Initial screen to display */
   initialScreen?: string
+  /** v2 文書: 現在のロール（app.roles の値）。ロール外の操作・ナビ・通知を出さない。未指定は全ロール分を表示 */
+  role?: string
+  /** v2 文書: 最初の画面の状態（normal / success / error / empty / loading）。既定 normal（状態バナーなし） */
+  initialState?: V2ViewState
   /** Callback when ready */
   onReady?: (instance: MokkunInstance) => void
   /** Callback on error */
@@ -58,12 +67,24 @@ export interface MokkunInitOptions {
  * Mokkun instance returned by init()
  */
 export interface MokkunInstance {
-  /** Current schema */
+  /** Current schema（v2 文書のときは null。schemaV2 を使う） */
   readonly schema: MokkunSchema | null
+  /** Current v2 schema（v1 文書のときは null） */
+  readonly schemaV2: MokkunV2Schema | null
   /** Current screen name */
   readonly currentScreen: string | null
   /** Navigate to a screen */
   showScreen: (screenName: string) => void
+  /** v2 文書: 現在のロール。変更すると現在の画面を描き直す（undefined は全ロール） */
+  setRole: (role: string | undefined) => void
+  /** v2 文書: 現在の画面の状態。変更すると描き直す */
+  setState: (viewState: V2ViewState) => void
+  /** v2 文書: 現在の画面で選べる状態（normal は常に。success / error / empty / loading は対応する states.* があるとき） */
+  getAvailableStates: () => V2ViewState[]
+  /** v2 文書: 現在のロール */
+  readonly role: string | undefined
+  /** v2 文書: 現在の画面の状態 */
+  readonly viewState: V2ViewState
   /** Get available screen names */
   getScreenNames: () => string[]
   /** Change theme */
@@ -83,7 +104,15 @@ export interface MokkunInstance {
 interface InternalState {
   container: HTMLElement
   schema: MokkunSchema | null
+  /** v2 文書（mokkun: 2）のとき。v2 専用レンダラーで直接描画する */
+  schemaV2: MokkunV2Schema | null
+  v2Controller: V2Controller | null
   currentScreenName: string | null
+  /** v2: 現在のロールと画面の状態 */
+  role: string | undefined
+  viewState: V2ViewState
+  /** v2: 次の showScreen で使う状態（init の initialState。使ったら消える）。通常は画面を移るたびに通常へ戻る */
+  nextState: V2ViewState | undefined
   appChrome: AppChromeController | null
   tabsCleanup?: (() => void) | null
   wizardController: WizardController | null
@@ -99,7 +128,36 @@ interface InternalState {
  * Create a Mokkun instance with given state
  */
 function createInstance(state: InternalState): MokkunInstance {
+  /** v2 文書: 専用レンダラーで描画（v1 のコントローラーは使わない） */
+  const renderCurrentV2 = (schemaV2: MokkunV2Schema, name: string): void => {
+    // 古い view を外す間も <style> を保持し、遷移のたびに外れて付け直されないようにする
+    const release = holdV2Styles()
+    state.v2Controller?.destroy()
+    const callbacks: V2Callbacks = {
+      syncHash: state.options.syncHash === true,
+      onNavigate: to => {
+        const fromScreen = state.currentScreenName
+        instance.showScreen(to)
+        if (fromScreen) state.options.onNavigate?.(fromScreen, to)
+      },
+      onAction: (_actionId, kind) => {
+        if (kind !== 'submit') return
+        const formData = instance.getFormData()
+        if (formData) state.options.onSubmit?.(name, formData)
+      },
+    }
+    try {
+      state.v2Controller = mountViewV2(state.container, schemaV2, name, callbacks, { state: state.viewState, role: state.role })
+    } finally {
+      release()
+    }
+  }
+
   const renderCurrentScreen = (): void => {
+    if (state.schemaV2 && state.currentScreenName) {
+      renderCurrentV2(state.schemaV2, state.currentScreenName)
+      return
+    }
     if (!state.schema || !state.currentScreenName) return
 
     const screen = getScreen(state.schema, state.currentScreenName)
@@ -162,11 +220,26 @@ function createInstance(state: InternalState): MokkunInstance {
     get schema() {
       return state.schema
     },
+    get schemaV2() {
+      return state.schemaV2
+    },
     get currentScreen() {
       return state.currentScreenName
     },
 
     showScreen(screenName: string) {
+      if (state.schemaV2) {
+        if (!Object.hasOwn(state.schemaV2.views, screenName)) {
+          console.warn(`[Mokkun] Screen not found: ${screenName}`)
+          return
+        }
+        state.currentScreenName = screenName
+        // 状態は画面ごと。画面を移ったら通常に戻す（init の initialState だけ最初の画面に使う。選べない状態は通常）
+        state.viewState = resolveViewState(state.schemaV2, screenName, state.nextState ?? 'normal')
+        state.nextState = undefined
+        renderCurrentScreen()
+        return
+      }
       if (!state.schema) return
       const screen = getScreen(state.schema, screenName)
       if (!screen) {
@@ -177,7 +250,32 @@ function createInstance(state: InternalState): MokkunInstance {
       renderCurrentScreen()
     },
 
+    setRole(role) {
+      // app.roles にないロールは未選択（すべて）
+      state.role = state.schemaV2 ? resolveRole(state.schemaV2, role) : undefined
+      if (state.schemaV2 && state.currentScreenName) renderCurrentScreen()
+    },
+
+    setState(viewState) {
+      // 不正な値や、いまの画面で選べない状態は通常
+      state.viewState = state.schemaV2 && state.currentScreenName ? resolveViewState(state.schemaV2, state.currentScreenName, viewState) : 'normal'
+      if (state.schemaV2 && state.currentScreenName) renderCurrentScreen()
+    },
+
+    getAvailableStates() {
+      return state.schemaV2 && state.currentScreenName ? availableStates(state.schemaV2, state.currentScreenName) : ['normal']
+    },
+
+    get role() {
+      return state.role
+    },
+
+    get viewState() {
+      return state.viewState
+    },
+
     getScreenNames() {
+      if (state.schemaV2) return Object.keys(state.schemaV2.views)
       return state.schema ? getScreenNames(state.schema) : []
     },
 
@@ -209,6 +307,9 @@ function createInstance(state: InternalState): MokkunInstance {
     },
 
     destroy() {
+      state.v2Controller?.destroy()
+      state.v2Controller = null
+      state.schemaV2 = null
       state.appChrome?.destroy()
       state.appChrome = null
       state.tabsCleanup?.()
@@ -231,6 +332,17 @@ function createInstance(state: InternalState): MokkunInstance {
 // ============================================================================
 // Public API
 // ============================================================================
+
+/**
+ * v2 の YAML を検証して state に載せる（旧フォーマットへ変換しない）
+ */
+function loadV2(state: InternalState, yamlText: string): void {
+  const result = parseYamlV2(yamlText)
+  if (!result.success) {
+    throw new Error(`[Mokkun] YAML parse error: ${result.errors.map((e) => e.message).join(', ')}`)
+  }
+  state.schemaV2 = result.data
+}
 
 /**
  * Initialize Mokkun with the given options
@@ -258,7 +370,12 @@ async function init(options: MokkunInitOptions): Promise<MokkunInstance> {
   const state: InternalState = {
     container,
     schema: null,
+    schemaV2: null,
+    v2Controller: null,
     currentScreenName: null,
+    role: undefined,
+    viewState: 'normal',
+    nextState: undefined,
     appChrome: null,
     wizardController: null,
     actionHandler: null,
@@ -268,19 +385,27 @@ async function init(options: MokkunInitOptions): Promise<MokkunInstance> {
   try {
     // Load YAML
     if (options.yamlContent) {
-      const result = parseYaml(options.yamlContent)
-      if (!result.success) {
-        throw new Error(
-          `[Mokkun] YAML parse error: ${result.errors.map((e) => e.message).join(', ')}`
-        )
+      if (isV2Yaml(options.yamlContent)) {
+        loadV2(state, options.yamlContent)
+      } else {
+        const result = parseYaml(options.yamlContent)
+        if (!result.success) {
+          throw new Error(
+            `[Mokkun] YAML parse error: ${result.errors.map((e) => e.message).join(', ')}`
+          )
+        }
+        state.schema = result.data
       }
-      state.schema = result.data
     } else if (options.yamlUrl) {
       const result = await loadFromUrl(options.yamlUrl)
       if (!result.success) {
         throw new Error(`[Mokkun] Failed to load YAML: ${result.error.message}`)
       }
-      state.schema = result.schema
+      if (result.schemaV2) {
+        state.schemaV2 = result.schemaV2
+      } else {
+        state.schema = result.schema
+      }
     } else {
       throw new Error('[Mokkun] Either yamlUrl or yamlContent must be provided')
     }
@@ -295,9 +420,14 @@ async function init(options: MokkunInitOptions): Promise<MokkunInstance> {
         ? options.initialScreen
         : screenNames[0]
 
+    // role / initialState も画面のロール・状態と同じ解決を通す（不正な値は未選択・通常）
+    state.role = state.schemaV2 ? resolveRole(state.schemaV2, options.role) : undefined
+    state.nextState = parseViewState(options.initialState)
+
     if (initialScreen) {
       instance.showScreen(initialScreen)
     }
+    state.nextState = undefined
 
     // Call ready callback
     options.onReady?.(instance)
@@ -329,6 +459,10 @@ export const Mokkun = {
   /** Utility functions */
   utils: {
     parseYaml,
+    parseYamlV2,
+    compileV2Warnings,
+    /** v2 の状態の表示名（ビューアーのセレクトに使う） */
+    V2_STATE_LABELS,
     getScreen,
     getScreenNames,
     findFieldById,
@@ -346,7 +480,13 @@ if (typeof window !== 'undefined') {
   ;(window as unknown as { Mokkun: typeof Mokkun }).Mokkun = Mokkun
 }
 
-export type { MokkunSchema, ScreenDefinition, BuiltInThemeId }
+export type { MokkunSchema, ScreenDefinition, BuiltInThemeId, MokkunV2Schema }
+
+// v2 レンダラー（DADS 準拠）
+export { renderViewV2, mountViewV2, parseYamlV2, parseV2Document, isV2Document, compileV2Warnings }
+export type { V2Controller, V2Callbacks, V2ViewState }
+export type { V2RenderOptions, V2ActionPayload } from './renderer-v2'
+export type { V2CompileWarning } from './parser/v2/compile-warnings'
 
 // Export components
 export {

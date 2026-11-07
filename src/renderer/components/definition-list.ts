@@ -484,6 +484,18 @@ export class DefinitionList {
 
   static renderField(field: InputField): string {
     const label = escapeHtml(field.label)
+    const items = (field as InputField & { items?: Array<{ term: string; description: unknown }> }).items
+    if (Array.isArray(items) && items.length > 0) {
+      // items 指定あり: 定義どおりの項目を描画する（配列は「、」区切り、null は空）
+      const toText = (v: unknown): string =>
+        v === null || v === undefined ? '' : Array.isArray(v) ? v.map(toText).join('、') : String(v)
+      const itemsHtml = items.map(item => `
+        <div class="definition-item">
+          <dt class="definition-term">${escapeHtml(toText(item.term))}</dt>
+          <dd class="definition-description">${escapeHtml(toText(item.description))}</dd>
+        </div>`).join('')
+      return createFieldWrapper(field, `<dl class="mokkun-definition-list" aria-label="${label}">${itemsHtml}</dl>`)
+    }
     const definitionHtml = `
       <dl class="mokkun-definition-list" aria-label="${label}">
         <div class="definition-item">

@@ -1,0 +1,506 @@
+# 小売チェーン 在庫管理
+mokkun: 2
+
+app:
+  name: "在庫管理"
+  layout: shell
+  header:
+    systemName: "店舗在庫管理システム"
+    userName: "佐藤 花子"
+    tenantName: "みどりマート"
+  roles: ["店舗担当者", "本部管理者"]
+  navigation:
+    - group: "在庫"
+      items:
+        - view: dashboard
+        - view: stock_list
+        - view: movement_form
+        - view: count_page1
+    - group: "本部管理"
+      items:
+        - view: deadline_alert
+        - view: product_edit
+        - view: staff_list
+  notifications:
+    - variant: info
+      message: "本日 22:00 に在庫データの夜間バッチを実行します。実行中は在庫数が更新されません"
+
+flows:
+  movement_entry:
+    name: "入出庫登録"
+    role: "店舗担当者"
+    outcome: "入庫・出庫が記録され、店舗の在庫数が実態と一致する"
+    resumable: true
+    steps:
+      - view: movement_form
+        label: "入出庫の入力"
+      - view: movement_confirm
+        label: "内容の確認"
+      - view: movement_done
+        label: "登録完了"
+  stocktake:
+    name: "棚卸し"
+    role: "店舗担当者"
+    outcome: "実数が記録され、差異の理由が残り、在庫数が実態と一致する"
+    resumable: true
+    steps:
+      - view: count_page1
+        label: "実数の入力（1ページ目）"
+      - view: count_page2
+        label: "実数の入力（2ページ目）"
+      - view: count_confirm
+        label: "差異の確認"
+      - view: count_done
+        label: "棚卸し完了"
+
+views:
+  dashboard:
+    title: "在庫ダッシュボード"
+    goal: "欠品の兆しと今日の入出庫を把握する"
+    nav: dashboard
+    description: "欠品間近の商品を見つけたら、在庫一覧から発注候補に追加します"
+    primaryAction:
+      id: to_stock_list
+      label: "在庫一覧を開く"
+      kind: navigate
+      to: stock_list
+    secondaryActions:
+      - { id: to_movement, label: "入出庫を登録する", kind: navigate, to: movement_form, style: secondary }
+    states:
+      empty: { message: "本日の入出庫はまだありません" }
+    sections:
+      - id: kpi
+        title: "今日の状況を確認する"
+        kind: summary
+        fields:
+          - { item: lowStockCount, label: "欠品間近の商品数（件）", component: number, value: 12 }
+          - { item: todayMovements, label: "本日の入出庫件数（件）", component: number, value: 48 }
+          - { item: pendingCounts, label: "未処理の棚卸し件数（件）", component: number, value: 3 }
+      - id: recent
+        title: "直近の入出庫を確認する"
+        kind: list
+        list:
+          columns:
+            - { id: movedAt, label: "日時", sortable: true }
+            - { id: storeName, label: "店舗" }
+            - { id: productName, label: "商品名" }
+            - { id: direction, label: "入庫・出庫" }
+            - { id: quantity, label: "数量" }
+          rowActions:
+            - { id: open, label: "商品詳細を開く", kind: navigate, to: product_detail }
+          paging: { pageSize: 10 }
+          empty: "直近の入出庫はありません"
+
+  deadline_alert:
+    title: "棚卸し締切が近い店舗"
+    goal: "締切が近い店舗を見つけて声をかける"
+    nav: deadline_alert
+    role: "本部管理者"
+    description: "棚卸し締切が近い店舗があります。未完了の店舗に連絡してください"
+    sections:
+      - id: stores
+        title: "締切が近い店舗を確認する"
+        kind: list
+        list:
+          columns:
+            - { id: storeName, label: "店舗" }
+            - { id: deadline, label: "締切日", sortable: true }
+            - { id: remaining, label: "未入力の商品数" }
+          paging: { pageSize: 20 }
+          empty: "締切が近い店舗はありません"
+
+  stock_list:
+    title: "在庫一覧"
+    goal: "欠品しそうな商品を探して発注候補に加える"
+    nav: stock_list
+    description: "条件で絞り込み、発注したい商品を選んで発注候補に追加します"
+    primaryAction:
+      id: add_to_order
+      label: "発注候補に追加する"
+      kind: custom
+      placement: header
+    secondaryActions:
+      - { id: download_csv, label: "CSV をダウンロードする", kind: custom, style: secondary }
+      - { id: to_movement, label: "入出庫を登録する", kind: navigate, to: movement_form, style: secondary }
+    states:
+      empty: { message: "該当する在庫はありません" }
+      error: { message: "発注候補に追加する商品が選ばれていません。一覧の左端で商品を選んでください" }
+      success: { message: "選んだ商品を発注候補に追加しました" }
+    sections:
+      - id: filter
+        title: "条件で絞り込む"
+        columns: 3
+        fields:
+          - item: keyword
+            label: "キーワード"
+            component: text
+            example: "商品名、SKU"
+            width: lg
+          - item: store
+            label: "店舗"
+            component: select
+            width: md
+            options:
+              - { value: all, label: "すべての店舗" }
+              - { value: s1, label: "新宿店" }
+              - { value: s2, label: "渋谷店" }
+              - { value: s3, label: "横浜店" }
+              - { value: s4, label: "大宮店" }
+              - { value: s5, label: "千葉店" }
+          - item: stockStatus
+            label: "状態"
+            component: radio
+            default: all
+            options:
+              - { value: all, label: "すべて" }
+              - { value: ok, label: "適正" }
+              - { value: low, label: "欠品間近" }
+              - { value: out, label: "欠品" }
+      - id: results
+        title: "在庫を選ぶ"
+        kind: list
+        list:
+          columns:
+            - { id: productName, label: "商品名", sortable: true }
+            - { id: sku, label: "SKU", sortable: true }
+            - { id: storeName, label: "店舗", sortable: true }
+            - { id: stock, label: "在庫数", sortable: true }
+            - { id: safetyStock, label: "安全在庫", sortable: true }
+            - { id: stockStatus, label: "状態" }
+          rowActions:
+            - { id: open, label: "商品詳細を開く", kind: navigate, to: product_detail }
+          search: false
+          paging: { pageSize: 20 }
+          selection: multiple
+          empty: "該当する在庫はありません"
+
+  product_detail:
+    title: "商品詳細"
+    goal: "商品の在庫状況と入出庫の経緯を確かめる"
+    nav: stock_list
+    layout: tabs
+    primaryAction:
+      id: to_edit
+      label: "商品を編集する"
+      kind: navigate
+      to: product_edit
+    secondaryActions:
+      - { id: back_list, label: "在庫一覧に戻る", kind: navigate, to: stock_list, style: tertiary }
+      - id: discontinue
+        label: "廃番にする"
+        kind: custom
+        style: danger
+        confirm: { message: "この商品を廃番にします。全店舗で入出庫の登録ができなくなります。実行しますか？", danger: true }
+    sections:
+      - id: basic
+        title: "基本情報を確認する"
+        kind: readonly
+        fields:
+          - { item: productName, label: "商品名", component: text, value: "有機緑茶 100g" }
+          - { item: sku, label: "SKU", component: text, value: "TEA-0100" }
+          - { item: category, label: "カテゴリ", component: text, value: "飲料 > お茶" }
+          - { item: unitPrice, label: "単価（円）", component: number, value: 480 }
+          - { item: safetyStock, label: "安全在庫", component: number, value: 24 }
+          - { item: salesStatus, label: "販売状態", component: status, value: "販売中", variant: primary }
+      - id: store_stock
+        title: "店舗別の在庫を確認する"
+        kind: list
+        list:
+          columns:
+            - { id: storeName, label: "店舗", sortable: true }
+            - { id: stock, label: "在庫数", sortable: true }
+            - { id: stockStatus, label: "状態" }
+          paging: { pageSize: 10 }
+          empty: "この商品を扱う店舗はありません"
+      - id: history
+        title: "入出庫の履歴を確認する"
+        kind: readonly
+        fields:
+          - { item: movementTimeline, label: "入出庫履歴", component: timeline, value: "11/06 入庫 +48 新宿店 / 11/05 出庫 -6 渋谷店 / 11/03 入庫 +24 横浜店" }
+
+  product_edit:
+    title: "商品マスタの編集"
+    goal: "商品の情報を正しく保つ"
+    nav: product_edit
+    role: "本部管理者"
+    description: "保存すると全店舗の商品情報に反映されます"
+    primaryAction: { id: save, label: "保存する", kind: submit, placement: sticky }
+    secondaryActions:
+      - { id: cancel, label: "キャンセル", kind: navigate, to: product_detail, style: tertiary, confirm: { message: "編集内容は保存されません。商品詳細に戻りますか？" } }
+    states:
+      error: { message: "保存できませんでした。赤字の項目を確認してください" }
+      success: { message: "商品マスタを保存しました" }
+    sections:
+      - id: basic
+        title: "商品の基本情報を入力する"
+        fields:
+          - { item: productName, label: "商品名（50文字以内）", component: text, required: true, width: lg }
+          - { item: sku, label: "SKU", component: text, required: true, format: "半角英数字とハイフン", example: "TEA-0100", width: md, whyRequired: "入出庫と棚卸しで商品を一意に特定するため" }
+          - item: category
+            label: "カテゴリ"
+            component: combobox
+            required: true
+            width: lg
+            help: "文字を入力して絞り込めます。約200件の階層カテゴリから選びます"
+            options:
+              - { value: c1, label: "飲料 > お茶" }
+              - { value: c2, label: "飲料 > コーヒー" }
+              - { value: c3, label: "食品 > 乾物" }
+              - { value: c4, label: "食品 > 調味料" }
+              - { value: c5, label: "日用品 > 洗剤" }
+              - { value: c6, label: "日用品 > 紙製品" }
+          - { item: unitPrice, label: "単価（円）", component: number, required: true, width: sm }
+          - { item: safetyStock, label: "安全在庫", component: number, required: true, width: xs, help: "この数を下回ると欠品間近になります" }
+      - id: image
+        title: "商品画像を登録する"
+        fields:
+          - { item: productImage, label: "商品画像", component: file, accept: image, required: false, help: "5MB 以下の画像を登録できます" }
+      - id: sales
+        title: "販売状態を設定する"
+        fields:
+          - { item: onSale, label: "この商品を販売する", component: checkbox, default: true, help: "オフにして保存すると、全店舗で入出庫の対象外になります" }
+
+  movement_form:
+    title: "入出庫の登録"
+    goal: "入庫・出庫を記録する"
+    nav: movement_form
+    role: "店舗担当者"
+    description: "店舗を選び、動いた商品を明細に追加します"
+    primaryAction: { id: to_confirm, label: "確認へ進む", kind: navigate, to: movement_confirm, placement: sticky }
+    secondaryActions:
+      - { id: save_draft, label: "下書き保存", kind: custom, style: secondary }
+      - { id: cancel, label: "やめる", kind: navigate, to: stock_list, style: tertiary, confirm: { message: "入力内容は保存されません。在庫一覧に戻りますか？" } }
+    states:
+      error: { message: "入力内容に誤りがあります。赤字の項目を確認してください" }
+    sections:
+      - id: store
+        title: "店舗を指定する"
+        fields:
+          - item: store
+            label: "店舗"
+            component: select
+            required: true
+            width: md
+            options:
+              - { value: s1, label: "新宿店" }
+              - { value: s2, label: "渋谷店" }
+              - { value: s3, label: "横浜店" }
+              - { value: s4, label: "大宮店" }
+              - { value: s5, label: "千葉店" }
+              - { value: s6, label: "川崎店" }
+      - id: lines
+        title: "入出庫の明細を追加する"
+        repeatable: { min: 1, max: 50, addLabel: "明細を追加" }
+        columns: 3
+        fields:
+          - item: product
+            label: "商品"
+            component: combobox
+            required: true
+            width: lg
+            help: "商品名か SKU を入力して絞り込めます"
+            options:
+              - { value: p1, label: "有機緑茶 100g (TEA-0100)" }
+              - { value: p2, label: "ドリップコーヒー 10袋 (COF-0010)" }
+              - { value: p3, label: "食器用洗剤 500ml (DET-0500)" }
+          - item: direction
+            label: "入庫・出庫"
+            component: radio
+            required: true
+            options:
+              - { value: in, label: "入庫" }
+              - { value: out, label: "出庫" }
+          - { item: quantity, label: "数量", component: number, required: true, width: xs, rules: [positiveQty] }
+          - item: reason
+            label: "理由"
+            component: radio
+            required: true
+            options:
+              - { value: purchase, label: "仕入" }
+              - { value: sale, label: "販売" }
+              - { value: transfer, label: "店舗間移動" }
+              - { value: loss, label: "破損・廃棄" }
+              - { value: other, label: "その他" }
+      - id: memo
+        title: "備考を伝える"
+        reveal: collapsed
+        fields:
+          - { item: note, label: "備考（200文字以内）", component: textarea, required: false }
+
+  movement_confirm:
+    title: "入出庫内容の確認"
+    goal: "入力内容を確かめて登録する"
+    nav: movement_form
+    primaryAction: { id: submit, label: "登録する", kind: submit, placement: sticky }
+    secondaryActions:
+      - { id: back, label: "入力に戻る", kind: navigate, to: movement_form, style: secondary }
+    sections:
+      - id: summary
+        title: "入出庫内容を確認する"
+        kind: readonly
+        fields:
+          - { item: store, label: "店舗", component: text, value: "新宿店" }
+          - { item: line1, label: "明細1", component: text, value: "有機緑茶 100g / 入庫 / 48 / 仕入" }
+          - { item: line2, label: "明細2", component: text, value: "食器用洗剤 500ml / 出庫 / 3 / 破損・廃棄" }
+
+  movement_done:
+    title: "入出庫を登録しました"
+    goal: "次にやることを選ぶ"
+    nav: movement_form
+    states:
+      success: { message: "新宿店の入出庫 2 件を登録しました。在庫数に反映されています" }
+    primaryAction: { id: to_stock_list, label: "在庫一覧へ", kind: navigate, to: stock_list }
+    secondaryActions:
+      - { id: another, label: "続けて登録する", kind: navigate, to: movement_form, style: secondary }
+    sections:
+      - id: result
+        title: "登録した内容"
+        kind: readonly
+        fields:
+          - { item: store, label: "店舗", component: text, value: "新宿店" }
+          - { item: count, label: "登録件数", component: number, value: 2 }
+
+  count_page1:
+    title: "棚卸し（1ページ目）"
+    goal: "商品の実数を数えて入力する"
+    nav: count_page1
+    role: "店舗担当者"
+    description: "新宿店の棚卸しです。差異がある商品は理由も記入してください"
+    primaryAction: { id: next, label: "次のページへ進む", kind: navigate, to: count_page2, placement: sticky }
+    secondaryActions:
+      - { id: save_draft, label: "下書き保存", kind: custom, style: secondary }
+      - { id: cancel, label: "やめる", kind: navigate, to: dashboard, style: tertiary, confirm: { message: "入力内容は保存されません。ダッシュボードに戻りますか？" } }
+    sections:
+      - id: items
+        title: "実数を入力する"
+        note: "帳簿上の在庫数は各項目の補足に表示しています（全 2 ページ中 1 ページ目）"
+        fields:
+          - { item: actualTea, label: "有機緑茶 100g の実数", component: number, required: true, width: xs, help: "帳簿上の在庫数は 36 です" }
+          - { item: diffTea, label: "帳簿と実数に差異がある", component: checkbox, help: "差異があるときに選ぶと、理由の欄が出ます" }
+          - { item: reasonTea, label: "有機緑茶 100g の差異の理由", component: textarea, required: true, help: "200文字以内", visibleWhen: { item: diffTea, equals: true } }
+          - { item: actualCoffee, label: "ドリップコーヒー 10袋の実数", component: number, required: true, width: xs, help: "帳簿上の在庫数は 12 です" }
+          - { item: diffCoffee, label: "帳簿と実数に差異がある", component: checkbox }
+          - { item: reasonCoffee, label: "ドリップコーヒー 10袋の差異の理由", component: textarea, required: true, help: "200文字以内", visibleWhen: { item: diffCoffee, equals: true } }
+
+  count_page2:
+    title: "棚卸し（2ページ目）"
+    goal: "商品の実数を数えて入力する"
+    nav: count_page1
+    primaryAction: { id: to_confirm, label: "差異の確認へ進む", kind: navigate, to: count_confirm, placement: sticky }
+    secondaryActions:
+      - { id: back, label: "前のページに戻る", kind: navigate, to: count_page1, style: secondary }
+      - { id: save_draft, label: "下書き保存", kind: custom, style: secondary }
+    sections:
+      - id: items
+        title: "実数を入力する"
+        note: "全 2 ページ中 2 ページ目です"
+        fields:
+          - { item: actualDetergent, label: "食器用洗剤 500ml の実数", component: number, required: true, width: xs, help: "帳簿上の在庫数は 20 です" }
+          - { item: diffDetergent, label: "帳簿と実数に差異がある", component: checkbox }
+          - { item: reasonDetergent, label: "食器用洗剤 500ml の差異の理由", component: textarea, required: true, help: "200文字以内", visibleWhen: { item: diffDetergent, equals: true } }
+
+  count_confirm:
+    title: "棚卸しの差異の確認"
+    goal: "差異と理由を確かめて確定する"
+    nav: count_page1
+    primaryAction: { id: submit, label: "棚卸しを確定する", kind: submit, placement: sticky }
+    secondaryActions:
+      - { id: back, label: "入力に戻る", kind: navigate, to: count_page1, style: secondary }
+    sections:
+      - id: diffs
+        title: "差異のある商品を確認する"
+        kind: readonly
+        fields:
+          - { item: diffTea, label: "有機緑茶 100g", component: text, value: "帳簿 36 / 実数 34 / 理由: 破損" }
+          - { item: diffDetergent, label: "食器用洗剤 500ml", component: text, value: "帳簿 20 / 実数 21 / 理由: 入庫の登録漏れ" }
+
+  count_done:
+    title: "棚卸しを完了しました"
+    goal: "次にやることを選ぶ"
+    nav: count_page1
+    states:
+      success: { message: "新宿店の棚卸しを確定しました。差異 2 件を在庫数に反映しました" }
+    primaryAction: { id: to_dashboard, label: "ダッシュボードへ", kind: navigate, to: dashboard }
+    sections:
+      - id: result
+        title: "確定した内容"
+        kind: readonly
+        fields:
+          - { item: diffCount, label: "差異のあった商品数", component: number, value: 2 }
+
+  staff_list:
+    title: "担当者管理"
+    goal: "担当者の状況を把握して招待・変更する"
+    nav: staff_list
+    role: "本部管理者"
+    primaryAction: { id: invite, label: "担当者を招待する", kind: navigate, to: staff_invite, placement: header }
+    states:
+      empty: { message: "担当者がいません" }
+    sections:
+      - id: results
+        title: "担当者を選ぶ"
+        kind: list
+        list:
+          columns:
+            - { id: staffName, label: "氏名", sortable: true }
+            - { id: email, label: "メールアドレス" }
+            - { id: roleName, label: "ロール", sortable: true }
+            - { id: storeName, label: "所属店舗" }
+            - { id: active, label: "状態" }
+          rowActions:
+            - { id: change_role, label: "ロールを変更する", kind: navigate, to: staff_role }
+          search: true
+          paging: { pageSize: 20 }
+          empty: "該当する担当者はいません"
+
+  staff_invite:
+    title: "担当者の招待"
+    goal: "新しい担当者にアカウントを案内する"
+    nav: staff_list
+    role: "本部管理者"
+    primaryAction: { id: send, label: "招待を送る", kind: submit }
+    secondaryActions:
+      - { id: cancel, label: "キャンセル", kind: navigate, to: staff_list, style: tertiary }
+    states:
+      success: { message: "招待メールを送信しました" }
+      error: { message: "招待を送れませんでした。メールアドレスの形式を確認してください" }
+    sections:
+      - id: invitee
+        title: "招待する人を指定する"
+        fields:
+          - { item: email, label: "メールアドレス", component: text, required: true, width: lg, format: "全角でも可", example: "hanako@example.com" }
+          - { item: roleName, label: "ロール", component: radio, required: true, options: [{ value: store, label: "店舗担当者" }, { value: hq, label: "本部管理者" }] }
+          - { item: storeName, label: "所属店舗", component: select, width: md, visibleWhen: { item: roleName, equals: store }, options: [{ value: s1, label: "新宿店" }, { value: s2, label: "渋谷店" }] }
+
+  staff_role:
+    title: "担当者のロール変更"
+    goal: "担当者の権限を正しく保つ"
+    nav: staff_list
+    role: "本部管理者"
+    primaryAction: { id: save, label: "ロールを変更する", kind: submit }
+    secondaryActions:
+      - { id: cancel, label: "キャンセル", kind: navigate, to: staff_list, style: tertiary }
+      - id: deactivate
+        label: "この担当者を無効化する"
+        kind: custom
+        style: danger
+        confirm: { message: "この担当者はログインできなくなります。実行しますか？", danger: true }
+    states:
+      success: { message: "ロールを変更しました" }
+    sections:
+      - id: who
+        title: "対象の担当者を確認する"
+        kind: readonly
+        fields:
+          - { item: staffName, label: "氏名", component: text, value: "鈴木 一郎" }
+          - { item: email, label: "メールアドレス", component: text, value: "suzuki@example.com" }
+      - id: role
+        title: "ロールを選ぶ"
+        fields:
+          - { item: roleName, label: "ロール", component: radio, required: true, default: store, options: [{ value: store, label: "店舗担当者" }, { value: hq, label: "本部管理者" }] }
+
+patterns: {}
+rules:
+  positiveQty:
+    min: 1
+    message: "＊数量は 1 以上の整数で入力してください"

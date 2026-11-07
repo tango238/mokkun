@@ -165,7 +165,7 @@ export function renderWizardScreen(
 /**
  * セクションIDを生成（セクション名から安全なIDを生成）
  */
-function generateSectionId(sectionName: string, index: number): string {
+export function generateSectionId(sectionName: string, index: number): string {
   const safeName = sectionName
     .toLowerCase()
     .replace(/[^a-z0-9\u3040-\u309f\u30a0-\u30ff\u4e00-\u9faf]/g, '_')

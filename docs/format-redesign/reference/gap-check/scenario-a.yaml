@@ -1,0 +1,459 @@
+# 保育所入所申込（住民向けオンライン申請）
+mokkun: 2
+
+app:
+  name: "保育所入所申込"
+  layout: shell
+  header:
+    systemName: "市民向けオンライン手続き"
+    userName: "鈴木 花子"
+  roles: ["保護者"]
+  navigation:
+    - group: "保育所入所"
+      items:
+        - view: application_list
+        - view: application_form
+  notifications:
+    - variant: info
+      message: "11月20日までに申し込むと、12月入所の審査対象になります"
+
+flows:
+  nursery_apply:
+    name: "保育所入所申込"
+    role: "保護者"
+    outcome: "申込が受け付けられ、受付番号が発行される"
+    steps:
+      - view: application_form
+        label: "申込内容の入力"
+      - view: application_confirm
+        label: "申込内容の確認"
+      - view: application_done
+        label: "申込の完了"
+
+views:
+  application_list:
+    title: "保育所入所申込の一覧"
+    goal: "過去の申込と状態を確かめる"
+    nav: application_list
+    role: "保護者"
+    primaryAction:
+      id: new_application
+      label: "新規に申し込む"
+      kind: navigate
+      to: application_form
+      placement: header
+    states:
+      empty: { message: "申込はまだありません" }
+    sections:
+      - id: filter
+        title: "状態で絞り込む"
+        fields:
+          - item: statusFilter
+            label: "状態"
+            component: select
+            variant: segmented
+            default: all
+            options:
+              - { value: all, label: "すべて" }
+              - { value: received, label: "受付済" }
+              - { value: reviewing, label: "審査中" }
+              - { value: accepted, label: "内定" }
+              - { value: declined, label: "不承諾" }
+      - id: results
+        title: "申込を選ぶ"
+        kind: list
+        list:
+          columns:
+            - { id: receiptNo, label: "受付番号", sortable: true }
+            - { id: childName, label: "児童の氏名" }
+            - { id: appliedAt, label: "申込日", sortable: true }
+            - { id: desiredStart, label: "希望入所日" }
+            - { id: status, label: "状態" }
+          rowActions:
+            - { id: open, label: "申込内容を見る", kind: navigate, to: application_detail }
+          search: false
+          paging: { pageSize: 10 }
+          selection: none
+          empty: "申込はまだありません"
+
+  application_form:
+    title: "保育所入所の申込"
+    goal: "申込に必要な情報を入力する"
+    nav: application_form
+    role: "保護者"
+    layout: sectioned
+    description: "入力後、確認画面で内容を確かめてから申し込みます"
+    primaryAction:
+      id: to_confirm
+      label: "確認へ進む"
+      kind: navigate
+      to: application_confirm
+      placement: sticky
+    secondaryActions:
+      - id: cancel
+        label: "申込をやめる"
+        kind: navigate
+        to: application_list
+        style: tertiary
+        confirm: { message: "入力内容は保存されません。申込一覧に戻りますか？" }
+    states:
+      error: { message: "未入力の必須項目か形式の誤りがあります。赤字の項目を確認してください" }
+    sections:
+      - id: applicant
+        title: "申込者（保護者）を入力する"
+        purpose: "受付の連絡先と本人を確かめる"
+        columns: 1
+        fields:
+          - item: applicantName
+            label: "保護者の氏名"
+            component: text
+            required: true
+            example: "鈴木 花子"
+            width: md
+          - item: applicantKana
+            label: "保護者のフリガナ"
+            component: text
+            required: true
+            format: "全角カタカナ（ひらがなでも可）"
+            example: "スズキ ハナコ"
+            width: md
+          - item: applicantBirth
+            label: "保護者の生年月日"
+            component: date
+            required: true
+            help: "西暦で入力してください。例）1990年4月1日"
+          - item: postalCode
+            label: "郵便番号"
+            component: text
+            required: true
+            format: "ハイフンなし7桁（ハイフンありでも可）"
+            example: "1000001"
+            width: sm
+          - item: address
+            label: "住所"
+            component: text
+            required: true
+            help: "郵便番号から市区町村までは自動で入ります"
+            example: "東京都千代田区千代田1-1"
+            width: full
+          - item: phone
+            label: "電話番号"
+            component: text
+            required: true
+            format: "ハイフンなしでも可"
+            example: "09012345678"
+            width: md
+          - item: email
+            label: "メールアドレス"
+            component: text
+            required: true
+            whyRequired: "審査結果の連絡に使います"
+            example: "hanako@example.jp"
+            width: lg
+      - id: child
+        title: "児童の情報を入力する"
+        purpose: "入所する児童を特定する"
+        columns: 1
+        fields:
+          - item: childName
+            label: "児童の氏名"
+            component: text
+            required: true
+            example: "鈴木 太郎"
+            width: md
+          - item: childKana
+            label: "児童のフリガナ"
+            component: text
+            required: true
+            format: "全角カタカナ（ひらがなでも可）"
+            example: "スズキ タロウ"
+            width: md
+          - item: childBirth
+            label: "児童の生年月日"
+            component: date
+            required: true
+            help: "西暦で入力してください。例）2025年6月15日"
+          - item: childGender
+            label: "児童の性別"
+            component: radio
+            required: true
+            options:
+              - { value: male, label: "男" }
+              - { value: female, label: "女" }
+              - { value: none, label: "回答しない" }
+      - id: nursery
+        title: "希望する保育所を選ぶ"
+        purpose: "審査で考慮する希望順位と入所時期を決める"
+        columns: 1
+        fields:
+          - item: nursery1
+            label: "第1希望の保育所"
+            component: select
+            required: true
+            whyRequired: "審査の第一候補として使います"
+            width: lg
+            options:
+              - { value: n01, label: "中央保育所" }
+              - { value: n02, label: "駅前保育所" }
+              - { value: n03, label: "桜ヶ丘保育所" }
+              - { value: n04, label: "みどり保育所" }
+              - { value: n05, label: "ひまわり保育所" }
+              - { value: n06, label: "あおぞら保育所" }
+              - { value: n07, label: "さくら保育所" }
+              - { value: n08, label: "つばさ保育所" }
+              - { value: n09, label: "わかば保育所" }
+              - { value: n10, label: "たんぽぽ保育所" }
+              - { value: n11, label: "かもめ保育所" }
+              - { value: n12, label: "こすもす保育所" }
+              - { value: n13, label: "すみれ保育所" }
+              - { value: n14, label: "はるかぜ保育所" }
+              - { value: n15, label: "にじ保育所" }
+              - { value: n16, label: "青葉保育所" }
+              - { value: n17, label: "あすなろ保育所" }
+              - { value: n18, label: "ひかり保育所" }
+              - { value: n19, label: "もみじ保育所" }
+              - { value: n20, label: "やまぶき保育所" }
+              - { value: n21, label: "うみのほし保育所" }
+              - { value: n22, label: "きらり保育所" }
+              - { value: n23, label: "なでしこ保育所" }
+              - { value: n24, label: "ことり保育所" }
+              - { value: n25, label: "わたぼうし保育所" }
+          - item: nursery2
+            label: "第2希望の保育所"
+            component: select
+            help: "任意です。第1希望と同じ保育所は選べません"
+            width: lg
+            options:
+              - { value: n01, label: "中央保育所" }
+              - { value: n02, label: "駅前保育所" }
+              - { value: n03, label: "桜ヶ丘保育所" }
+              - { value: n04, label: "みどり保育所" }
+              - { value: n05, label: "ひまわり保育所" }
+              - { value: n06, label: "あおぞら保育所" }
+              - { value: n07, label: "さくら保育所" }
+              - { value: n08, label: "つばさ保育所" }
+              - { value: n09, label: "わかば保育所" }
+              - { value: n10, label: "たんぽぽ保育所" }
+              - { value: n11, label: "かもめ保育所" }
+              - { value: n12, label: "こすもす保育所" }
+              - { value: n13, label: "すみれ保育所" }
+              - { value: n14, label: "はるかぜ保育所" }
+              - { value: n15, label: "にじ保育所" }
+              - { value: n16, label: "青葉保育所" }
+              - { value: n17, label: "あすなろ保育所" }
+              - { value: n18, label: "ひかり保育所" }
+              - { value: n19, label: "もみじ保育所" }
+              - { value: n20, label: "やまぶき保育所" }
+              - { value: n21, label: "うみのほし保育所" }
+              - { value: n22, label: "きらり保育所" }
+              - { value: n23, label: "なでしこ保育所" }
+              - { value: n24, label: "ことり保育所" }
+              - { value: n25, label: "わたぼうし保育所" }
+          - item: nursery3
+            label: "第3希望の保育所"
+            component: select
+            help: "任意です。第1希望と同じ保育所は選べません"
+            width: lg
+            options:
+              - { value: n01, label: "中央保育所" }
+              - { value: n02, label: "駅前保育所" }
+              - { value: n03, label: "桜ヶ丘保育所" }
+              - { value: n04, label: "みどり保育所" }
+              - { value: n05, label: "ひまわり保育所" }
+              - { value: n06, label: "あおぞら保育所" }
+              - { value: n07, label: "さくら保育所" }
+              - { value: n08, label: "つばさ保育所" }
+              - { value: n09, label: "わかば保育所" }
+              - { value: n10, label: "たんぽぽ保育所" }
+              - { value: n11, label: "かもめ保育所" }
+              - { value: n12, label: "こすもす保育所" }
+              - { value: n13, label: "すみれ保育所" }
+              - { value: n14, label: "はるかぜ保育所" }
+              - { value: n15, label: "にじ保育所" }
+              - { value: n16, label: "青葉保育所" }
+              - { value: n17, label: "あすなろ保育所" }
+              - { value: n18, label: "ひかり保育所" }
+              - { value: n19, label: "もみじ保育所" }
+              - { value: n20, label: "やまぶき保育所" }
+              - { value: n21, label: "うみのほし保育所" }
+              - { value: n22, label: "きらり保育所" }
+              - { value: n23, label: "なでしこ保育所" }
+              - { value: n24, label: "ことり保育所" }
+              - { value: n25, label: "わたぼうし保育所" }
+          - item: desiredStart
+            label: "希望入所日"
+            component: date
+            required: true
+            help: "西暦で入力してください。例）2026年12月1日"
+            props: { calendar: true }
+      - id: reason
+        title: "保育が必要な理由を伝える"
+        purpose: "入所の優先度を判断する根拠にする"
+        columns: 1
+        fields:
+          - item: needReason
+            label: "保育を必要とする理由"
+            component: radio
+            required: true
+            help: "「就労」を選ぶと勤務先の入力欄が表示されます"
+            options:
+              - { value: work, label: "就労" }
+              - { value: seeking, label: "求職" }
+              - { value: childbirth, label: "出産" }
+              - { value: illness, label: "疾病" }
+              - { value: other, label: "その他" }
+          - item: otherReason
+            label: "その他の理由"
+            component: textarea
+            required: true
+            help: "具体的な事情を200文字以内で書いてください"
+            visibleWhen: { item: needReason, equals: other }
+      - id: work
+        title: "勤務先を入力する"
+        purpose: "就労による保育の必要量を確かめる"
+        columns: 1
+        visibleWhen: { item: needReason, equals: work }
+        fields:
+          - item: employerName
+            label: "勤務先名"
+            component: text
+            required: true
+            example: "株式会社サンプル"
+            width: lg
+          - item: weeklyHours
+            label: "週の就労時間"
+            component: number
+            required: true
+            format: "時間単位の半角数字"
+            example: "40"
+            width: xs
+      - id: attachments
+        title: "添付書類を提出する"
+        purpose: "申込内容を裏づける書類を受け取る"
+        fields:
+          - item: documents
+            label: "添付書類"
+            component: file
+            help: "就労証明書などを PDF か画像で添付してください。複数可"
+            props: { multiple: true }
+      - id: agreement
+        title: "利用規約に同意する"
+        fields:
+          - item: agreeTerms
+            label: "利用規約に同意する"
+            component: checkbox
+            required: true
+            whyRequired: "同意がないと申込を受け付けられません"
+            help: "利用規約を確認のうえチェックしてください"
+
+  application_confirm:
+    title: "申込内容の確認"
+    goal: "入力内容を確かめて申し込む"
+    nav: application_form
+    role: "保護者"
+    description: "内容を確かめて「申し込む」を押すと受付番号が発行されます"
+    primaryAction:
+      id: submit
+      label: "申し込む"
+      kind: submit
+      placement: sticky
+    secondaryActions:
+      - id: back
+        label: "入力に戻る"
+        kind: navigate
+        to: application_form
+        style: tertiary
+    sections:
+      - id: applicant_summary
+        title: "申込者（保護者）を確認する"
+        kind: readonly
+        fields:
+          - { item: applicantName, label: "保護者の氏名", component: text, value: "鈴木 花子" }
+          - { item: applicantKana, label: "保護者のフリガナ", component: text, value: "スズキ ハナコ" }
+          - { item: applicantBirth, label: "保護者の生年月日", component: date, value: "1990-04-01" }
+          - { item: address, label: "住所", component: text, value: "〒100-0001 東京都千代田区千代田1-1" }
+          - { item: phone, label: "電話番号", component: text, value: "09012345678" }
+          - { item: email, label: "メールアドレス", component: text, value: "hanako@example.jp" }
+      - id: child_summary
+        title: "児童の情報を確認する"
+        kind: readonly
+        fields:
+          - { item: childName, label: "児童の氏名", component: text, value: "鈴木 太郎" }
+          - { item: childKana, label: "児童のフリガナ", component: text, value: "スズキ タロウ" }
+          - { item: childBirth, label: "児童の生年月日", component: date, value: "2025-06-15" }
+          - { item: childGender, label: "児童の性別", component: text, value: "男" }
+      - id: nursery_summary
+        title: "希望する保育所を確認する"
+        kind: readonly
+        fields:
+          - { item: nursery1, label: "第1希望の保育所", component: text, value: "中央保育所" }
+          - { item: nursery2, label: "第2希望の保育所", component: text, value: "駅前保育所" }
+          - { item: nursery3, label: "第3希望の保育所", component: text, value: "桜ヶ丘保育所" }
+          - { item: desiredStart, label: "希望入所日", component: date, value: "2026-12-01" }
+      - id: reason_summary
+        title: "保育が必要な理由を確認する"
+        kind: readonly
+        fields:
+          - { item: needReason, label: "保育を必要とする理由", component: text, value: "就労" }
+          - { item: employerName, label: "勤務先名", component: text, value: "株式会社サンプル" }
+          - { item: weeklyHours, label: "週の就労時間", component: text, value: "40時間" }
+          - { item: documents, label: "添付書類", component: text, value: "就労証明書.pdf" }
+
+  application_done:
+    title: "保育所入所の申込を受け付けました"
+    goal: "受付番号を控え、次にやることを選ぶ"
+    nav: application_form
+    role: "保護者"
+    states:
+      success: { message: "申込を受け付けました。受付番号は N-2026-001234 です。審査結果はメールでお知らせします" }
+    primaryAction:
+      id: to_list
+      label: "申込一覧へ"
+      kind: navigate
+      to: application_list
+    sections:
+      - id: receipt
+        title: "受け付けた申込を確認する"
+        kind: readonly
+        fields:
+          - { item: receiptNo, label: "受付番号", component: text, value: "N-2026-001234" }
+          - { item: status, label: "状態", component: status, value: "受付済", variant: primary }
+          - { item: appliedAt, label: "申込日", component: date, value: "2026-11-07" }
+
+  application_detail:
+    title: "申込内容の詳細"
+    goal: "申込の内容と状態を確かめ、必要なら取り下げる"
+    nav: application_list
+    role: "保護者"
+    secondaryActions:
+      - id: withdraw
+        label: "申込を取り下げる"
+        kind: custom
+        style: danger
+        confirm: { message: "取り下げた申込は元に戻せません。この申込を取り下げますか？", danger: true }
+      - id: back_to_list
+        label: "申込一覧に戻る"
+        kind: navigate
+        to: application_list
+        style: tertiary
+    sections:
+      - id: state
+        title: "申込の状態を確認する"
+        kind: readonly
+        fields:
+          - { item: receiptNo, label: "受付番号", component: text, value: "N-2026-001234" }
+          - { item: status, label: "状態", component: status, value: "審査中", variant: primary }
+          - { item: appliedAt, label: "申込日", component: date, value: "2026-11-07" }
+      - id: content
+        title: "申込内容を確認する"
+        kind: readonly
+        fields:
+          - { item: childName, label: "児童の氏名", component: text, value: "鈴木 太郎" }
+          - { item: nursery1, label: "第1希望の保育所", component: text, value: "中央保育所" }
+          - { item: nursery2, label: "第2希望の保育所", component: text, value: "駅前保育所" }
+          - { item: nursery3, label: "第3希望の保育所", component: text, value: "桜ヶ丘保育所" }
+          - { item: desiredStart, label: "希望入所日", component: date, value: "2026-12-01" }
+          - { item: needReason, label: "保育を必要とする理由", component: text, value: "就労" }
+
+patterns: {}
+rules: {}

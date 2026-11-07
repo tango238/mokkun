@@ -7,7 +7,7 @@
  */
 
 import { createElement, clearElement } from '../utils/dom'
-import { createFieldWrapper } from '../utils/field-helpers'
+import { createFieldWrapper, escapeHtml } from '../utils/field-helpers'
 import type { InputField } from '../../types/schema'
 
 // =============================================================================
@@ -449,6 +449,30 @@ export class Stepper {
   // ===========================================================================
 
   static renderField(field: InputField): string {
+    const f = field as InputField & {
+      steps?: Array<string | { id?: string; label: string; completed?: boolean; status?: string | { type: string } }>
+      currentStep?: number
+    }
+    if (Array.isArray(f.steps) && f.steps.length > 0) {
+      // steps 指定あり: 定義どおりの静的ステッパーを描画する
+      const current = f.currentStep ?? 0
+      const stepsHtml = f.steps.map((raw, i) => {
+        // 文字列はそのままラベルとして扱う
+        const step = typeof raw === 'string' ? { label: raw } : raw
+        const status = typeof step.status === 'string' ? step.status : step.status?.type
+        const cls = ['stepper-step']
+        if (step.completed || status === 'completed') cls.push('completed')
+        if (status === 'closed') cls.push('closed')
+        if (i === current) cls.push('active', 'current')
+        const line = i < f.steps!.length - 1 ? '<div class="stepper-line"></div>' : ''
+        return `
+        <div class="${cls.join(' ')}"${i === current ? ' aria-current="step"' : ''}>
+          <span class="stepper-step-circle">${i + 1}</span>
+          <span class="stepper-label">${escapeHtml(String(step.label ?? ''))}</span>
+        </div>${line}`
+      }).join('')
+      return createFieldWrapper(field, `<div class="mokkun-stepper stepper-list stepper-list-horizontal">${stepsHtml}</div>`)
+    }
     const stepperHtml = `
       <div class="mokkun-stepper stepper-list stepper-list-horizontal">
         <div class="stepper-step completed">

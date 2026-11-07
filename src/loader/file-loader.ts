@@ -3,8 +3,10 @@
  * YAMLファイルの読み込み機能を提供
  */
 
-import { parseYaml, formatParseErrors } from '../parser'
+import yaml from 'js-yaml'
+import { parseYaml, parseV2Document, isV2Document, compileV2, formatParseErrors } from '../parser'
 import type { MokkunSchema } from '../types/schema'
+import type { MokkunV2Schema } from '../types/schema-v2'
 import type { ParseError } from '../parser/yaml-parser'
 
 // ============================================================================
@@ -36,7 +38,10 @@ export interface FileLoadError {
  */
 export interface FileLoadSuccess {
   success: true
-  schema: MokkunSchema
+  /** v1 スキーマ。v2 文書では compileV2 の結果（変換できなければ null） */
+  schema: MokkunSchema | null
+  /** v2 文書（mokkun: 2）のとき、検証済みの v2 スキーマ。v2 専用レンダラーの入力 */
+  schemaV2?: MokkunV2Schema
   fileName: string
   source: 'file' | 'url' | 'drop'
   /** 読み込んだ YAML の原文（コメント・順序を保持） */
@@ -157,6 +162,38 @@ function parseYamlContent(
   fileName: string,
   source: 'file' | 'url' | 'drop'
 ): FileLoadResult {
+  // YAML は 1 回だけ読む。v2 は読み込み済みの値をそのまま検証する（読めないときは parseYaml がエラー内容を作る）
+  let loaded: unknown
+  let readable = true
+  try {
+    loaded = yaml.load(content)
+  } catch {
+    readable = false
+  }
+
+  if (readable && isV2Document(loaded)) {
+    const v2 = parseV2Document(loaded)
+    if (!v2.success) {
+      return {
+        success: false,
+        error: {
+          type: 'YAML_PARSE_ERROR',
+          message: 'YAMLのパースに失敗しました',
+          details: formatParseErrors(v2.errors),
+          parseErrors: v2.errors,
+        },
+      }
+    }
+    // 旧フォーマットへの変換結果は補助（画面名など）。変換できなくても v2 の描画には影響しない
+    let compiled: MokkunSchema | null = null
+    try {
+      compiled = compileV2(v2.data)
+    } catch {
+      compiled = null
+    }
+    return { success: true, schema: compiled, schemaV2: v2.data, fileName, source, content }
+  }
+
   const result = parseYaml(content)
 
   if (!result.success) {

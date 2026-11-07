@@ -1,0 +1,1158 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/tango238/mokkun/main/schema-v2.json",
+  "title": "Mokkun v2 format",
+  "description": "mokkun v2 フォーマット（App / Flow / View / Section / Field / Component の6層）。仕様: docs/format-redesign/02-schema-v2.md",
+  "type": "object",
+  "properties": {
+    "mokkun": {
+      "const": 2,
+      "description": "フォーマットバージョン。旧フォーマットとの判別に使う"
+    },
+    "app": {
+      "$ref": "#/definitions/App"
+    },
+    "flows": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/Flow"
+      }
+    },
+    "views": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "$ref": "#/definitions/View"
+      }
+    },
+    "patterns": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/Pattern"
+      }
+    },
+    "rules": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/Rule"
+      }
+    }
+  },
+  "required": [
+    "mokkun",
+    "app",
+    "views"
+  ],
+  "additionalProperties": false,
+  "definitions": {
+    "Condition": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "type": "string",
+          "minLength": 1
+        },
+        "equals": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
+        },
+        "notEquals": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
+        },
+        "in": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": [
+              "string",
+              "number",
+              "boolean"
+            ]
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "item"
+      ],
+      "oneOf": [
+        {
+          "required": [
+            "equals"
+          ]
+        },
+        {
+          "required": [
+            "notEquals"
+          ]
+        },
+        {
+          "required": [
+            "in"
+          ]
+        }
+      ],
+      "description": "条件。equals / notEquals / in のうち 1 つだけを書く（item の値が等しい／等しくない／配列のどれかと等しい）"
+    },
+    "Option": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
+        },
+        "label": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "label"
+      ]
+    },
+    "Rule": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true,
+      "description": "共通バリデーション。message 以外は旧 FieldValidation（required/min/max/pattern/custom）をそのまま書く"
+    },
+    "Notice": {
+      "type": "object",
+      "properties": {
+        "variant": {
+          "enum": [
+            "info",
+            "success",
+            "warning",
+            "error"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "dismissible": {
+          "type": "boolean"
+        },
+        "role": {
+          "$ref": "#/definitions/RoleSpec"
+        },
+        "until": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+          "description": "掲示期限（ISO 日付）。今日がこれより後なら表示しない"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "message"
+      ]
+    },
+    "NavItem": {
+      "type": "object",
+      "properties": {
+        "view": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label": {
+          "type": "string"
+        },
+        "icon": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "view"
+      ]
+    },
+    "NavGroup": {
+      "type": "object",
+      "properties": {
+        "group": {
+          "type": "string",
+          "minLength": 1
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/NavItem"
+          }
+        },
+        "role": {
+          "$ref": "#/definitions/RoleSpec"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "group",
+        "items"
+      ]
+    },
+    "App": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "layout": {
+          "enum": [
+            "shell",
+            "plain"
+          ]
+        },
+        "header": {
+          "type": "object",
+          "properties": {
+            "systemName": {
+              "type": "string"
+            },
+            "userName": {
+              "type": "string"
+            },
+            "userEmail": {
+              "type": "string"
+            },
+            "tenantName": {
+              "type": "string"
+            },
+            "helpUrl": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "navigation": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/NavGroup"
+          }
+        },
+        "notifications": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Notice"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "name"
+      ]
+    },
+    "FlowStep": {
+      "type": "object",
+      "properties": {
+        "view": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "view"
+      ]
+    },
+    "Flow": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "outcome": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role": {
+          "type": "string"
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/FlowStep"
+          }
+        },
+        "progress": {
+          "enum": [
+            "stepper",
+            "none"
+          ]
+        },
+        "resumable": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "outcome",
+        "steps"
+      ]
+    },
+    "Action": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": [
+            "submit",
+            "navigate",
+            "custom",
+            "reset"
+          ]
+        },
+        "to": {
+          "type": "string"
+        },
+        "placement": {
+          "enum": [
+            "header",
+            "footer",
+            "sticky"
+          ]
+        },
+        "style": {
+          "enum": [
+            "primary",
+            "secondary",
+            "tertiary",
+            "danger"
+          ]
+        },
+        "confirm": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "minLength": 1
+            },
+            "danger": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "message"
+          ]
+        },
+        "role": {
+          "$ref": "#/definitions/RoleSpec"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "label"
+      ],
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "navigate"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "required": [
+          "to"
+        ]
+      }
+    },
+    "StateMessage": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "message"
+      ]
+    },
+    "List": {
+      "type": "object",
+      "properties": {
+        "columns": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "label": {
+                "type": "string"
+              },
+              "sortable": {
+                "type": "boolean"
+              },
+              "type": {
+                "enum": [
+                  "text",
+                  "status",
+                  "date",
+                  "number"
+                ],
+                "description": "セルの型（既定 text）"
+              },
+              "to": {
+                "type": "string",
+                "minLength": 1,
+                "description": "セルを遷移リンクにする view 名"
+              },
+              "field": {
+                "$ref": "#/definitions/ColumnField"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "label"
+            ]
+          }
+        },
+        "rowActions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1
+              },
+              "kind": {
+                "enum": [
+                  "submit",
+                  "navigate",
+                  "custom",
+                  "reset"
+                ]
+              },
+              "to": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "label"
+            ],
+            "if": {
+              "properties": {
+                "kind": {
+                  "const": "navigate"
+                }
+              },
+              "required": [
+                "kind"
+              ]
+            },
+            "then": {
+              "required": [
+                "to"
+              ]
+            }
+          }
+        },
+        "search": {
+          "type": "boolean"
+        },
+        "paging": {
+          "type": "object",
+          "properties": {
+            "pageSize": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        "selection": {
+          "enum": [
+            "none",
+            "single",
+            "multiple"
+          ]
+        },
+        "empty": {
+          "type": "string"
+        },
+        "bulkActions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Action"
+          },
+          "description": "選択した行への操作。selection: multiple のときだけ"
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": {
+              "type": [
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            }
+          },
+          "description": "代表行（キーは列 id、値は文字列・数値・真偽値・null）。あればダミー行の代わりに使う"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "columns"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "bulkActions"
+            ]
+          },
+          "then": {
+            "required": [
+              "selection"
+            ],
+            "properties": {
+              "selection": {
+                "const": "multiple"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "columns"
+            ],
+            "properties": {
+              "columns": {
+                "contains": {
+                  "required": [
+                    "field"
+                  ]
+                }
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "rows"
+            ]
+          }
+        }
+      ]
+    },
+    "Field": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!_v2_)"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "component": {
+          "enum": [
+            "text",
+            "number",
+            "textarea",
+            "date",
+            "time",
+            "duration",
+            "file",
+            "photo_grid",
+            "select",
+            "combobox",
+            "radio",
+            "checkbox",
+            "toggle",
+            "browser",
+            "badge",
+            "chip",
+            "status",
+            "timeline",
+            "map"
+          ]
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "whyRequired": {
+          "type": "string"
+        },
+        "example": {
+          "type": "string"
+        },
+        "help": {
+          "type": "string"
+        },
+        "format": {
+          "type": "string"
+        },
+        "default": {},
+        "options": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Option"
+          }
+        },
+        "multiple": {
+          "type": "boolean"
+        },
+        "variant": {
+          "type": "string"
+        },
+        "inline": {
+          "type": "boolean"
+        },
+        "accept": {
+          "description": "file の種別。image / pdf / document、または拡張子・MIME タイプの配列（旧来の HTML accept 文字列 \".pdf\" \"image/png\" も受け付ける）",
+          "anyOf": [
+            {
+              "enum": [
+                "image",
+                "pdf",
+                "document"
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "^\\s*(\\.[A-Za-z0-9]|[A-Za-z0-9*+.-]+/)"
+            },
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "pattern": "^(\\.[A-Za-z0-9]+|[A-Za-z0-9.+-]+/[A-Za-z0-9.+*-]+)$"
+              }
+            }
+          ]
+        },
+        "value": {},
+        "readonly": {
+          "type": "boolean"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/definitions/Rule"
+              }
+            ]
+          }
+        },
+        "visibleWhen": {
+          "$ref": "#/definitions/Condition"
+        },
+        "width": {
+          "enum": [
+            "xs",
+            "sm",
+            "md",
+            "lg",
+            "full"
+          ]
+        },
+        "props": {
+          "type": "object"
+        },
+        "maxSize": {
+          "type": "string",
+          "pattern": "^[1-9]\\d*(KB|MB|GB)$",
+          "description": "file の 1 ファイルあたりの上限（正の整数 + KB / MB / GB。例 \"10MB\"）"
+        },
+        "unit": {
+          "type": "string",
+          "description": "入力欄の後ろに付ける単位"
+        },
+        "precision": {
+          "enum": [
+            "day",
+            "month"
+          ],
+          "description": "date の精度。month は年月だけ"
+        },
+        "autocomplete": {
+          "type": "string",
+          "minLength": 1,
+          "description": "HTML の autocomplete トークン"
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string",
+                "minLength": 1
+              },
+              "href": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "label",
+              "href"
+            ]
+          },
+          "description": "サポートテキストの後ろに出すリンク"
+        },
+        "requiredWhen": {
+          "$ref": "#/definitions/Condition",
+          "description": "この条件が成り立つときだけ必須。required: true とは併用しない"
+        },
+        "to": {
+          "type": "string",
+          "minLength": 1,
+          "description": "summary / readonly の値を遷移リンクにする view 名"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "item",
+        "label",
+        "component"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "precision"
+            ]
+          },
+          "then": {
+            "properties": {
+              "component": {
+                "const": "date"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "requiredWhen"
+            ]
+          },
+          "then": {
+            "not": {
+              "required": [
+                "required"
+              ],
+              "properties": {
+                "required": {
+                  "const": true
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "Section": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "purpose": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "form",
+            "list",
+            "readonly",
+            "summary"
+          ]
+        },
+        "reveal": {
+          "enum": [
+            "open",
+            "collapsed"
+          ]
+        },
+        "repeatable": {
+          "type": "object",
+          "properties": {
+            "min": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "max": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "addLabel": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "note": {
+          "type": "string"
+        },
+        "columns": {
+          "enum": [
+            1,
+            2,
+            3
+          ]
+        },
+        "visibleWhen": {
+          "$ref": "#/definitions/Condition",
+          "description": "表示条件。v2 レンダラーではセクション全体を隠す。旧フォーマットへの変換ではセクション内の各フィールドの条件になる"
+        },
+        "use": {
+          "type": "string"
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Field"
+          }
+        },
+        "list": {
+          "$ref": "#/definitions/List"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/definitions/Action"
+              },
+              {
+                "not": {
+                  "required": [
+                    "style"
+                  ],
+                  "properties": {
+                    "style": {
+                      "const": "primary"
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "description": "見出し行に置く操作。primary は View だけが持つので不可"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "list"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "required": [
+              "list"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "list",
+                  "readonly",
+                  "summary"
+                ]
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "reveal"
+                  ]
+                },
+                {
+                  "required": [
+                    "repeatable"
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "required": [
+                "kind"
+              ],
+              "properties": {
+                "kind": {
+                  "enum": [
+                    "readonly",
+                    "summary"
+                  ]
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "fields": {
+                "items": {
+                  "not": {
+                    "required": [
+                      "to"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "Pattern": {
+      "type": "object",
+      "description": "再利用可能なフィールド群（fields と note のみ。use のネストは非対応）",
+      "properties": {
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Field"
+          }
+        },
+        "note": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "View": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "goal": {
+          "type": "string",
+          "minLength": 1
+        },
+        "nav": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "layout": {
+          "enum": [
+            "stack",
+            "tabs",
+            "sectioned"
+          ]
+        },
+        "description": {
+          "type": "string"
+        },
+        "primaryAction": {
+          "$ref": "#/definitions/Action"
+        },
+        "secondaryActions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Action"
+          }
+        },
+        "states": {
+          "type": "object",
+          "properties": {
+            "empty": {
+              "$ref": "#/definitions/StateMessage"
+            },
+            "loading": {
+              "$ref": "#/definitions/StateMessage"
+            },
+            "success": {
+              "$ref": "#/definitions/StateMessage"
+            },
+            "error": {
+              "$ref": "#/definitions/StateMessage"
+            }
+          },
+          "additionalProperties": false
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Section"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "title",
+        "goal",
+        "sections"
+      ]
+    },
+    "RoleSpec": {
+      "description": "ロール指定。文字列または配列（省略は全ロール）。app.roles が定義されているときは、その値でなければならない（パーサーが検証）",
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ]
+    },
+    "ColumnField": {
+      "type": "object",
+      "description": "一覧セルに置く入力欄。item / label は持たない。text / number / select / checkbox のみ",
+      "properties": {
+        "component": {
+          "enum": [
+            "text",
+            "number",
+            "select",
+            "checkbox"
+          ]
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "help": {
+          "type": "string"
+        },
+        "default": {},
+        "options": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Option"
+          }
+        },
+        "multiple": {
+          "type": "boolean"
+        },
+        "variant": {
+          "type": "string"
+        },
+        "inline": {
+          "type": "boolean"
+        },
+        "value": {},
+        "readonly": {
+          "type": "boolean"
+        },
+        "width": {
+          "enum": [
+            "xs",
+            "sm",
+            "md",
+            "lg",
+            "full"
+          ]
+        },
+        "props": {
+          "type": "object"
+        },
+        "unit": {
+          "type": "string",
+          "description": "入力欄の後ろに付ける単位"
+        },
+        "autocomplete": {
+          "type": "string",
+          "minLength": 1,
+          "description": "HTML の autocomplete トークン"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "component"
+      ]
+    }
+  }
+}

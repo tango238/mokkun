@@ -72,6 +72,9 @@
     }
 
     .toolbar-spacer { flex: 1; }
+    .toolbar-section[hidden] { display: none; }
+    .toolbar select { min-width: 120px; }
+    .toolbar select option:disabled { color: #8a8aa8; }
 
     #mokkun-app {
       margin-top: 60px;
@@ -113,6 +116,16 @@
         </select>
       </div>
 
+      <!-- v2 文書のときだけ表示: 状態（通常 / 成功 / エラー / 空 / 読み込み中）とロール -->
+      <div class="toolbar-section" id="state-section" hidden>
+        <label for="state-select">状態:</label>
+        <select id="state-select"></select>
+      </div>
+      <div class="toolbar-section" id="role-section" hidden>
+        <label for="role-select">ロール:</label>
+        <select id="role-select"></select>
+      </div>
+
       <div class="toolbar-spacer"></div>
     </div>
 
@@ -137,11 +150,57 @@
       document.body.classList.toggle('dark-theme', currentTheme === 'dark');
       document.documentElement.setAttribute('data-theme', currentTheme);
 
+      var stateSelect = document.getElementById('state-select');
+      var roleSelect = document.getElementById('role-select');
+      var params = new URLSearchParams(window.location.search);
+      // 状態の表示名はライブラリ（Mokkun.utils）のものを使う
+      var STATE_LABELS = Mokkun.utils.V2_STATE_LABELS;
+
+      // 状態セレクト: 現在の画面が持つ states.* に対応するものだけ選べる
+      function refreshStateSelect() {
+        var section = document.getElementById('state-section');
+        if (!mokkunInstance || !mokkunInstance.schemaV2) { section.hidden = true; return; }
+        section.hidden = false;
+        var enabled = mokkunInstance.getAvailableStates();
+        stateSelect.innerHTML = '';
+        Object.keys(STATE_LABELS).forEach(function(key) {
+          var opt = document.createElement('option');
+          opt.value = key;
+          opt.textContent = STATE_LABELS[key];
+          opt.disabled = enabled.indexOf(key) < 0;
+          stateSelect.appendChild(opt);
+        });
+        stateSelect.value = mokkunInstance.viewState;
+      }
+
+      // ロールセレクト: app.roles（と「すべて」）。roles が無い文書では出さない
+      function buildRoleSelect() {
+        var section = document.getElementById('role-section');
+        var schema = mokkunInstance && mokkunInstance.schemaV2;
+        var roles = (schema && schema.app.roles) || [];
+        section.hidden = roles.length === 0;
+        roleSelect.innerHTML = '';
+        [''].concat(roles).forEach(function(role) {
+          var opt = document.createElement('option');
+          opt.value = role;
+          opt.textContent = role || 'すべて';
+          roleSelect.appendChild(opt);
+        });
+        roleSelect.value = mokkunInstance.role || '';
+      }
+
       // Screen change
       screenSelect.addEventListener('change', function() {
         if (mokkunInstance && screenSelect.value) {
           mokkunInstance.showScreen(screenSelect.value);
+          refreshStateSelect();
         }
+      });
+      stateSelect.addEventListener('change', function() {
+        if (mokkunInstance) mokkunInstance.setState(stateSelect.value);
+      });
+      roleSelect.addEventListener('change', function() {
+        if (mokkunInstance) mokkunInstance.setRole(roleSelect.value || undefined);
       });
 
       // Sample YAML for when no file is specified
@@ -185,7 +244,11 @@
         var options = {
           container: '#mokkun-app',
           theme: currentTheme,
+          initialScreen: params.get('screen') || undefined,
+          initialState: params.get('state') || undefined,
+          role: params.get('role') || undefined,
           onReady: function(instance) {
+            mokkunInstance = instance;
             var screens = instance.getScreenNames();
             screenSelect.innerHTML = '';
             screens.forEach(function(name) {
@@ -194,7 +257,19 @@
               opt.textContent = name;
               screenSelect.appendChild(opt);
             });
-            screenSelect.value = screens[0] || '';
+            screenSelect.value = instance.currentScreen || screens[0] || '';
+            refreshStateSelect();
+            buildRoleSelect();
+            // 旧フォーマットへ変換したときに落ちるキーはコンソールにだけ出す（画面には出さない）
+            if (instance.schemaV2) {
+              Mokkun.utils.compileV2Warnings(instance.schemaV2).forEach(function(w) {
+                console.warn('[mokkun] 旧フォーマット変換: ' + w.path + ': ' + w.message);
+              });
+            }
+          },
+          onNavigate: function(from, to) {
+            screenSelect.value = to;
+            refreshStateSelect();
           },
           onError: function(error) {
             document.getElementById('mokkun-app').innerHTML =

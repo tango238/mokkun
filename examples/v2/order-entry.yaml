@@ -1,0 +1,276 @@
+# mokkun v2 フォーマットのサンプル: 受注管理
+mokkun: 2
+
+app:
+  name: "受注管理"
+  layout: shell
+  header:
+    systemName: "サンプル業務システム"
+    userName: "山田 太郎"
+    tenantName: "株式会社サンプル"
+  roles: ["営業担当", "管理者"]
+  navigation:
+    - group: "受注"
+      items:
+        - view: order_list
+        - view: order_form
+    - group: "設定"
+      items:
+        - view: settings
+  notifications:
+    - variant: info
+      message: "11月10日 2:00-4:00 にメンテナンスを実施します"
+      dismissible: true
+
+flows:
+  order_entry:
+    name: "受注登録"
+    role: "営業担当"
+    outcome: "受注が確定し、出荷指示を出せる状態になる"
+    resumable: true
+    steps:
+      - view: order_form
+        label: "入力"
+      - view: order_confirm
+        label: "確認"
+      - view: order_done
+        label: "完了"
+
+views:
+  order_list:
+    title: "受注一覧"
+    goal: "受注を探して開く"
+    nav: order_list
+    role: "営業担当"
+    primaryAction:
+      id: new_order
+      label: "新規に受注を登録する"
+      kind: navigate
+      to: order_form
+      placement: header
+    states:
+      loading: { message: "受注を読み込んでいます" }
+    sections:
+      - id: filter
+        title: "条件で絞り込む"
+        purpose: "大量の受注から目的のものを素早く見つける"
+        columns: 3
+        fields:
+          - item: keyword
+            label: "キーワード"
+            component: text
+            example: "受注ID、顧客名"
+            width: md
+          - item: status
+            label: "ステータス"
+            component: select
+            variant: segmented
+            default: all
+            options:
+              - { value: all, label: "すべて" }
+              - { value: pending, label: "処理中" }
+              - { value: shipped, label: "出荷済み" }
+          - item: orderedFrom
+            label: "受注日（から）"
+            component: date
+      - id: results
+        title: "受注を選ぶ"
+        kind: list
+        list:
+          columns:
+            - { id: orderId, label: "受注ID", sortable: true, to: order_form }
+            - { id: customerName, label: "顧客名" }
+            - { id: orderedAt, label: "受注日", type: date, sortable: true }
+            - { id: status, label: "ステータス", type: status }
+            - { id: total, label: "金額（円）", type: number }
+          rows:
+            - { orderId: "10234", customerName: "株式会社サンプル", orderedAt: "2026-11-07", status: "処理中", total: 125000 }
+            - { orderId: "10233", customerName: "有限会社みどり商事", orderedAt: "2026-11-06", status: "出荷済み", total: 48600 }
+            - { orderId: "10232", customerName: "東都物産株式会社", orderedAt: "2026-11-05", status: "完了", total: 312400 }
+            - { orderId: "10231", customerName: "北斗フーズ株式会社", orderedAt: "2026-11-05", status: "受付済", total: 9800 }
+            - { orderId: "10230", customerName: "ひかり電機株式会社", orderedAt: "2026-11-02", status: "要対応", total: 76500 }
+          search: false
+          paging: { pageSize: 20 }
+          selection: none
+          empty: "受注はまだありません。「新規に受注を登録する」から登録できます"
+
+  order_form:
+    title: "受注登録"
+    goal: "注文を作る"
+    nav: order_form
+    role: "営業担当"
+    description: "入力後、確認画面で内容を確かめてから確定します"
+    primaryAction:
+      id: to_confirm
+      label: "確認へ進む"
+      kind: navigate
+      to: order_confirm
+      placement: sticky
+    secondaryActions:
+      - id: save_draft
+        label: "下書き保存する"
+        kind: custom
+        style: secondary
+      - id: cancel
+        label: "キャンセル"
+        kind: navigate
+        to: order_list
+        style: tertiary
+        confirm: { message: "入力内容は保存されません。受注一覧に戻りますか？" }
+    states:
+      error: { message: "＊2件の項目を確認してください。顧客名、数量" }
+    sections:
+      - id: customer
+        title: "注文者を指定する"
+        purpose: "誰からの注文かを確定する"
+        columns: 2
+        fields:
+          - item: customerName
+            label: "顧客名"
+            component: combobox
+            required: true
+            whyRequired: "請求先の特定に必要です"
+            example: "株式会社サンプル"
+            help: "登録済みの顧客から選べます"
+            options:
+              - { value: c1, label: "株式会社サンプル" }
+              - { value: c2, label: "テスト企業" }
+              - { value: c3, label: "有限会社みどり商事" }
+              - { value: c4, label: "東都物産株式会社" }
+              - { value: c5, label: "北斗フーズ株式会社" }
+              - { value: c6, label: "ひかり電機株式会社" }
+              - { value: c7, label: "さくら運輸株式会社" }
+              - { value: c8, label: "あおぞら工業株式会社" }
+          - item: contactName
+            label: "担当者名"
+            component: text
+            example: "山田 太郎"
+      - id: delivery
+        title: "配送先を指定する"
+        purpose: "出荷指示に必要な宛先を揃える"
+        note: "郵便番号を入力すると住所が補完されます"
+        columns: 2
+        fields:
+          - item: deliveryType
+            label: "配送先"
+            component: radio
+            required: true
+            default: customer
+            options:
+              - { value: customer, label: "顧客住所へ送る" }
+              - { value: other, label: "別の住所へ送る" }
+          - item: postalCode
+            label: "郵便番号"
+            component: text
+            format: "ハイフンなし7桁"
+            example: "1000001"
+            width: sm
+            visibleWhen: { item: deliveryType, equals: other }
+          - item: address
+            label: "住所"
+            component: text
+            width: full
+            visibleWhen: { item: deliveryType, equals: other }
+          - item: desiredDate
+            label: "配達希望日"
+            component: date
+            help: "西暦で入力してください。例）2026年11月14日"
+            props: { calendar: true }
+      - id: lines
+        title: "明細を追加する"
+        purpose: "何をいくつ注文するかを明らかにする"
+        repeatable: { min: 1, max: 20, addLabel: "明細を追加" }
+        columns: 3
+        fields:
+          - item: product
+            label: "商品"
+            component: select
+            required: true
+            options:
+              - { value: p1, label: "商品A" }
+              - { value: p2, label: "商品B" }
+          - item: quantity
+            label: "数量"
+            component: number
+            required: true
+            default: 1
+            width: xs
+          - item: unitPrice
+            label: "単価"
+            component: number
+            unit: "円"
+            readonly: true
+            help: "商品を選ぶと自動で入ります（税込）"
+      - id: memo
+        title: "補足を伝える"
+        reveal: collapsed
+        fields:
+          - item: note
+            label: "備考"
+            component: textarea
+            help: "出荷担当への申し送りがあれば記入してください"
+
+  order_confirm:
+    title: "受注内容の確認"
+    goal: "入力内容を確かめて確定する"
+    nav: order_form
+    primaryAction:
+      id: submit
+      label: "確定する"
+      kind: submit
+      placement: sticky
+    description: "内容を確かめて「確定する」を押すと、受注が登録され出荷指示が作成されます"
+    sections:
+      - id: summary
+        title: "注文内容を確認する"
+        kind: readonly
+        actions:
+          - { id: edit, label: "注文内容を修正する", kind: navigate, to: order_form, style: secondary }
+        fields:
+          - { item: customerName, label: "顧客名", component: text, value: "株式会社サンプル" }
+          - { item: address, label: "配送先", component: text, value: "東京都千代田区千代田1-1" }
+          - { item: desiredDate, label: "配達希望日", component: date, value: "2026-11-14" }
+          - { item: total, label: "合計金額", component: number, value: 125000, unit: "円" }
+
+  order_done:
+    title: "受注を登録しました"
+    goal: "次にやることを選ぶ"
+    nav: order_form
+    states:
+      success: { message: "受注 #10234 を登録しました。出荷指示が作成されています" }
+    primaryAction:
+      id: to_list
+      label: "受注一覧を開く"
+      kind: navigate
+      to: order_list
+    secondaryActions:
+      - id: another
+        label: "続けて登録する"
+        kind: navigate
+        to: order_form
+        style: secondary
+    sections:
+      - id: next
+        title: "登録した受注"
+        kind: readonly
+        fields:
+          - { item: orderId, label: "受注ID", component: text, value: "10234" }
+          - { item: status, label: "ステータス", component: status, value: "処理中", variant: primary }
+
+  settings:
+    title: "設定"
+    goal: "通知と表示を自分向けに整える"
+    nav: settings
+    role: "管理者"
+    primaryAction: { id: save, label: "保存", kind: submit }
+    sections:
+      - id: notify
+        title: "通知を設定する"
+        fields:
+          - item: emailNotify
+            label: "メール通知を受け取る"
+            component: checkbox
+            default: true
+
+patterns: {}
+rules: {}

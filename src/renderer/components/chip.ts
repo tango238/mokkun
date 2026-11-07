@@ -319,11 +319,17 @@ export class Chip {
     const variant = chipField.variant ?? 'default'
     const color = variant === 'danger' ? 'error' : (CHIP_COLORS.has(variant) ? variant : 'default')
     const removable = chipField.removable ?? false
+    const displayText = (field as InputField & { value?: string | number }).value ?? field.label
 
     // インタラクティブ版 (render()) と同じクラス名。
+    const hasValue = (field as InputField & { value?: string | number }).value !== undefined && (field as InputField & { value?: string | number }).value !== ''
+    // value を表示する場合、自己ラベル型のラッパーはラベルを出さないため、キャプションと aria-label でラベルを残す
+    const captionHtml = hasValue && field.label ? `<span class="field-caption">${escapeHtml(field.label)}</span>` : ''
+    const ariaAttr = hasValue && field.label ? ` aria-label="${escapeHtml(`${field.label}: ${String(displayText)}`)}"` : ''
     const chipHtml = `
-      <span class="mokkun-chip chip chip-medium chip-${color}" data-color="${color}">
-        <span class="chip-content">${field.label ? `<span class="chip-label">${escapeHtml(field.label)}</span>` : ''}</span>
+      ${captionHtml}
+      <span class="mokkun-chip chip chip-medium chip-${color}" data-color="${color}"${ariaAttr}>
+        <span class="chip-content">${displayText !== undefined && displayText !== '' ? `<span class="chip-label">${escapeHtml(String(displayText))}</span>` : ''}</span>
         ${removable ? '<button type="button" class="chip-delete-button" aria-label="削除"><span class="chip-delete-icon" aria-hidden="true">×</span></button>' : ''}
       </span>
     `

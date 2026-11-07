@@ -6,6 +6,9 @@
 import './style.css'
 import './viewer.css'
 import { getScreenNames, getScreen } from './parser'
+import { mountViewV2, holdV2Styles, type V2Controller, type V2ViewState } from './renderer-v2'
+import { compileV2Warnings } from './parser/v2/compile-warnings'
+import { parseViewState, renderV2Controls, resolveRole, resolveViewState } from './viewer/v2-controls'
 import { renderScreen, renderWizardScreen, mountAppChrome, attachActionHandler, attachTabsBehavior, type AppChromeController, type ActionHandler } from './renderer'
 import {
   loadFromUrl,
@@ -19,9 +22,16 @@ import { initializeTheme, applyTheme, getAvailableThemes, getCurrentTheme } from
 import { highlightYaml, findScreenRange } from './viewer/yaml-highlight'
 import { initializeGoogleMapEmbedFields } from './renderer/components/google-map-embed-init'
 import type { MokkunSchema } from './types/schema'
+import type { MokkunV2Schema } from './types/schema-v2'
 
 // グローバル状態
 let currentSchema: MokkunSchema | null = null
+/** v2 文書（mokkun: 2）のとき。v2 専用レンダラーで直接描画する（currentSchema は画面名・ソート表示用のコンパイル結果） */
+let currentSchemaV2: MokkunV2Schema | null = null
+let v2Controller: V2Controller | null = null
+/** v2: ビューアーの「状態」「ロール」切替。ロール未選択（undefined）は全ロール分を表示する */
+let currentViewState: V2ViewState = 'normal'
+let currentRole: string | undefined
 let currentScreenName: string | null = null
 let currentFileName: string | null = null
 let fileLoaderCleanup: (() => void) | null = null
@@ -96,12 +106,12 @@ function syncViewerHeaderHeight(): void {
 /**
  * 画面選択プルダウンを生成
  */
-function renderScreenSelector(schema: MokkunSchema): string {
-  const screenNames = getScreenNames(schema)
+function renderScreenSelector(schema: MokkunSchema | null): string {
+  // v2 文書は view 名・タイトルを v2 スキーマから取る（旧フォーマットへ変換できなくても動く）
+  const screenNames = currentSchemaV2 ? Object.keys(currentSchemaV2.views) : schema ? getScreenNames(schema) : []
 
   const options = screenNames.map(name => {
-    const screen = getScreen(schema, name)
-    const title = screen?.title ?? name
+    const title = (currentSchemaV2 ? currentSchemaV2.views[name]?.title : schema ? getScreen(schema, name)?.title : undefined) ?? name
     const selected = name === currentScreenName ? 'selected' : ''
 
     return `<option value="${escapeHtml(name)}" ${selected}>${escapeHtml(title)} (${escapeHtml(name)})</option>`
@@ -121,6 +131,10 @@ let tabsCleanup: (() => void) | null = null
  * #app の innerHTML を差し替える前に呼ぶこと。
  */
 function teardownScreen(): void {
+  if (v2Controller) {
+    v2Controller.destroy()
+    v2Controller = null
+  }
   if (appChrome) {
     appChrome.destroy()
     appChrome = null
@@ -261,7 +275,17 @@ function attachGutter(): void {
 /**
  * アプリケーション全体をレンダリング
  */
-function renderApp(schema: MokkunSchema, screenName: string | null): void {
+function renderApp(schema: MokkunSchema | null, screenName: string | null): void {
+  // 前の v2 view を teardown する間も DADS の <style> を保持する（遷移ごとの外し付け直しを避ける）
+  const release = currentSchemaV2 ? holdV2Styles() : null
+  try {
+    renderAppInner(schema, screenName)
+  } finally {
+    release?.()
+  }
+}
+
+function renderAppInner(schema: MokkunSchema | null, screenName: string | null): void {
   const app = document.querySelector<HTMLDivElement>('#app')
   if (!app) return
 
@@ -273,8 +297,11 @@ function renderApp(schema: MokkunSchema, screenName: string | null): void {
   let screenContentHtml = ''
 
   if (screenName) {
-    const screen = getScreen(schema, screenName)
-    if (screen) {
+    const screen = schema ? getScreen(schema, screenName) : undefined
+    if (currentSchemaV2 && Object.hasOwn(currentSchemaV2.views, screenName)) {
+      // v2 は専用レンダラー。コンテナだけ出力し、app.innerHTML の後で mount する
+      screenContentHtml = '<div id="mk-v2-root"></div>'
+    } else if (screen) {
       screenContentHtml = renderScreen(screen)
     } else {
       screenContentHtml = `<div class="error">画面が見つかりません: ${escapeHtml(screenName)}</div>`
@@ -304,6 +331,7 @@ function renderApp(schema: MokkunSchema, screenName: string | null): void {
           <button type="button" class="mk-btn" id="load-yaml-btn">YAMLを読み込む</button>
           <label for="screen-selector" class="mk-label">画面:</label>
           ${screenSelectorHtml}
+          ${currentSchemaV2 && screenName ? renderV2Controls(currentSchemaV2, screenName, currentViewState, currentRole) : ''}
           <button type="button" class="mk-btn" id="source-toggle-btn" hidden>YAML を表示</button>
         </div>
       </header>
@@ -340,8 +368,39 @@ function renderApp(schema: MokkunSchema, screenName: string | null): void {
   attachEventListeners()
   syncViewerHeaderHeight()
 
+  // v2: 専用レンダラーをマウントして終了（v1 の AppHeader / tabs / アクションハンドラーは使わない）
+  const v2Root = app.querySelector<HTMLElement>('#mk-v2-root')
+  if (v2Root && currentSchemaV2 && screenName) {
+    v2Controller = mountViewV2(
+      v2Root,
+      currentSchemaV2,
+      screenName,
+      {
+        syncHash: true,
+        onNavigate: to => {
+          if (!currentSchemaV2 || !Object.hasOwn(currentSchemaV2.views, to)) return
+          currentScreenName = to
+          // 状態は画面ごとに選ぶ。遷移したら通常に戻す
+          currentViewState = 'normal'
+          updateUrlParam('screen', to)
+          updateUrlParam('state', currentViewState)
+          renderApp(schema, currentScreenName)
+        },
+        onAction: (actionId, kind, payload) => {
+          const form = v2Root.querySelector('form')
+          const data = form ? formDataToRecord(new FormData(form)) : {}
+          const extra = payload ? `\nペイロード: ${JSON.stringify(payload)}` : ''
+          if (kind === 'submit') alert(`アクション: ${actionId}${extra}\nデータ:\n${JSON.stringify(data, null, 2)}`)
+          else if (kind === 'custom') alert(`カスタムアクション: ${actionId}${extra}`)
+        },
+      },
+      { state: currentViewState, role: currentRole },
+    )
+    return
+  }
+
   // AppHeader / AppNavi をマウント
-  if (screenName) {
+  if (screenName && schema) {
     const screen = getScreen(schema, screenName)
     const mainContent = app.querySelector<HTMLElement>('.main-content')
     // AppHeader / AppNavi を初期化（コンテナは renderScreen が出力済み）
@@ -425,13 +484,25 @@ function handleFileLoad(result: FileLoadResult): void {
   }
 
   currentSchema = result.schema
+  // v2 文書はローダーが検証済みの v2 スキーマを返す（変換を経ずに描画する。currentSchema は変換できたときのみ）
+  currentSchemaV2 = result.schemaV2 ?? null
   currentFileName = result.fileName
   currentYamlText = result.content
   lastScrolledScreen = null
   sourcePaneState = loadSourcePaneState()
-  const screenNames = getScreenNames(currentSchema)
+  const screenNames = currentSchemaV2 ? Object.keys(currentSchemaV2.views) : currentSchema ? getScreenNames(currentSchema) : []
   const urlScreen = new URLSearchParams(window.location.search).get('screen')
   currentScreenName = (urlScreen && screenNames.includes(urlScreen) ? urlScreen : screenNames[0]) ?? null
+  if (currentSchemaV2) {
+    const params = new URLSearchParams(window.location.search)
+    currentRole = resolveRole(currentSchemaV2, params.get('role'))
+    currentViewState = currentScreenName ? resolveViewState(currentSchemaV2, currentScreenName, parseViewState(params.get('state'))) : 'normal'
+    // 旧フォーマットに変換したときに落ちるキーはコンソールにだけ出す（画面には出さない）
+    for (const w of compileV2Warnings(currentSchemaV2)) console.warn(`[mokkun] 旧フォーマット変換: ${w.path}: ${w.message}`)
+  } else {
+    currentRole = undefined
+    currentViewState = 'normal'
+  }
   renderApp(currentSchema, currentScreenName)
 }
 
@@ -497,20 +568,37 @@ function attachEventListeners(): void {
   if (selector) {
     selector.addEventListener('change', () => {
       const screenName = selector.value
-      if (screenName && currentSchema) {
+      if (screenName && (currentSchema || currentSchemaV2)) {
         currentScreenName = screenName
+        // 状態は画面ごと。画面を移ったら通常に戻す
+        currentViewState = 'normal'
         updateUrlParam('screen', screenName)
+        updateUrlParam('state', currentViewState)
         renderApp(currentSchema, currentScreenName)
       }
     })
   }
+
+  // v2: 状態 / ロール セレクト（URL を更新して再描画）
+  const stateSelector = document.getElementById('state-selector') as HTMLSelectElement | null
+  stateSelector?.addEventListener('change', () => {
+    currentViewState = parseViewState(stateSelector.value)
+    updateUrlParam('state', currentViewState)
+    renderApp(currentSchema, currentScreenName)
+  })
+  const roleSelector = document.getElementById('role-selector') as HTMLSelectElement | null
+  roleSelector?.addEventListener('change', () => {
+    currentRole = currentSchemaV2 ? resolveRole(currentSchemaV2, roleSelector.value) : undefined
+    updateUrlParam('role', currentRole ?? '')
+    renderApp(currentSchema, currentScreenName)
+  })
 
   // theme セレクト（URL を更新して再描画）
   const themeSelector = document.getElementById('theme-selector') as HTMLSelectElement | null
   themeSelector?.addEventListener('change', () => {
     applyTheme(themeSelector.value)
     updateUrlParam('theme', themeSelector.value)
-    if (currentSchema) renderApp(currentSchema, currentScreenName)
+    if (currentSchema || currentSchemaV2) renderApp(currentSchema, currentScreenName)
   })
 
   // YAML ペインの開閉
@@ -653,7 +741,7 @@ function renderError(message: string, showBackButton = false): void {
     const backBtn = app.querySelector('#error-back-btn')
     if (backBtn) {
       backBtn.addEventListener('click', () => {
-        if (currentSchema) {
+        if (currentSchema || currentSchemaV2) {
           renderApp(currentSchema, currentScreenName)
         } else {
           renderFileLoaderScreen()
@@ -667,7 +755,9 @@ function renderError(message: string, showBackButton = false): void {
 function updateUrlParam(key: string, value: string): void {
   try {
     const url = new URL(window.location.href)
-    url.searchParams.set(key, value)
+    // 空の値と既定の状態（normal）は URL から外す（`role=` `state=normal` を残さない）
+    if (value === '' || (key === 'state' && value === 'normal')) url.searchParams.delete(key)
+    else url.searchParams.set(key, value)
     window.history.replaceState(null, '', url)
   } catch {
     // URL 更新に失敗しても描画には影響しない

@@ -453,11 +453,17 @@ export class StatusLabel {
       default: 'grey', primary: 'blue', success: 'green', warning: 'yellow', danger: 'red', info: 'blue',
     }
     const type = Object.hasOwn(typeMap, variant) ? typeMap[variant] : 'grey'
+    const displayText = (field as InputField & { value?: string | number }).value ?? field.label
 
     // インタラクティブ版 (render()) と同じクラス名。
+    const hasValue = (field as InputField & { value?: string | number }).value !== undefined && (field as InputField & { value?: string | number }).value !== ''
+    // value を表示する場合、自己ラベル型のラッパーはラベルを出さないため、キャプションと aria-label でラベルを残す
+    const captionHtml = hasValue && field.label ? `<span class="field-caption">${escapeHtml(field.label)}</span>` : ''
+    const ariaAttr = hasValue && field.label ? ` aria-label="${escapeHtml(`${field.label}: ${String(displayText)}`)}"` : ''
     const statusHtml = `
-      <span class="mokkun-status-label status-label status-label-${type} status-label-medium" data-type="${type}">
-        <span class="status-label-content" role="status">${field.label ? `<span class="status-label-text">${escapeHtml(field.label)}</span>` : ''}</span>
+      ${captionHtml}
+      <span class="mokkun-status-label status-label status-label-${type} status-label-medium" data-type="${type}"${ariaAttr}>
+        <span class="status-label-content" role="status">${displayText !== undefined && displayText !== '' ? `<span class="status-label-text">${escapeHtml(String(displayText))}</span>` : ''}</span>
       </span>
     `
     return createFieldWrapper(field, statusHtml)
