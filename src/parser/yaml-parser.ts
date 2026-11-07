@@ -5,7 +5,8 @@
 
 import yaml from 'js-yaml'
 import { normalizeKeysDeep } from './key-normalizer'
-import { hasMokkunVersionKey, parseV2 } from './v2/parse-v2'
+import { hasMokkunVersionKey, isV2Document, parseV2, parseV2Document } from './v2/parse-v2'
+import type { MokkunV2Schema } from '../types/schema-v2'
 import type {
   MokkunSchema,
   MokkunSchemaRaw,
@@ -1661,6 +1662,45 @@ export function parseYaml(yamlText: string): ParseResult<MokkunSchema> {
           message: error instanceof Error ? error.message : 'Unknown error',
         },
       ],
+    }
+  }
+}
+
+/**
+ * YAMLテキストが v2 フォーマット（トップレベルの `mokkun: 2`）か判定する。YAML として読めない場合は false
+ */
+export function isV2Yaml(yamlText: string): boolean {
+  try {
+    return isV2Document(yaml.load(yamlText))
+  } catch {
+    return false
+  }
+}
+
+/**
+ * v2 の YAMLテキストをパースし、検証済みの MokkunV2Schema を返す（旧フォーマットへはコンパイルしない）
+ * 既存の parseYaml の挙動は変えない
+ */
+export function parseYamlV2(yamlText: string): ParseResult<MokkunV2Schema> {
+  try {
+    return parseV2Document(yaml.load(yamlText))
+  } catch (error) {
+    if (error instanceof yaml.YAMLException) {
+      return {
+        success: false,
+        errors: [
+          {
+            type: 'YAML_SYNTAX_ERROR',
+            message: error.message,
+            line: error.mark?.line,
+            column: error.mark?.column,
+          },
+        ],
+      }
+    }
+    return {
+      success: false,
+      errors: [{ type: 'YAML_SYNTAX_ERROR', message: error instanceof Error ? error.message : 'Unknown error' }],
     }
   }
 }

@@ -460,9 +460,10 @@ function validateV2(data: Obj): ParseError[] {
 }
 
 /**
- * v2 ドキュメント（yaml.load 済みの生データ）を検証し、旧フォーマットへコンパイルする
+ * v2 ドキュメント（yaml.load 済みの生データ）を検証し、検証済みの MokkunV2Schema を返す（コンパイルしない）
+ * v2 専用レンダラー（renderer-v2）の入力に使う
  */
-export function parseV2(data: unknown): ParseResult<MokkunSchema> {
+export function parseV2Document(data: unknown): ParseResult<MokkunV2Schema> {
   if (!isObject(data)) {
     return { success: false, errors: [{ type: 'SCHEMA_VALIDATION_ERROR', message: 'Root must be an object', path: '' }] }
   }
@@ -481,7 +482,29 @@ export function parseV2(data: unknown): ParseResult<MokkunSchema> {
   try {
     const errors = validateV2(data)
     if (errors.length > 0) return { success: false, errors }
-    return { success: true, data: compileV2(data as unknown as MokkunV2Schema) }
+    return { success: true, data: data as unknown as MokkunV2Schema }
+  } catch (error) {
+    return {
+      success: false,
+      errors: [
+        {
+          type: 'SCHEMA_VALIDATION_ERROR',
+          message: error instanceof Error ? error.message : 'Unknown error while validating v2 schema',
+          path: '',
+        },
+      ],
+    }
+  }
+}
+
+/**
+ * v2 ドキュメント（yaml.load 済みの生データ）を検証し、旧フォーマットへコンパイルする
+ */
+export function parseV2(data: unknown): ParseResult<MokkunSchema> {
+  const parsed = parseV2Document(data)
+  if (!parsed.success) return parsed
+  try {
+    return { success: true, data: compileV2(parsed.data) }
   } catch (error) {
     return {
       success: false,

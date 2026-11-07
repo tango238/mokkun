@@ -7,7 +7,7 @@
 import './style.css'
 
 // Import core modules
-import { parseYaml, getScreen, getScreenNames, findFieldById } from './parser'
+import { parseYaml, parseYamlV2, isV2Yaml, parseV2Document, isV2Document, getScreen, getScreenNames, findFieldById } from './parser'
 import {
   renderScreen,
   mountAppChrome,
@@ -24,7 +24,9 @@ import {
   getAvailableThemes,
   getCurrentTheme,
 } from './theme'
+import { mountViewV2, renderViewV2, type V2Controller, type V2Callbacks } from './renderer-v2'
 import type { MokkunSchema, ScreenDefinition, BuiltInThemeId } from './types'
+import type { MokkunV2Schema } from './types/schema-v2'
 
 // ============================================================================
 // Types
@@ -58,8 +60,10 @@ export interface MokkunInitOptions {
  * Mokkun instance returned by init()
  */
 export interface MokkunInstance {
-  /** Current schema */
+  /** Current schema（v2 文書のときは null。schemaV2 を使う） */
   readonly schema: MokkunSchema | null
+  /** Current v2 schema（v1 文書のときは null） */
+  readonly schemaV2: MokkunV2Schema | null
   /** Current screen name */
   readonly currentScreen: string | null
   /** Navigate to a screen */
@@ -83,6 +87,9 @@ export interface MokkunInstance {
 interface InternalState {
   container: HTMLElement
   schema: MokkunSchema | null
+  /** v2 文書（mokkun: 2）のとき。v2 専用レンダラーで直接描画する */
+  schemaV2: MokkunV2Schema | null
+  v2Controller: V2Controller | null
   currentScreenName: string | null
   appChrome: AppChromeController | null
   tabsCleanup?: (() => void) | null
@@ -99,7 +106,29 @@ interface InternalState {
  * Create a Mokkun instance with given state
  */
 function createInstance(state: InternalState): MokkunInstance {
+  /** v2 文書: 専用レンダラーで描画（v1 のコントローラーは使わない） */
+  const renderCurrentV2 = (schemaV2: MokkunV2Schema, name: string): void => {
+    state.v2Controller?.destroy()
+    const callbacks: V2Callbacks = {
+      onNavigate: to => {
+        const fromScreen = state.currentScreenName
+        instance.showScreen(to)
+        if (fromScreen) state.options.onNavigate?.(fromScreen, to)
+      },
+      onAction: (_actionId, kind) => {
+        if (kind !== 'submit') return
+        const formData = instance.getFormData()
+        if (formData) state.options.onSubmit?.(name, formData)
+      },
+    }
+    state.v2Controller = mountViewV2(state.container, schemaV2, name, callbacks)
+  }
+
   const renderCurrentScreen = (): void => {
+    if (state.schemaV2 && state.currentScreenName) {
+      renderCurrentV2(state.schemaV2, state.currentScreenName)
+      return
+    }
     if (!state.schema || !state.currentScreenName) return
 
     const screen = getScreen(state.schema, state.currentScreenName)
@@ -162,11 +191,23 @@ function createInstance(state: InternalState): MokkunInstance {
     get schema() {
       return state.schema
     },
+    get schemaV2() {
+      return state.schemaV2
+    },
     get currentScreen() {
       return state.currentScreenName
     },
 
     showScreen(screenName: string) {
+      if (state.schemaV2) {
+        if (!Object.hasOwn(state.schemaV2.views, screenName)) {
+          console.warn(`[Mokkun] Screen not found: ${screenName}`)
+          return
+        }
+        state.currentScreenName = screenName
+        renderCurrentScreen()
+        return
+      }
       if (!state.schema) return
       const screen = getScreen(state.schema, screenName)
       if (!screen) {
@@ -178,6 +219,7 @@ function createInstance(state: InternalState): MokkunInstance {
     },
 
     getScreenNames() {
+      if (state.schemaV2) return Object.keys(state.schemaV2.views)
       return state.schema ? getScreenNames(state.schema) : []
     },
 
@@ -209,6 +251,9 @@ function createInstance(state: InternalState): MokkunInstance {
     },
 
     destroy() {
+      state.v2Controller?.destroy()
+      state.v2Controller = null
+      state.schemaV2 = null
       state.appChrome?.destroy()
       state.appChrome = null
       state.tabsCleanup?.()
@@ -231,6 +276,17 @@ function createInstance(state: InternalState): MokkunInstance {
 // ============================================================================
 // Public API
 // ============================================================================
+
+/**
+ * v2 の YAML を検証して state に載せる（旧フォーマットへ変換しない）
+ */
+function loadV2(state: InternalState, yamlText: string): void {
+  const result = parseYamlV2(yamlText)
+  if (!result.success) {
+    throw new Error(`[Mokkun] YAML parse error: ${result.errors.map((e) => e.message).join(', ')}`)
+  }
+  state.schemaV2 = result.data
+}
 
 /**
  * Initialize Mokkun with the given options
@@ -258,6 +314,8 @@ async function init(options: MokkunInitOptions): Promise<MokkunInstance> {
   const state: InternalState = {
     container,
     schema: null,
+    schemaV2: null,
+    v2Controller: null,
     currentScreenName: null,
     appChrome: null,
     wizardController: null,
@@ -268,19 +326,27 @@ async function init(options: MokkunInitOptions): Promise<MokkunInstance> {
   try {
     // Load YAML
     if (options.yamlContent) {
-      const result = parseYaml(options.yamlContent)
-      if (!result.success) {
-        throw new Error(
-          `[Mokkun] YAML parse error: ${result.errors.map((e) => e.message).join(', ')}`
-        )
+      if (isV2Yaml(options.yamlContent)) {
+        loadV2(state, options.yamlContent)
+      } else {
+        const result = parseYaml(options.yamlContent)
+        if (!result.success) {
+          throw new Error(
+            `[Mokkun] YAML parse error: ${result.errors.map((e) => e.message).join(', ')}`
+          )
+        }
+        state.schema = result.data
       }
-      state.schema = result.data
     } else if (options.yamlUrl) {
       const result = await loadFromUrl(options.yamlUrl)
       if (!result.success) {
         throw new Error(`[Mokkun] Failed to load YAML: ${result.error.message}`)
       }
-      state.schema = result.schema
+      if (isV2Yaml(result.content)) {
+        loadV2(state, result.content)
+      } else {
+        state.schema = result.schema
+      }
     } else {
       throw new Error('[Mokkun] Either yamlUrl or yamlContent must be provided')
     }
@@ -329,6 +395,7 @@ export const Mokkun = {
   /** Utility functions */
   utils: {
     parseYaml,
+    parseYamlV2,
     getScreen,
     getScreenNames,
     findFieldById,
@@ -346,7 +413,11 @@ if (typeof window !== 'undefined') {
   ;(window as unknown as { Mokkun: typeof Mokkun }).Mokkun = Mokkun
 }
 
-export type { MokkunSchema, ScreenDefinition, BuiltInThemeId }
+export type { MokkunSchema, ScreenDefinition, BuiltInThemeId, MokkunV2Schema }
+
+// v2 レンダラー（DADS 準拠）
+export { renderViewV2, mountViewV2, parseYamlV2, parseV2Document, isV2Document }
+export type { V2Controller, V2Callbacks }
 
 // Export components
 export {

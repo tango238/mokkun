@@ -5,7 +5,8 @@
 
 import './style.css'
 import './viewer.css'
-import { getScreenNames, getScreen } from './parser'
+import { getScreenNames, getScreen, isV2Yaml, parseYamlV2 } from './parser'
+import { mountViewV2, type V2Controller } from './renderer-v2'
 import { renderScreen, renderWizardScreen, mountAppChrome, attachActionHandler, attachTabsBehavior, type AppChromeController, type ActionHandler } from './renderer'
 import {
   loadFromUrl,
@@ -19,9 +20,13 @@ import { initializeTheme, applyTheme, getAvailableThemes, getCurrentTheme } from
 import { highlightYaml, findScreenRange } from './viewer/yaml-highlight'
 import { initializeGoogleMapEmbedFields } from './renderer/components/google-map-embed-init'
 import type { MokkunSchema } from './types/schema'
+import type { MokkunV2Schema } from './types/schema-v2'
 
 // グローバル状態
 let currentSchema: MokkunSchema | null = null
+/** v2 文書（mokkun: 2）のとき。v2 専用レンダラーで直接描画する（currentSchema は画面名・ソート表示用のコンパイル結果） */
+let currentSchemaV2: MokkunV2Schema | null = null
+let v2Controller: V2Controller | null = null
 let currentScreenName: string | null = null
 let currentFileName: string | null = null
 let fileLoaderCleanup: (() => void) | null = null
@@ -121,6 +126,10 @@ let tabsCleanup: (() => void) | null = null
  * #app の innerHTML を差し替える前に呼ぶこと。
  */
 function teardownScreen(): void {
+  if (v2Controller) {
+    v2Controller.destroy()
+    v2Controller = null
+  }
   if (appChrome) {
     appChrome.destroy()
     appChrome = null
@@ -274,7 +283,10 @@ function renderApp(schema: MokkunSchema, screenName: string | null): void {
 
   if (screenName) {
     const screen = getScreen(schema, screenName)
-    if (screen) {
+    if (currentSchemaV2 && Object.hasOwn(currentSchemaV2.views, screenName)) {
+      // v2 は専用レンダラー。コンテナだけ出力し、app.innerHTML の後で mount する
+      screenContentHtml = '<div id="mk-v2-root"></div>'
+    } else if (screen) {
       screenContentHtml = renderScreen(screen)
     } else {
       screenContentHtml = `<div class="error">画面が見つかりません: ${escapeHtml(screenName)}</div>`
@@ -339,6 +351,26 @@ function renderApp(schema: MokkunSchema, screenName: string | null): void {
   // イベントリスナーを設定
   attachEventListeners()
   syncViewerHeaderHeight()
+
+  // v2: 専用レンダラーをマウントして終了（v1 の AppHeader / tabs / アクションハンドラーは使わない）
+  const v2Root = app.querySelector<HTMLElement>('#mk-v2-root')
+  if (v2Root && currentSchemaV2 && screenName) {
+    v2Controller = mountViewV2(v2Root, currentSchemaV2, screenName, {
+      onNavigate: to => {
+        if (!currentSchemaV2 || !Object.hasOwn(currentSchemaV2.views, to)) return
+        currentScreenName = to
+        updateUrlParam('screen', to)
+        renderApp(schema, currentScreenName)
+      },
+      onAction: (actionId, kind) => {
+        const form = v2Root.querySelector('form')
+        const data = form ? formDataToRecord(new FormData(form)) : {}
+        if (kind === 'submit') alert(`アクション: ${actionId}\nデータ:\n${JSON.stringify(data, null, 2)}`)
+        else if (kind === 'custom') alert(`カスタムアクション: ${actionId}`)
+      },
+    })
+    return
+  }
 
   // AppHeader / AppNavi をマウント
   if (screenName) {
@@ -425,6 +457,12 @@ function handleFileLoad(result: FileLoadResult): void {
   }
 
   currentSchema = result.schema
+  // v2 文書は検証済みの v2 スキーマを保持して、変換を経ずに描画する
+  currentSchemaV2 = null
+  if (isV2Yaml(result.content)) {
+    const v2 = parseYamlV2(result.content)
+    if (v2.success) currentSchemaV2 = v2.data
+  }
   currentFileName = result.fileName
   currentYamlText = result.content
   lastScrolledScreen = null

@@ -1,0 +1,35 @@
+/* Google Fonts（取得できない環境では DADS の --font-family-sans にある OS 標準フォントにフォールバック） */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100..900&display=swap');
+
+/* DADS 取り込み CSS（無改変。取得元は dads/NOTICE.md） */
+@import './dads/global.css';
+@import './dads/button.css';
+@import './dads/form-control-label.css';
+@import './dads/input-text.css';
+@import './dads/textarea.css';
+@import './dads/select.css';
+@import './dads/radio.css';
+@import './dads/checkbox.css';
+@import './dads/switch-on-off.css';
+@import './dads/date-picker.css';
+@import './dads/calendar.css';
+@import './dads/file-upload.css';
+@import './dads/chip-label.css';
+@import './dads/heading.css';
+@import './dads/notification-banner.css';
+@import './dads/step-navigation.css';
+@import './dads/table.css';
+@import './dads/page-navigation.css';
+@import './dads/description-list.css';
+@import './dads/accordion.css';
+@import './dads/modal-dialog.css';
+@import './dads/breadcrumb.css';
+@import './dads/horizontal-menu.css';
+@import './dads/menu-list.css';
+@import './dads/utility-link.css';
+@import './dads/link.css';
+@import './dads/tab.css';
+@import './dads/toc.css';
+@import './dads/list.css';
+@import './dads/divider.css';
+@import './dads/image.css';
