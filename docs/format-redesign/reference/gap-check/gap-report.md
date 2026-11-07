@@ -3,7 +3,7 @@
 - 対象ルール: `docs/format-redesign/04-yaml-authoring-rules.md`（以下 04）
 - 形式: `docs/format-redesign/02-schema-v2.md`（以下 02）, `schema-v2.json`
 - 正解の基準: `reference/dads-components-ux.md`（C:）, `reference/dads-foundations-ux.md`（F:）。必要箇所のみ DADS 原文ダンプで確認（input-text の「氏と名を空白で区切ってください」「確認メール送信で疎通を確認」など）
-- 検証対象: `scratchpad/gap/scenario-a.yaml`（住民向け 保育所入所申込）, `scenario-b.yaml`（小売 在庫管理 管理画面）と各決定ログ
+- 検証対象: `scenario-a.yaml`（住民向け 保育所入所申込）, `scenario-b.yaml`（小売 在庫管理 管理画面）と各決定ログ
 - 補助確認: v2 レンダラー（`src/renderer-v2/`）の実挙動（example はサポートテキスト「例: 」で描画、required 未指定は「※任意」、readonly は「編集不可」、states.success と error は同時にバナー描画、一覧セルはダミー生成）
 
 判定の凡例（§1）
