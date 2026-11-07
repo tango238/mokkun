@@ -4,6 +4,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import fs from 'fs'
+import yaml from 'js-yaml'
 import { parseYamlV2 } from '../parser/yaml-parser'
 import { renderViewV2, mountViewV2 as mountRaw, type V2Controller } from '../renderer-v2'
 import { loadFromUrl } from '../loader'
@@ -207,6 +208,8 @@ describe('visibleWhen', () => {
     ['select', f('src', 'select', { default: 'b', options: [{ value: 'a', label: 'A' }, { value: 'b', label: 'B' }] }), () => {}, 'b', true],
     ['checkbox multiple (1 件の選択肢)', f('src', 'checkbox', { multiple: true, default: ['a'], options: [{ value: 'a', label: 'A' }] }), () => {}, 'a', true],
     ['checkbox multiple 未選択', f('src', 'checkbox', { multiple: true, options: [{ value: 'a', label: 'A' }] }), () => {}, 'a', false],
+    ['date (既定値あり)', f('src', 'date', { default: '2026-11-14' }), () => {}, '2026-11-14', true],
+    ['date (未入力)', f('src', 'date'), () => {}, '2026-11-14', false],
     ['select multiple', f('src', 'select', { multiple: true, default: ['b'], options: [{ value: 'a', label: 'A' }, { value: 'b', label: 'B' }] }), () => {}, 'a', false],
   ]
   it.each(cases)('静的な初期表示と mount 後の評価が一致する: %s', (_name, src, _prep, equals, expected) => {
@@ -277,7 +280,10 @@ describe('field.width / date カレンダーボタン', () => {
   })
   it('props.calendar でカレンダーボタン、inline は月表示', () => {
     const root = dom(renderViewV2(build({ sections: [section([f('a', 'date', { props: { calendar: true } }), f('b', 'date', { inline: true })])] }), 'v'))
-    expect(root.querySelector('[data-field="a"] button.dads-date-picker__calendar-button[aria-haspopup]')).not.toBeNull()
+    const btn = root.querySelector('[data-field="a"] button.dads-date-picker__calendar-button')!
+    expect(btn.getAttribute('aria-disabled')).toBe('true')
+    expect(btn.hasAttribute('aria-haspopup')).toBe(false)
+    expect(btn.hasAttribute('aria-expanded')).toBe(false)
     expect(root.querySelector('[data-field="b"] .dads-calendar')).not.toBeNull()
     expect(root.querySelector('[data-field="b"] .dads-date-picker__calendar-button')).toBeNull()
   })
@@ -397,7 +403,10 @@ describe('ローダー / Mokkun.init', () => {
   it('v2 文書はローダーを 1 回通るだけで schemaV2 を返す', async () => {
     const text = fs.readFileSync('examples/v2/order-entry.yaml', 'utf-8')
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, text: async () => text }))
+    const load = vi.spyOn(yaml, 'load')
     const r = await loadFromUrl('http://localhost/order-entry.yaml')
+    expect(load).toHaveBeenCalledTimes(1)
+    load.mockRestore()
     expect(r.success).toBe(true)
     if (r.success) {
       expect(r.schemaV2!.mokkun).toBe(2)
@@ -441,5 +450,74 @@ views:
     expect(document.querySelector(STYLE)).toBe(style)
     inst.destroy()
     expect(document.querySelector(STYLE)).toBeNull()
+  })
+})
+
+describe('ページ送りと checkbox の値', () => {
+  it('pageSize が無ければページ送りを出さない', () => {
+    const s = build({ sections: [{ id: 'l', title: 'L', kind: 'list', list: { columns: [{ id: 'c', label: 'C' }] } }] })
+    expect(dom(renderViewV2(s, 'v')).querySelector('.dads-page-navigation')).toBeNull()
+  })
+  it('単一 checkbox は value="true"', () => {
+    const root = dom(renderViewV2(build({ sections: [section([f('c', 'checkbox')])] }), 'v'))
+    expect(root.querySelector('input[type="checkbox"]')!.getAttribute('value')).toBe('true')
+  })
+})
+
+describe('挿入される <style>', () => {
+  it('DADS と mokkun-v2.css の実際の内容を含む', () => {
+    mountViewV2(container, build({}), 'v')
+    const css = document.querySelector(STYLE)!.textContent!
+    expect(css).toContain('.dads-select__control')
+    expect(css).toContain('[data-width="full"]')
+  })
+})
+
+describe('repeatable の再採番とフォーカス', () => {
+  it('既知の接尾辞だけを再採番し、a__2-b のような item 名は壊さない', () => {
+    const s = build({ sections: [{ id: 'r', title: 'R', repeatable: { min: 1 }, fields: [f('x__2-b', 'text', { help: 'h' })] }] })
+    mountViewV2(container, s, 'v')
+    container.querySelector<HTMLElement>('[data-repeat-add]')!.click()
+    const input = container.querySelectorAll<HTMLInputElement>('input[name^="x__2-b"]')
+    expect(Array.from(input).map(i => i.name)).toEqual(['x__2-b__1', 'x__2-b__2'])
+    expect(input[1].id).toBe('v-x__2-b__2')
+    expect(input[1].getAttribute('aria-describedby')).toBe('v-x__2-b__2-support')
+  })
+  it('削除後は追加ボタンにフォーカスが移る', () => {
+    const s = build({ sections: [{ id: 'r', title: 'R', repeatable: { min: 1, max: 3 }, fields: [f('x', 'text')] }] })
+    mountViewV2(container, s, 'v')
+    const add = container.querySelector<HTMLElement>('[data-repeat-add]')!
+    add.click()
+    container.querySelectorAll<HTMLElement>('[data-repeat-remove]')[1].click()
+    expect(document.activeElement).toBe(add)
+  })
+})
+
+describe('syncHash', () => {
+  const s = build({ secondaryActions: [{ id: 'go', label: 'Go', kind: 'navigate', to: 'v' }] })
+  it('既定では location.hash を書き換えない', () => {
+    window.location.hash = ''
+    const seen: string[] = []
+    mountViewV2(container, s, 'v', { onNavigate: v => seen.push(v) })
+    container.querySelector<HTMLElement>('[data-action="go"]')!.click()
+    expect(seen).toEqual(['v'])
+    expect(window.location.hash).toBe('')
+  })
+  it('syncHash: true のとき書き換える（ナビ・アクション共通）', () => {
+    mountViewV2(container, s, 'v', { syncHash: true })
+    container.querySelector<HTMLElement>('[data-action="go"]')!.click()
+    expect(window.location.hash).toBe('#v')
+  })
+  it('Mokkun.init の syncHash オプション（既定 false）', async () => {
+    const yamlText = 'mokkun: 2\napp: { name: A }\nviews:\n  a:\n    title: A\n    goal: G\n    primaryAction: { id: go, label: Go, kind: navigate, to: b }\n    sections: []\n  b:\n    title: B\n    goal: G\n    sections: []\n'
+    window.location.hash = ''
+    const a = await Mokkun.init({ container, yamlContent: yamlText })
+    container.querySelector<HTMLElement>('[data-action="go"]')!.click()
+    expect(window.location.hash).toBe('')
+    a.destroy()
+    const b = await Mokkun.init({ container, yamlContent: yamlText, syncHash: true })
+    container.querySelector<HTMLElement>('[data-action="go"]')!.click()
+    expect(window.location.hash).toBe('#b')
+    b.destroy()
   })
 })

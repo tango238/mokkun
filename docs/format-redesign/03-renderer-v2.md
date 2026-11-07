@@ -108,6 +108,7 @@ interface V2Controller { destroy(): void }
 
 - DADS の `global.css` は `html` / `a` / `:focus-visible` などの要素セレクタと `:root` のトークンを含む。ライブラリの `mokkun.css` に含めると v1 画面まで再スタイルされるため、`dads.css` と `mokkun-v2.css` は `?inline` で文字列として取り込み、v2 を mount している間だけ `<style id="mokkun-v2-styles">` として挿入する（最後の view を destroy すると外れる。画面遷移では古い view を外す間も保持し、付け直さない）。
 - `dads.css` の先頭は Google Fonts（Noto Sans JP）の `@import url(...)`。mount 時にこの外部 URL へ接続するため、CSP を設定する環境では `style-src` に `https://fonts.googleapis.com`、`font-src` に `https://fonts.gstatic.com` が必要。取得できなければ OS のサンセリフにフォールバックする。
+- `:where(.mokkun-v2)` によるリセットは詳細度が v1 の要素セレクタ（`p` / `h1-h6`）と同じで、「後から挿入される v2 の `<style>` が勝つ」ことに依存する。そのため `mokkun.css` は `<head>` の `<link>` で読み込むこと（v2 の `<style>` は mount 時に `<head>` の末尾へ追加される）。
 - v1 の `style.css` には `p` / `h1-h6` / `input[type=number]` などの非スコープ規則がある。`mokkun-v2.css` は `.mokkun-v2` 配下でそれらを打ち消す。
 
 ## 判断の記録

@@ -41,10 +41,10 @@ function renderPicker(c: Ctl): string {
   const ymd = parseDate(c.value)
   const inputs = attrs({ 'data-error': !!c.error, 'data-readonly': c.f.readonly === true })
   const error = c.error ? `\n      <p id="${esc(c.errorId)}" class="dads-date-picker__error-text">${esc(c.error)}</p>` : ''
-  // props.calendar: 静的なカレンダーボタン（ポップオーバーは出さない）
+  // props.calendar: 静的なカレンダーボタン（モック。ポップオーバーは出さず aria-disabled、上流のクラスは維持）
   const calendar =
     c.f.props?.calendar === true
-      ? `\n        <button${attrs({ class: 'dads-date-picker__calendar-button', type: 'button', 'aria-haspopup': 'dialog', 'aria-expanded': 'false', disabled: c.f.readonly === true, 'data-js-calendar-button': true })}>${calendarButtonIcon}</button>`
+      ? `\n        <button${attrs({ class: 'dads-date-picker__calendar-button', type: 'button', 'aria-disabled': 'true', 'data-js-calendar-button': true })}>${calendarButtonIcon}</button>`
       : ''
   return wrapGroup(
     c,

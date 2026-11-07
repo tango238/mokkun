@@ -44,6 +44,8 @@ export interface MokkunInitOptions {
   yamlContent?: string
   /** Initial theme ('light' | 'dark') */
   theme?: BuiltInThemeId | string
+  /** v2 文書で、画面遷移時に location.hash も書き換える（既定 false） */
+  syncHash?: boolean
   /** Initial screen to display */
   initialScreen?: string
   /** Callback when ready */
@@ -112,6 +114,7 @@ function createInstance(state: InternalState): MokkunInstance {
     const release = holdV2Styles()
     state.v2Controller?.destroy()
     const callbacks: V2Callbacks = {
+      syncHash: state.options.syncHash === true,
       onNavigate: to => {
         const fromScreen = state.currentScreenName
         instance.showScreen(to)

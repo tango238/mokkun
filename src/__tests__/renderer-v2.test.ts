@@ -121,8 +121,10 @@ describe('order_list', () => {
     expect(root.querySelector('nav.dads-page-navigation')).not.toBeNull()
     expect(root.querySelectorAll('tbody tr').length).toBe(3)
     expect(root.querySelector('[data-empty][hidden]')!.textContent).toBe('該当する受注はありません')
-    // 前後のページが無いときはボタンを出さない（無効にもしない）
-    expect(root.querySelectorAll('nav.dads-page-navigation button').length).toBe(0)
+    // pageSize があれば 1 ページ目の見え方（カウンターと「次のページ」のみ。前のページは出さない）
+    expect(root.querySelector('.dads-page-navigation__counter')!.textContent).toBe('1 / 5')
+    expect(root.querySelectorAll('nav.dads-page-navigation button').length).toBe(1)
+    expect(root.querySelector('nav.dads-page-navigation [data-control="prev"]')).toBeNull()
     expect(root.querySelector('figure.dads-table[data-row-hover-highlight] .dads-table__caption')).not.toBeNull()
   })
 })
@@ -263,7 +265,7 @@ describe('mountViewV2', () => {
 
   it('確認ダイアログ: アクションで開き、確定で実行される', () => {
     const seen: string[] = []
-    mountViewV2(container, schema, 'order_form', { onNavigate: v => seen.push(v) })
+    mountViewV2(container, schema, 'order_form', { onNavigate: v => seen.push(v), syncHash: true })
     const dialog = container.querySelector<HTMLDialogElement>('dialog')!
     expect(dialog.open).toBe(false)
     container.querySelector<HTMLElement>('[data-action="cancel"]')!.click()
@@ -278,7 +280,7 @@ describe('mountViewV2', () => {
 
   it('グローバルナビ・navigate アクションで onNavigate を呼ぶ', () => {
     const seen: string[] = []
-    mountViewV2(container, schema, 'order_list', { onNavigate: v => seen.push(v) })
+    mountViewV2(container, schema, 'order_list', { onNavigate: v => seen.push(v), syncHash: true })
     container.querySelector<HTMLElement>('.mk2-globalnav a[data-nav-view="settings"]')!.click()
     container.querySelector<HTMLElement>('[data-action="new_order"]')!.click()
     expect(seen).toEqual(['settings', 'order_form'])

@@ -3,7 +3,8 @@
  * YAMLファイルの読み込み機能を提供
  */
 
-import { parseYaml, parseYamlV2, isV2Yaml, compileV2, formatParseErrors } from '../parser'
+import yaml from 'js-yaml'
+import { parseYaml, parseV2Document, isV2Document, compileV2, formatParseErrors } from '../parser'
 import type { MokkunSchema } from '../types/schema'
 import type { MokkunV2Schema } from '../types/schema-v2'
 import type { ParseError } from '../parser/yaml-parser'
@@ -161,9 +162,17 @@ function parseYamlContent(
   fileName: string,
   source: 'file' | 'url' | 'drop'
 ): FileLoadResult {
-  if (isV2Yaml(content)) {
-    // v2 は 1 回だけ検証し、旧フォーマットへの変換結果（画面名の一覧など）は補助として持たせる
-    const v2 = parseYamlV2(content)
+  // YAML は 1 回だけ読む。v2 は読み込み済みの値をそのまま検証する（読めないときは parseYaml がエラー内容を作る）
+  let loaded: unknown
+  let readable = true
+  try {
+    loaded = yaml.load(content)
+  } catch {
+    readable = false
+  }
+
+  if (readable && isV2Document(loaded)) {
+    const v2 = parseV2Document(loaded)
     if (!v2.success) {
       return {
         success: false,
@@ -175,6 +184,7 @@ function parseYamlContent(
         },
       }
     }
+    // 旧フォーマットへの変換結果は補助（画面名など）。変換できなくても v2 の描画には影響しない
     let compiled: MokkunSchema | null = null
     try {
       compiled = compileV2(v2.data)

@@ -15,6 +15,10 @@ function findField(scope: ParentNode, item: string): HTMLElement | undefined {
 
 /** 項目の現在値。複数選択（data-multiple）は選択値の配列、単一 checkbox / switch は 'true' / 'false' */
 function readValue(field: HTMLElement): string | string[] {
+  if (field.dataset.component === 'date' && !field.querySelector('.dads-calendar')) {
+    const parts = ['year', 'month', 'day'].map(p => field.querySelector<HTMLInputElement>(`input[data-js-${p}-input]`)?.value.trim() ?? '')
+    return parts.every(p => p === '') ? '' : parts.join('-')
+  }
   const radios = Array.from(field.querySelectorAll<HTMLInputElement>('input[type="radio"]'))
   if (radios.length > 0) return radios.find(r => r.checked)?.value ?? ''
   const checks = Array.from(field.querySelectorAll<HTMLInputElement>('input[type="checkbox"]'))

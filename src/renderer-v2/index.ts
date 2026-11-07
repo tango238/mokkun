@@ -21,6 +21,8 @@ export interface V2Callbacks {
   onNavigate?: (view: string) => void
   /** navigate 以外のアクション（submit / custom / reset）を実行したとき */
   onAction?: (actionId: string, kind: string) => void
+  /** true のとき、遷移時に location.hash も書き換える（既定 false） */
+  syncHash?: boolean
 }
 
 export interface V2Controller {

@@ -184,7 +184,7 @@
   position: sticky;
   bottom: 0;
   z-index: 10;
-  margin-top: 24px;
+  margin-top: 32px;
   background-color: var(--color-neutral-white);
   box-shadow: var(--elevation-1);
   padding: 16px;
@@ -210,10 +210,17 @@
   padding-top: 32px;
 }
 
-.mk2-section:first-child {
+/* 最初に表示されるセクションは上の罫線・余白を持たない（先頭が visibleWhen で隠れている場合も 2 つ先まで対応） */
+.mk2-section:not([hidden]):first-child,
+[hidden]:first-child + .mk2-section:not([hidden]),
+[hidden]:first-child + [hidden] + .mk2-section:not([hidden]) {
   margin-top: 0;
   border-top: 0;
   padding-top: 0;
+}
+
+.mk2-sections > .mk2-accordion-group:first-child {
+  margin-top: 0;
 }
 
 .mk2-section__purpose {
@@ -367,7 +374,7 @@
 }
 
 /* 入力欄は列幅いっぱいに広げる。field.width があればその幅（xs ≈ 6rem / sm ≈ 10rem / md ≈ 20rem / lg ≈ 30rem） */
-.mk2-fields :is(.dads-input-text__input, .dads-textarea__textarea, .dads-select, .dads-select__select) {
+.mk2-fields :is(.dads-input-text__input, .dads-textarea__textarea, .dads-select, .dads-select__control, .dads-select__select) {
   width: 100%;
 }
 
@@ -389,6 +396,7 @@
 
 .mk2-fields > [data-width="full"] {
   --mk2-field-width: 100%;
+  grid-column: 1 / -1;
 }
 
 /* width 指定は 100% の規則より優先（詳細度を上げて上書き） */
@@ -398,7 +406,7 @@
   width: var(--mk2-field-width);
 }
 
-.mk2-fields > [data-width] :is(.dads-input-text__input, .dads-textarea__textarea, .dads-select__select) {
+.mk2-fields > [data-width] :is(.dads-input-text__input, .dads-textarea__textarea, .dads-select__control, .dads-select__select) {
   width: 100%;
 }
 

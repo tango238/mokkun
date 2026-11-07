@@ -77,6 +77,7 @@ export function renderCheckbox(c: Ctl): string {
     class: 'dads-checkbox__input',
     type: 'checkbox',
     name: c.name,
+    value: 'true',
     checked,
     required: c.f.required === true,
     disabled: c.f.readonly === true,

@@ -37,8 +37,8 @@ export function attachV2Behavior(root: HTMLElement, callbacks: V2Callbacks): () 
   const ac = new AbortController()
   const { signal } = ac
 
-  const navigate = (view: string, setHash: boolean) => {
-    if (setHash) {
+  const navigate = (view: string) => {
+    if (callbacks.syncHash === true) {
       try {
         window.location.hash = view
       } catch {
@@ -51,7 +51,7 @@ export function attachV2Behavior(root: HTMLElement, callbacks: V2Callbacks): () 
   const run = (button: HTMLElement) => {
     const kind = button.dataset.actionKind ?? 'custom'
     const to = button.dataset.navigateTo
-    if (kind === 'navigate' && to) return navigate(to, true)
+    if (kind === 'navigate' && to) return navigate(to)
     if (kind === 'reset') {
       root.querySelector('form')?.reset()
       restoreAfterReset(root)
@@ -69,7 +69,7 @@ export function attachV2Behavior(root: HTMLElement, callbacks: V2Callbacks): () 
       if (navLink) {
         ev.preventDefault()
         closeAllSubmenus(root)
-        navigate(navLink.dataset.navView!, true)
+        navigate(navLink.dataset.navView!)
         return
       }
       const toggle = target.closest<HTMLElement>('[data-submenu-toggle]')

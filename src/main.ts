@@ -366,6 +366,7 @@ function renderAppInner(schema: MokkunSchema | null, screenName: string | null):
   const v2Root = app.querySelector<HTMLElement>('#mk-v2-root')
   if (v2Root && currentSchemaV2 && screenName) {
     v2Controller = mountViewV2(v2Root, currentSchemaV2, screenName, {
+      syncHash: true,
       onNavigate: to => {
         if (!currentSchemaV2 || !Object.hasOwn(currentSchemaV2.views, to)) return
         currentScreenName = to

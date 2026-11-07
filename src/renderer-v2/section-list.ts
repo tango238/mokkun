@@ -7,7 +7,7 @@ import type { InputField } from '../types/schema'
 import type { ListColumnV2, SectionV2 } from '../types/schema-v2'
 import { generateDummyData } from '../renderer/utils/dummy-data'
 import { domId, type ViewContext } from './context'
-import { sortIcons, sortSvg } from './icons'
+import { pageNavNext, sortIcons, sortSvg } from './icons'
 import { attrs, esc } from './util'
 
 const DUMMY_ROWS = 3
@@ -106,6 +106,13 @@ export function renderList(section: SectionV2, ctx: ViewContext): string {
     ? `<div class="mk2-list__search"><span class="dads-input-text"><input class="dads-input-text__input" type="search" data-size="md" aria-label="${esc(section.title)}を検索"></span></div>`
     : ''
   const pageSize = list.paging?.pageSize
+  // ページが 1 つだけならページ送りは出さない（DADS）。pageSize があるときは「1 ページ目」の見え方を示す（upstream first-page.html）
+  const paging = pageSize
+    ? `<nav class="dads-page-navigation" aria-label="ページ">
+  <span class="dads-page-navigation__counter">1 / 5</span>
+  <button class="dads-button" type="button" data-type="text" data-size="md" data-control="next">次のページ${pageNavNext}</button>
+</nav>`
+    : ''
   return `<div class="mk2-list" data-list="${esc(section.id)}"${attrs({ 'data-page-size': pageSize })}>
 ${search}
 <figure class="dads-table" data-row-hover-highlight${selection ? ' data-selectable' : ''}>
@@ -122,8 +129,6 @@ ${search}
   </table>
 </figure>
 ${empty ? `<p class="dads-form-control-label__support-text mk2-empty" data-empty hidden>${esc(empty)}</p>` : ''}
-<nav class="dads-page-navigation" aria-label="ページ">
-  <span class="dads-page-navigation__counter">1 / 1</span>
-</nav>
+${paging}
 </div>`
 }

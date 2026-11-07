@@ -2,9 +2,10 @@
  * repeatable: グループの追加・削除、添字の再採番、min / max の反映
  */
 
-/** 添字トークン `__<n>`。id / name の末尾か、`-` / 空白の直前にあるものだけを対象にする */
-const INDEX_TOKEN = /__\d+(?=$|[-\s])/
-const INDEX_TOKEN_G = /__\d+(?=$|[-\s])/g
+/** 添字トークン `__<n>`。id / name の末尾か空白の直前、またはこのレンダラーが付ける既知の接尾辞（-support / -error / -1 など）の直前だけを対象にする（`a__2-b` は書き換えない） */
+const SUFFIX = '-(?:support|error|label|button|selected|list|year|month|day|\\d+)'
+const INDEX_TOKEN = new RegExp(`__\\d+(?=$|\\s|${SUFFIX}(?:$|\\s))`)
+const INDEX_TOKEN_G = new RegExp(INDEX_TOKEN.source, 'g')
 const INDEX_ATTRS = ['id', 'for', 'name', 'list', 'aria-describedby', 'aria-labelledby', 'aria-controls']
 
 /** DOM id / name に付く `__<n>` を新しい番号へ置き換え、見出しの番号も更新する */
@@ -64,6 +65,8 @@ export function handleRepeatClick(target: Element): boolean {
     groupsOf(rep).forEach((g, i) => reindex(g, i + 1))
   }
   sync(rep)
+  // 削除したボタンは消えるため、フォーカスを追加ボタンへ移す（max で無効だった追加ボタンは sync 後に使える）
+  if (remove) rep.querySelector<HTMLElement>('[data-repeat-add]')?.focus()
   return true
 }
 
