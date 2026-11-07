@@ -5,6 +5,7 @@
 
 import yaml from 'js-yaml'
 import { normalizeKeysDeep } from './key-normalizer'
+import { isV2Document, parseV2 } from './v2/parse-v2'
 import type {
   MokkunSchema,
   MokkunSchemaRaw,
@@ -1616,7 +1617,14 @@ export function parseYaml(yamlText: string): ParseResult<MokkunSchema> {
   try {
     // Parse YAML
     // camelCase（正規形）→ 内部 snake_case へキーを変換（snake_case はそのまま通す）
-    const data = normalizeKeysDeep(yaml.load(yamlText))
+    const loaded = yaml.load(yamlText)
+
+    // v2 フォーマット（mokkun: 2）は camelCase ネイティブのためキー正規化を通さず専用パーサーへ
+    if (isV2Document(loaded)) {
+      return parseV2(loaded)
+    }
+
+    const data = normalizeKeysDeep(loaded)
 
     // Validate schema
     const errors = validateSchema(data)

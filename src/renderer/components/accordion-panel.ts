@@ -14,6 +14,7 @@
 import { createElement, generateId } from '../utils/dom'
 import { escapeHtml, createFieldWrapper } from '../utils/field-helpers'
 import type { InputField } from '../../types/schema'
+import { renderFields } from './form-fields'
 
 // =============================================================================
 // Types
@@ -634,6 +635,23 @@ export class AccordionPanel {
   // ===========================================================================
 
   static renderField(field: InputField): string {
+    const children = (field as InputField & { fields?: InputField[] }).fields
+    if (Array.isArray(children) && children.length > 0) {
+      // 子フィールドを持つ場合: <details> で開閉できる静的パネルとして描画する
+      const open = (field as InputField & { defaultOpen?: boolean }).defaultOpen ? ' open' : ''
+      const panelHtml = `
+      <div class="mokkun-accordion">
+        <details class="accordion-item"${open}>
+          <summary class="accordion-trigger">
+            ${field.label ? `<span>${escapeHtml(field.label)}</span>` : ''}
+            <span class="accordion-icon">▼</span>
+          </summary>
+          <div class="accordion-content">${renderFields(children)}</div>
+        </details>
+      </div>
+    `
+      return createFieldWrapper(field, panelHtml)
+    }
     const accordionHtml = `
       <div class="mokkun-accordion">
         <div class="accordion-item">

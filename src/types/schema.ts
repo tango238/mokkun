@@ -171,6 +171,8 @@ export interface ScreenDefinition {
   title: string
   /** 画面の説明 */
   description?: string
+  /** 画面の目的（v2 の goal など） */
+  purpose?: string
   /** アプリケーションヘッダー設定 */
   app_header?: AppHeaderConfigSchema
   /** アプリケーションナビゲーション設定 */
@@ -1484,6 +1486,8 @@ export interface AccordionPanelField extends BaseInputField {
   type: 'accordion_panel'
   /** 初期状態で開く */
   defaultOpen?: boolean
+  /** パネル内に表示するフィールド（静的レンダリング用） */
+  fields?: InputField[]
 }
 
 /**

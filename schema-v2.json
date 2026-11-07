@@ -1,0 +1,795 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/tango238/mokkun/main/schema-v2.json",
+  "title": "Mokkun v2 format",
+  "description": "mokkun v2 フォーマット（App / Flow / View / Section / Field / Component の6層）。仕様: docs/format-redesign/02-schema-v2.md",
+  "type": "object",
+  "properties": {
+    "mokkun": {
+      "const": 2,
+      "description": "フォーマットバージョン。旧フォーマットとの判別に使う"
+    },
+    "app": {
+      "$ref": "#/definitions/App"
+    },
+    "flows": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/Flow"
+      }
+    },
+    "views": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "$ref": "#/definitions/View"
+      }
+    },
+    "patterns": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/Pattern"
+      }
+    },
+    "rules": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/Rule"
+      }
+    }
+  },
+  "required": [
+    "mokkun",
+    "app",
+    "views"
+  ],
+  "additionalProperties": false,
+  "definitions": {
+    "Condition": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "type": "string",
+          "minLength": 1
+        },
+        "equals": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "item",
+        "equals"
+      ],
+      "description": "表示条件（item の値が equals のとき表示）"
+    },
+    "Option": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
+        },
+        "label": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "label"
+      ]
+    },
+    "Rule": {
+      "type": "object",
+      "properties": {
+        "required": {
+          "type": [
+            "boolean",
+            "string"
+          ]
+        },
+        "min": {
+          "type": [
+            "number",
+            "string"
+          ]
+        },
+        "max": {
+          "type": [
+            "number",
+            "string"
+          ]
+        },
+        "pattern": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "regex": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "required": [
+                "regex",
+                "message"
+              ]
+            }
+          ]
+        },
+        "custom": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Notice": {
+      "type": "object",
+      "properties": {
+        "variant": {
+          "enum": [
+            "info",
+            "success",
+            "warning",
+            "error"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "dismissible": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "message"
+      ]
+    },
+    "NavItem": {
+      "type": "object",
+      "properties": {
+        "view": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label": {
+          "type": "string"
+        },
+        "icon": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "view"
+      ]
+    },
+    "NavGroup": {
+      "type": "object",
+      "properties": {
+        "group": {
+          "type": "string",
+          "minLength": 1
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/NavItem"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "group",
+        "items"
+      ]
+    },
+    "App": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "layout": {
+          "enum": [
+            "shell",
+            "plain"
+          ]
+        },
+        "header": {
+          "type": "object",
+          "properties": {
+            "systemName": {
+              "type": "string"
+            },
+            "userName": {
+              "type": "string"
+            },
+            "userEmail": {
+              "type": "string"
+            },
+            "tenantName": {
+              "type": "string"
+            },
+            "helpUrl": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "navigation": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/NavGroup"
+          }
+        },
+        "notifications": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Notice"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "name"
+      ]
+    },
+    "FlowStep": {
+      "type": "object",
+      "properties": {
+        "view": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "view"
+      ]
+    },
+    "Flow": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "outcome": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role": {
+          "type": "string"
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/FlowStep"
+          }
+        },
+        "progress": {
+          "enum": [
+            "stepper",
+            "none"
+          ]
+        },
+        "resumable": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "outcome",
+        "steps"
+      ]
+    },
+    "Action": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": [
+            "submit",
+            "navigate",
+            "custom",
+            "reset"
+          ]
+        },
+        "to": {
+          "type": "string"
+        },
+        "placement": {
+          "enum": [
+            "header",
+            "footer",
+            "sticky"
+          ]
+        },
+        "style": {
+          "enum": [
+            "primary",
+            "secondary",
+            "danger"
+          ]
+        },
+        "confirm": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "minLength": 1
+            },
+            "danger": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "message"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "label"
+      ]
+    },
+    "StateMessage": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "message"
+      ]
+    },
+    "List": {
+      "type": "object",
+      "properties": {
+        "columns": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "label": {
+                "type": "string"
+              },
+              "sortable": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "label"
+            ]
+          }
+        },
+        "rowActions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1
+              },
+              "kind": {
+                "enum": [
+                  "submit",
+                  "navigate",
+                  "custom",
+                  "reset"
+                ]
+              },
+              "to": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "label"
+            ]
+          }
+        },
+        "search": {
+          "type": "boolean"
+        },
+        "paging": {
+          "type": "object",
+          "properties": {
+            "pageSize": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        "selection": {
+          "enum": [
+            "none",
+            "single",
+            "multiple"
+          ]
+        },
+        "empty": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "columns"
+      ]
+    },
+    "Field": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label": {
+          "type": "string"
+        },
+        "component": {
+          "enum": [
+            "text",
+            "number",
+            "textarea",
+            "date",
+            "time",
+            "duration",
+            "file",
+            "photo_grid",
+            "select",
+            "combobox",
+            "radio",
+            "checkbox",
+            "toggle",
+            "browser",
+            "badge",
+            "chip",
+            "status",
+            "timeline",
+            "map"
+          ]
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "whyRequired": {
+          "type": "string"
+        },
+        "example": {
+          "type": "string"
+        },
+        "help": {
+          "type": "string"
+        },
+        "format": {
+          "type": "string"
+        },
+        "default": {},
+        "options": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Option"
+          }
+        },
+        "multiple": {
+          "type": "boolean"
+        },
+        "variant": {
+          "type": "string"
+        },
+        "inline": {
+          "type": "boolean"
+        },
+        "accept": {
+          "type": "string"
+        },
+        "value": {},
+        "readonly": {
+          "type": "boolean"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/definitions/Rule"
+              }
+            ]
+          }
+        },
+        "visibleWhen": {
+          "$ref": "#/definitions/Condition"
+        },
+        "props": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "item",
+        "label",
+        "component"
+      ]
+    },
+    "Section": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "purpose": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "form",
+            "list",
+            "readonly",
+            "summary"
+          ]
+        },
+        "reveal": {
+          "enum": [
+            "open",
+            "collapsed"
+          ]
+        },
+        "repeatable": {
+          "type": "object",
+          "properties": {
+            "min": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "max": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "addLabel": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "note": {
+          "type": "string"
+        },
+        "columns": {
+          "enum": [
+            1,
+            2,
+            3
+          ]
+        },
+        "visibleWhen": {
+          "$ref": "#/definitions/Condition"
+        },
+        "use": {
+          "type": "string"
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Field"
+          }
+        },
+        "list": {
+          "$ref": "#/definitions/List"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title"
+      ]
+    },
+    "Pattern": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "purpose": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "form",
+            "list",
+            "readonly",
+            "summary"
+          ]
+        },
+        "reveal": {
+          "enum": [
+            "open",
+            "collapsed"
+          ]
+        },
+        "repeatable": {
+          "type": "object",
+          "properties": {
+            "min": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "max": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "addLabel": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "note": {
+          "type": "string"
+        },
+        "columns": {
+          "enum": [
+            1,
+            2,
+            3
+          ]
+        },
+        "visibleWhen": {
+          "$ref": "#/definitions/Condition"
+        },
+        "use": {
+          "type": "string"
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Field"
+          }
+        },
+        "list": {
+          "$ref": "#/definitions/List"
+        }
+      },
+      "additionalProperties": false,
+      "description": "再利用可能な Section（id / title は省略可）"
+    },
+    "View": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "goal": {
+          "type": "string",
+          "minLength": 1
+        },
+        "nav": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "layout": {
+          "enum": [
+            "stack",
+            "tabs",
+            "sectioned"
+          ]
+        },
+        "description": {
+          "type": "string"
+        },
+        "primaryAction": {
+          "$ref": "#/definitions/Action"
+        },
+        "secondaryActions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Action"
+          }
+        },
+        "states": {
+          "type": "object",
+          "properties": {
+            "empty": {
+              "$ref": "#/definitions/StateMessage"
+            },
+            "loading": {
+              "$ref": "#/definitions/StateMessage"
+            },
+            "success": {
+              "$ref": "#/definitions/StateMessage"
+            },
+            "error": {
+              "$ref": "#/definitions/StateMessage"
+            }
+          },
+          "additionalProperties": false
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Section"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "title",
+        "goal",
+        "sections"
+      ]
+    }
+  }
+}
