@@ -68,9 +68,25 @@ export function sortTable(button: HTMLElement): void {
   const col = (th as HTMLTableCellElement).cellIndex
   const dir = next === 'ascending' ? 1 : -1
   const rows = Array.from(body.rows)
-  const text = (r: HTMLTableRowElement) => r.cells[col]?.textContent?.trim() ?? ''
-  rows.sort((a, b) => dir * text(a).localeCompare(text(b), 'ja', { numeric: true }))
+  // 数値・日付のセルは data-sort-value（数・ISO 日付）で比べる。表示は桁区切りや日本語表記で順序が崩れるため
+  const cell = (r: HTMLTableRowElement) => r.cells[col]
+  const text = (r: HTMLTableRowElement) => cell(r)?.dataset.sortValue ?? cell(r)?.textContent?.trim() ?? ''
+  const num = (t: string) => (/^-?\d+(\.\d+)?$/.test(t) ? Number(t) : Number.NaN)
+  const compare = (a: string, b: string) =>
+    Number.isNaN(num(a)) || Number.isNaN(num(b)) ? a.localeCompare(b, 'ja', { numeric: true }) : num(a) - num(b)
+  rows.sort((a, b) => dir * compare(text(a), text(b)))
   body.append(...rows)
+  applyPage(table.closest<HTMLElement>('.mk2-list'))
+}
+
+/** rows と pageSize があるときは、並べ替えた全行の先頭 pageSize 件だけを表示する（2 ページ目以降は hidden） */
+export function applyPage(list: HTMLElement | null): void {
+  if (!list || !list.hasAttribute('data-paged')) return
+  const size = Number(list.dataset.pageSize)
+  if (!Number.isInteger(size) || size < 1) return
+  Array.from(list.querySelectorAll<HTMLTableRowElement>('[data-list-body] tr')).forEach((r, i) => {
+    r.hidden = i >= size
+  })
 }
 
 // ---- tab ----

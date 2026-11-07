@@ -64,19 +64,45 @@ export function dummyCell(col: ListColumnV2, row: number, ctx?: ViewContext): st
 }
 
 export interface ListRow {
-  /** 行 ID（行の `id`、なければ先頭列の値、なければ 1 始まりの通し番号）。選択行の payload と入力欄の name に使う */
+  /** 行 ID。選択行の payload（selectedRows）と入力欄の name に使う。一覧の中で一意 */
   id: string
   values: Record<string, unknown>
+  /** 1 ページ目に収まらない行（rows と pageSize があるとき。並べ替えのあとで表示を決め直す） */
+  pageHidden: boolean
 }
 
-function rowIdOf(values: Record<string, unknown>, columns: ListColumnV2[], index: number): string {
+/** 行 ID の素（行の `id`、なければ先頭列の値）。無ければ空文字 */
+function rowKeyOf(values: Record<string, unknown>, columns: ListColumnV2[]): string {
   for (const v of [values.id, values[columns[0]?.id ?? '']]) {
     if ((typeof v === 'string' && v !== '') || typeof v === 'number') return String(v)
   }
-  return String(index + 1)
+  return ''
 }
 
-/** 表示する行。empty 状態では 0 行。rows があればそれを（pageSize があれば 1 ページ目の分だけ）、なければダミー行 */
+/**
+ * 行 ID を一意にする。空のキーと重複したキーには `#<行の添字（0 始まり）>` を付ける
+ * （付けたあとも既存のキーと重なるなら、重ならなくなるまで `#` を足す）
+ */
+export function uniqueRowKeys(keys: string[]): string[] {
+  const used = new Set<string>()
+  // 一意なキーは先に確保し、あとから付ける `#n` がそれと衝突しないようにする
+  const counts = new Map<string, number>()
+  keys.forEach(k => counts.set(k, (counts.get(k) ?? 0) + 1))
+  keys.forEach(k => k !== '' && counts.get(k) === 1 && used.add(k))
+  const seen = new Set<string>()
+  return keys.map((key, i) => {
+    if (key !== '' && !seen.has(key)) {
+      seen.add(key)
+      return key
+    }
+    let next = `${key}#${i}`
+    while (used.has(next)) next += '#'
+    used.add(next)
+    return next
+  })
+}
+
+/** 表示する行。empty 状態では 0 行。rows があればそれ（pageSize があれば 2 ページ目以降は pageHidden）、なければダミー行 */
 export function listRows(list: ListV2, ctx: ViewContext): { rows: ListRow[]; total: number; given: boolean } {
   const given = Array.isArray(list.rows) && list.rows.length > 0
   const source: Array<Record<string, unknown>> = given
@@ -85,8 +111,12 @@ export function listRows(list: ListV2, ctx: ViewContext): { rows: ListRow[]; tot
   const total = source.length
   if (ctx.state === 'empty') return { rows: [], total: 0, given }
   const pageSize = list.paging?.pageSize
-  const shown = given && pageSize ? source.slice(0, pageSize) : source
-  return { rows: shown.map((values, i) => ({ id: rowIdOf(values, list.columns, i), values })), total, given }
+  const keys = uniqueRowKeys(source.map(values => rowKeyOf(values, list.columns)))
+  return {
+    rows: source.map((values, i) => ({ id: keys[i], values, pageHidden: given && pageSize !== undefined && i >= pageSize })),
+    total,
+    given,
+  }
 }
 
 // ---- セルの値の整形 ----
@@ -109,11 +139,28 @@ export function formatNumberCell(value: unknown): string {
   return /^-?\d+(\.\d+)?$/.test(text) ? Number(text).toLocaleString('ja-JP') : text
 }
 
-/** 状態ラベル → チップの色（R-I12 の割当: 完了・承認＝緑、要対応・却下＝赤、処理中＝水色、注意＝黄、その他＝灰） */
+/**
+ * 状態ラベル → チップの色（03-renderer-v2.md の表と同じ。上から順に最初に当たったものを使う）
+ *
+ * | 順 | 当たるラベル | 色 |
+ * |---|---|---|
+ * | 1 | 不承認・不承諾・非承認・不可・却下 | error（red） |
+ * | 2 | 未〜・不〜・非〜で始まる（未完了・不備）、〜予定、〜なし で終わる | neutral（gray） |
+ * | 3 | 〜待ち で終わる（承認待ち・キャンセル待ち） | warning（yellow） |
+ * | 4 | 間近・保留・注意・期限・差戻 | warning（yellow） |
+ * | 5 | 要確認・要対応・エラー・欠品・失敗・取下・無効・廃番 | error（red） |
+ * | 6 | 〜済（対応済み・送信済み・受付済）・完了・承認・内定・有効・適正・販売中・成功・受理 | success（green） |
+ * | 7 | 処理中・審査中・確認中・準備中・対応中・配送中・進行中 | info（light-blue） |
+ * | 8 | それ以外（キャンセル・受付・下書きなど） | neutral（gray） |
+ */
 export function statusColor(label: string): string {
-  if (/間近|注意|期限|保留|差戻/.test(label)) return 'yellow'
-  if (/要対応|却下|不承諾|不可|失敗|エラー|欠品|廃番|無効|取下|取り下げ|キャンセル/.test(label)) return 'red'
-  if (/完了|承認|内定|出荷済|発送済|登録済|有効|適正|販売中|成功|受理/.test(label)) return 'green'
-  if (/処理中|審査中|確認中|準備中|対応中|配送中|進行中/.test(label)) return 'light-blue'
+  const t = label.trim()
+  if (/^(不|非)(承認|承諾|可|合格|採用)|却下/.test(t)) return 'red'
+  if (/^[未不非]|予定$|なし$/.test(t)) return 'gray'
+  if (/待ち$/.test(t)) return 'yellow'
+  if (/間近|保留|注意|期限|差戻/.test(t)) return 'yellow'
+  if (/要確認|要対応|エラー|欠品|失敗|取下|無効|廃番/.test(t)) return 'red'
+  if (/済|完了|承認|内定|有効|適正|販売中|成功|受理/.test(t)) return 'green'
+  if (/処理中|審査中|確認中|準備中|対応中|配送中|進行中/.test(t)) return 'light-blue'
   return 'gray'
 }

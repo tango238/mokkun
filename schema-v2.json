@@ -531,9 +531,17 @@
         "rows": {
           "type": "array",
           "items": {
-            "type": "object"
+            "type": "object",
+            "additionalProperties": {
+              "type": [
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            }
           },
-          "description": "代表行（キーは列 id）。あればダミー行の代わりに使う"
+          "description": "代表行（キーは列 id、値は文字列・数値・真偽値・null）。あればダミー行の代わりに使う"
         }
       },
       "additionalProperties": false,
@@ -666,7 +674,7 @@
               "minItems": 1,
               "items": {
                 "type": "string",
-                "minLength": 1
+                "pattern": "^(\\.[A-Za-z0-9]+|[A-Za-z0-9.+-]+/[A-Za-z0-9.+*-]+)$"
               }
             }
           ]
@@ -705,8 +713,8 @@
         },
         "maxSize": {
           "type": "string",
-          "pattern": "^\\d+(KB|MB|GB)$",
-          "description": "file の 1 ファイルあたりの上限（例 \"10MB\"）"
+          "pattern": "^[1-9]\\d*(KB|MB|GB)$",
+          "description": "file の 1 ファイルあたりの上限（正の整数 + KB / MB / GB。例 \"10MB\"）"
         },
         "unit": {
           "type": "string",

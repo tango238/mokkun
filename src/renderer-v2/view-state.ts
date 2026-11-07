@@ -7,7 +7,7 @@
 
 import { renderBanner } from './app-shell'
 import type { MokkunV2Schema } from '../types/schema-v2'
-import { domId, type V2ViewState, type ViewContext } from './context'
+import { domId, V2_VIEW_STATES, type V2ViewState, type ViewContext } from './context'
 import { esc } from './util'
 
 /** states.success / error のバナー。選ばれた状態の分だけ出す */
@@ -57,4 +57,20 @@ export function availableStates(schema: MokkunV2Schema, viewName: string): V2Vie
   if (s?.empty || view.sections.some(sec => sec.kind === 'list' && sec.list?.empty)) out.push('empty')
   if (s?.loading) out.push('loading')
   return out
+}
+
+/** URL パラメータなどの文字列を状態にする（不正は normal） */
+export function parseViewState(value: unknown): V2ViewState {
+  return V2_VIEW_STATES.includes(value as V2ViewState) ? (value as V2ViewState) : 'normal'
+}
+
+/** view で選べない状態なら normal に戻す（不正な値も normal） */
+export function resolveViewState(schema: MokkunV2Schema, viewName: string, state: unknown): V2ViewState {
+  const parsed = parseViewState(state)
+  return availableStates(schema, viewName).includes(parsed) ? parsed : 'normal'
+}
+
+/** app.roles にあるロールだけ（それ以外は未選択＝すべて） */
+export function resolveRole(schema: MokkunV2Schema, role: unknown): string | undefined {
+  return typeof role === 'string' && role !== '' && schema.app.roles?.includes(role) ? role : undefined
 }

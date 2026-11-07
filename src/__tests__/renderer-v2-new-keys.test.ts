@@ -63,7 +63,9 @@ describe('list: columns type / to / rows', () => {
   it('pageSize に収まらない行は 1 ページ目だけ描き、実際のページ数を示す。収まれば page-navigation を出さない', () => {
     const rows = Array.from({ length: 5 }, (_, i) => ({ a: `r${i}` }))
     const paged = render(withList({ columns: [col('a')], rows, paging: { pageSize: 2 } }))
-    expect(paged.querySelectorAll('tbody tr').length).toBe(2)
+    // 全行を持ち、2 ページ目以降は hidden（並べ替えのあとで先頭ページを決め直すため）
+    expect(paged.querySelectorAll('tbody tr').length).toBe(5)
+    expect(paged.querySelectorAll('tbody tr:not([hidden])').length).toBe(2)
     expect(paged.querySelector('.dads-page-navigation__counter')!.textContent).toBe('1 / 3')
     expect(render(withList({ columns: [col('a')], rows, paging: { pageSize: 10 } })).querySelector('nav.dads-page-navigation')).toBeNull()
   })
@@ -131,9 +133,9 @@ describe('list: bulkActions と controls', () => {
     expect(root.querySelector('dialog[data-dialog-for="b2"]')).not.toBeNull()
   })
 
-  it('行 ID は id → 先頭列の値 → 通し番号の順', () => {
+  it('行 ID は id → 先頭列の値。空・重複のキーには #<添字> を付けて一意にする', () => {
     const r = render(withList({ columns: [col('a'), col('b')], rows: [{ a: 'first' }, { b: 'only-b' }], selection: 'multiple' }))
-    expect(Array.from(r.querySelectorAll('tbody tr')).map(tr => tr.getAttribute('data-row-id'))).toEqual(['first', '2'])
+    expect(Array.from(r.querySelectorAll('tbody tr')).map(tr => tr.getAttribute('data-row-id'))).toEqual(['first', '#1'])
   })
 })
 

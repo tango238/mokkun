@@ -28,6 +28,8 @@ export function renderFieldGrid(section: SectionV2, ctx: ViewContext, group?: nu
         domId: `${domId(ctx, f.item)}${suffix}`,
         name: `${f.item}${suffix}`,
         hidden: !isInitiallyVisible(f.visibleWhen, ctx),
+        // 項目のエラー文は error の状態だけ（通常の状態ではエラーを出さない）
+        showError: ctx.state === 'error',
         // requiredWhen は既定値で評価した初期状態。mount 後は変更に追随する
         required: f.requiredWhen ? isInitiallyVisible(f.requiredWhen, ctx) : f.required === true,
       }),

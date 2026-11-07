@@ -28,7 +28,6 @@ export const SELECTIONS = ['none', 'single', 'multiple']
 export const NOTICE_VARIANTS = ['info', 'success', 'warning', 'error']
 export const PATTERN_KEYS = ['fields', 'note']
 export const COLUMN_TYPES = ['text', 'status', 'date', 'number']
-export const ACCEPT_KEYWORDS = ['image', 'pdf', 'document']
 export const DATE_PRECISIONS = ['day', 'month']
 /** 一覧セルに置ける入力の component */
 export const COLUMN_FIELD_COMPONENTS = ['text', 'number', 'select', 'checkbox']
@@ -41,6 +40,8 @@ export interface VCtx {
   checkEnum: (value: unknown, allowed: Array<string | number>, path: string, name: string) => void
   checkString: (value: unknown, path: string, name: string, required?: boolean) => void
   /** views のキーを参照しているか */
+  /** obj に allowed 以外のキーがあればエラー（schema-v2.json の additionalProperties: false に対応） */
+  checkKeys: (obj: Obj, allowed: readonly string[], path: string) => void
   checkViewRef: (name: unknown, path: string) => void
   /** role（文字列または配列）の形と、app.roles にあるかを確かめる */
   checkRole: (value: unknown, path: string) => void
@@ -78,6 +79,11 @@ export function createVCtx(errors: ParseError[], data: Obj): VCtx {
       }
     },
     checkViewRef,
+    checkKeys(obj, allowed, path) {
+      for (const key of Object.keys(obj)) {
+        if (!allowed.includes(key)) add('INVALID_VALUE', `Unknown key "${key}" (allowed: ${allowed.join(', ')})`, path ? `${path}.${key}` : key)
+      }
+    },
     checkRole(value, path) {
       if (value === undefined) return
       const list = typeof value === 'string' ? [value] : Array.isArray(value) ? value : undefined

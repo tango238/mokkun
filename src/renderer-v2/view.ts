@@ -2,7 +2,7 @@
  * View 層: 見出し、ゴール、手順ナビ、状態バナー、アクション、レイアウト（stack / tabs / sectioned）
  */
 
-import { renderActions, renderDialogs } from './actions'
+import { collectActions, renderActions, renderDialogs } from './actions'
 import { domId, findFlow, type ViewContext } from './context'
 import { stepCompleted } from './icons'
 import { renderSection, renderSections, sectionDomId } from './section'
@@ -87,19 +87,23 @@ function renderLayout(ctx: ViewContext): string {
 }
 
 function renderForm(ctx: ViewContext, footer: string, sticky: string): string {
+  // sticky が 1 つのボタンだけ（確認画面の主アクションなど）のときは、右寄せの小さな帯にする
+  const compact = collectActions(ctx).filter(a => a.placement === 'sticky').length === 1
   return `<form class="mk2-form" novalidate data-view-form>
 <div class="mk2-sections" data-layout="${ctx.view.layout ?? 'stack'}">
 ${renderLayout(ctx)}
 </div>
 ${footer}
-${sticky ? `<div class="mk2-sticky">\n${sticky}\n</div>` : ''}
+${sticky ? `<div class="mk2-sticky"${compact ? ' data-compact' : ''}>\n${sticky}\n</div>` : ''}
 </form>`
 }
 
 /** View 本体（main の中身）: パンくずは app-shell 側で前置する */
 export function renderViewBody(ctx: ViewContext): string {
   const { view } = ctx
-  const header = renderActions(ctx, 'header')
+  // 読み込み中は操作もダイアログも描かない（フォームを出さないので、押せるボタンを残さない）
+  const loading = ctx.state === 'loading'
+  const header = loading ? '' : renderActions(ctx, 'header')
   const footer = renderActions(ctx, 'footer')
   const sticky = renderActions(ctx, 'sticky')
   return `<div class="mk2-view-head">
@@ -112,6 +116,6 @@ export function renderViewBody(ctx: ViewContext): string {
 ${renderStepNavigation(ctx)}
 ${renderStates(ctx)}
 ${view.description ? `<p class="mk2-view-description">${esc(view.description)}</p>` : ''}
-${ctx.state === 'loading' ? renderLoading(ctx) : renderForm(ctx, footer, sticky)}
-${renderDialogs(ctx)}`
+${loading ? renderLoading(ctx) : renderForm(ctx, footer, sticky)}
+${loading ? '' : renderDialogs(ctx)}`
 }

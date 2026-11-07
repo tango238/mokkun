@@ -162,6 +162,7 @@ views:
             example: "09012345678"
             autocomplete: tel
             width: md
+            props: { error: "＊電話番号は 10 桁か 11 桁で入力してください" }
           - item: email
             label: "メールアドレス"
             component: text

@@ -4,22 +4,16 @@
  */
 
 import type { ConditionV2 } from '../types/schema-v2'
-import { matchesCondition, type Token } from './condition'
+import { dateToken, matchesCondition, type Token } from './condition'
 
 function findField(scope: ParentNode, item: string): HTMLElement | undefined {
   return Array.from(scope.querySelectorAll<HTMLElement>('[data-field]')).find(el => el.dataset.field === item)
 }
 
-/** 日付の入力欄を `y-mm-dd`（年月だけの項目は `y-mm`）にする。全部空なら空文字 */
+/** 日付の入力欄をトークンにする（静的描画と同じ `dateToken`。年月だけの項目は日の入力が無い） */
 function readDate(field: HTMLElement): string {
-  const parts = ['year', 'month', 'day']
-    .map(p => field.querySelector<HTMLInputElement>(`input[data-js-${p}-input]`))
-    .filter((input): input is HTMLInputElement => input !== null)
-    .map((input, i) => {
-      const text = input.value.trim()
-      return i > 0 && /^\d$/.test(text) ? `0${text}` : text
-    })
-  return parts.every(p => p === '') ? '' : parts.join('-')
+  const value = (part: string) => field.querySelector<HTMLInputElement>(`input[data-js-${part}-input]`)?.value ?? ''
+  return dateToken(value('year'), value('month'), value('day'))
 }
 
 /** 項目の現在値。複数選択（data-multiple）は選択値の配列、単一 checkbox / switch は 'true' / 'false' */

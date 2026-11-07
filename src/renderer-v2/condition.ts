@@ -32,3 +32,21 @@ export function matchesCondition(token: Token, cond: ConditionV2): boolean {
   if (cond.notEquals !== undefined) return !hits(token, cond.notEquals)
   return hits(token, cond.equals)
 }
+
+/**
+ * date の値のトークン。年・月・日を 0 埋めして `-` でつなぎ、末尾の空の部分は落とす
+ * （年月だけなら `2026-11`、全部空なら空文字）。静的描画（既定値）と mount 後（入力欄）で同じ形にするための唯一の組み立て
+ */
+export function dateToken(year: string, month: string, day: string): string {
+  const pad = (t: string) => (/^\d$/.test(t.trim()) ? `0${t.trim()}` : t.trim())
+  const parts = [year.trim(), pad(month), pad(day)]
+  while (parts.length > 0 && parts[parts.length - 1] === '') parts.pop()
+  return parts.join('-')
+}
+
+/** 値の文字列（YYYY-MM-DD / YYYY-MM）から date のトークンを作る。precision: month は日を無視する。解釈できない値はそのまま */
+export function dateTokenOf(text: string, precision: 'day' | 'month' | undefined): string {
+  const m = /^(\d{4})-(\d{1,2})(?:-(\d{1,2}))?/.exec(text)
+  if (!m) return text
+  return dateToken(m[1], m[2], precision === 'month' ? '' : m[3] ?? '')
+}

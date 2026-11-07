@@ -3,9 +3,16 @@
  */
 
 import { VALID_COMPONENTS_V2 } from '../../types/schema-v2'
-import { SYNTH_PREFIX } from './compile-v2'
+import { SYNTH_PREFIX } from './compile-expand'
 import {
+  ACCEPT_FORMS,
   ACCEPT_KEYWORDS,
+  ACCEPT_LEGACY_PATTERN,
+  isAcceptToken,
+  MAX_SIZE_FORMS,
+  MAX_SIZE_PATTERN,
+} from './file-spec'
+import {
   COLUMN_FIELD_COMPONENTS,
   CONDITION_KEYS,
   DATE_PRECISIONS,
@@ -15,11 +22,7 @@ import {
   type Obj,
   type VCtx,
 } from './validate-context'
-
-/** maxSize の書式（KB / MB / GB） */
-const MAX_SIZE_PATTERN = /^\d+(KB|MB|GB)$/
-/** 旧来の HTML accept 文字列（".pdf" "image/png"）を許す判定 */
-const ACCEPT_LEGACY_PATTERN = /^\s*(\.[A-Za-z0-9]|[A-Za-z0-9*+.-]+\/)/
+import { COLUMN_FIELD_KEYS, CONDITION_ALLOWED_KEYS, FIELD_KEYS, LINK_KEYS, OPTION_KEYS } from './validate-keys'
 
 const isScalar = (value: unknown): boolean => ['string', 'number', 'boolean'].includes(typeof value)
 
@@ -32,6 +35,7 @@ export function checkConditionShape(v: VCtx, cond: unknown, path: string, name =
     v.add('INVALID_VALUE', `${name} must be an object with "item" and one of "equals", "notEquals", "in"`, path)
     return false
   }
+  v.checkKeys(cond, CONDITION_ALLOWED_KEYS, path)
   let ok = true
   if (!isNonEmptyString(cond.item)) {
     v.add('INVALID_VALUE', `${name}.item must be a non-empty string`, `${path}.item`)
@@ -61,10 +65,10 @@ export function checkConditionShape(v: VCtx, cond: unknown, path: string, name =
 
 function checkAccept(v: VCtx, accept: unknown, path: string): void {
   if (accept === undefined) return
-  const message = `Invalid accept ${JSON.stringify(accept)} (expected ${ACCEPT_KEYWORDS.join(' / ')}, or an array of extensions / MIME types)`
+  const message = `Invalid accept ${JSON.stringify(accept)} (expected ${ACCEPT_FORMS})`
   if (typeof accept === 'string') {
-    if (!ACCEPT_KEYWORDS.includes(accept) && !ACCEPT_LEGACY_PATTERN.test(accept)) v.add('INVALID_VALUE', message, path)
-  } else if (!(Array.isArray(accept) && accept.length > 0 && accept.every(isNonEmptyString))) {
+    if (!(ACCEPT_KEYWORDS as readonly string[]).includes(accept) && !ACCEPT_LEGACY_PATTERN.test(accept)) v.add('INVALID_VALUE', message, path)
+  } else if (!(Array.isArray(accept) && accept.length > 0 && accept.every(isAcceptToken))) {
     v.add('INVALID_VALUE', message, path)
   }
 }
@@ -81,6 +85,7 @@ function checkLinks(v: VCtx, links: unknown, path: string): void {
       v.add('INVALID_VALUE', 'link must be an object with "label" and "href"', lp)
       return
     }
+    v.checkKeys(link, LINK_KEYS, lp)
     v.checkString(link.label, `${lp}.label`, 'link label', true)
     v.checkString(link.href, `${lp}.href`, 'link href', true)
   })
@@ -98,11 +103,8 @@ export function checkField(v: VCtx, field: unknown, path: string, opts: FieldChe
     return
   }
   const column = opts.column === true
-  if (column) {
-    for (const key of ['item', 'label', 'visibleWhen', 'requiredWhen', 'to']) {
-      if (Object.hasOwn(field, key)) v.add('INVALID_VALUE', `${key} is not allowed in a column field`, `${path}.${key}`)
-    }
-  } else {
+  v.checkKeys(field, column ? COLUMN_FIELD_KEYS : FIELD_KEYS, path)
+  if (!column) {
     v.checkString(field.item, `${path}.item`, 'item', true)
     if (typeof field.item === 'string' && field.item.startsWith(SYNTH_PREFIX)) {
       v.add('INVALID_VALUE', `item must not start with "${SYNTH_PREFIX}" (reserved)`, `${path}.item`)
@@ -124,6 +126,7 @@ export function checkField(v: VCtx, field: unknown, path: string, opts: FieldChe
         const op = `${path}.options[${i}]`
         if (!isObject(o)) v.add('INVALID_VALUE', 'option must be an object with "value" and "label"', op)
         else {
+          v.checkKeys(o, OPTION_KEYS, op)
           if (!Object.hasOwn(o, 'value')) v.add('MISSING_REQUIRED_FIELD', 'option must have "value"', `${op}.value`)
           if (typeof o.label !== 'string') v.add('MISSING_REQUIRED_FIELD', 'option must have a string "label"', `${op}.label`)
         }
@@ -162,7 +165,7 @@ export function checkField(v: VCtx, field: unknown, path: string, opts: FieldChe
   }
   checkAccept(v, field.accept, `${path}.accept`)
   if (field.maxSize !== undefined && !(typeof field.maxSize === 'string' && MAX_SIZE_PATTERN.test(field.maxSize))) {
-    v.add('INVALID_VALUE', `Invalid maxSize ${JSON.stringify(field.maxSize)} (expected a number followed by KB, MB or GB, e.g. "10MB")`, `${path}.maxSize`)
+    v.add('INVALID_VALUE', `Invalid maxSize ${JSON.stringify(field.maxSize)} (expected ${MAX_SIZE_FORMS})`, `${path}.maxSize`)
   }
   checkLinks(v, field.links, `${path}.links`)
   if (field.to !== undefined) v.checkViewRef(field.to, `${path}.to`)

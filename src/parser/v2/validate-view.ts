@@ -8,6 +8,7 @@ import { checkAction } from './validate-action'
 import { checkConditionShape, checkField, conditionItem } from './validate-field'
 import { checkList } from './validate-list'
 import { isNonEmptyString, isObject, REVEALS, SECTION_KINDS, VIEW_LAYOUTS, type Obj, type VCtx } from './validate-context'
+import { REPEATABLE_KEYS, SECTION_KEYS, STATE_KEYS, STATE_MESSAGE_KEYS, VIEW_KEYS } from './validate-keys'
 
 interface ConditionRef {
   item: string
@@ -46,6 +47,7 @@ function checkSection(v: VCtx, section: unknown, sp: string, scope: ViewScope, p
   } else {
     scope.sectionIds.add(section.id)
   }
+  v.checkKeys(section, SECTION_KEYS, sp)
   v.checkString(section.title, `${sp}.title`, 'title', true)
   v.checkEnum(section.kind, SECTION_KINDS, `${sp}.kind`, 'kind')
   v.checkEnum(section.reveal, REVEALS, `${sp}.reveal`, 'reveal')
@@ -61,6 +63,13 @@ function checkSection(v: VCtx, section: unknown, sp: string, scope: ViewScope, p
     v.add('INVALID_VALUE', 'repeatable must be an object', `${sp}.repeatable`)
   } else if (isObject(section.repeatable)) {
     const { min, max } = section.repeatable
+    v.checkKeys(section.repeatable, REPEATABLE_KEYS, `${sp}.repeatable`)
+    if (min !== undefined && !(Number.isInteger(min) && (min as number) >= 0)) {
+      v.add('INVALID_VALUE', 'repeatable.min must be an integer of 0 or more', `${sp}.repeatable.min`)
+    }
+    if (max !== undefined && !(Number.isInteger(max) && (max as number) >= 1)) {
+      v.add('INVALID_VALUE', 'repeatable.max must be an integer of 1 or more', `${sp}.repeatable.max`)
+    }
     if (typeof min === 'number' && typeof max === 'number' && min > max) {
       v.add('INVALID_VALUE', `repeatable.min (${min}) must not be greater than max (${max})`, `${sp}.repeatable.min`)
     }
@@ -164,6 +173,7 @@ export function checkViews(
       v.add('INVALID_VALUE', 'View must be an object', vp)
       continue
     }
+    v.checkKeys(view, VIEW_KEYS, vp)
     v.checkString(view.title, `${vp}.title`, 'title', true)
     v.checkString(view.goal, `${vp}.goal`, 'goal', true)
     v.checkEnum(view.layout, VIEW_LAYOUTS, `${vp}.layout`, 'layout')
@@ -178,9 +188,12 @@ export function checkViews(
       if (!isObject(view.states)) {
         v.add('INVALID_VALUE', 'states must be an object', `${vp}.states`)
       } else {
+        v.checkKeys(view.states, STATE_KEYS, `${vp}.states`)
         for (const [state, value] of Object.entries(view.states)) {
           if (!isObject(value) || typeof value.message !== 'string') {
             v.add('INVALID_VALUE', `states.${state} must be an object with a string "message"`, `${vp}.states.${state}`)
+          } else {
+            v.checkKeys(value, STATE_MESSAGE_KEYS, `${vp}.states.${state}`)
           }
         }
       }

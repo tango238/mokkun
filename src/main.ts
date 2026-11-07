@@ -570,9 +570,10 @@ function attachEventListeners(): void {
       const screenName = selector.value
       if (screenName && (currentSchema || currentSchemaV2)) {
         currentScreenName = screenName
-        // 状態は画面ごと。選べない状態は通常に戻す
-        if (currentSchemaV2) currentViewState = resolveViewState(currentSchemaV2, screenName, currentViewState)
+        // 状態は画面ごと。画面を移ったら通常に戻す
+        currentViewState = 'normal'
         updateUrlParam('screen', screenName)
+        updateUrlParam('state', currentViewState)
         renderApp(currentSchema, currentScreenName)
       }
     })
@@ -754,7 +755,9 @@ function renderError(message: string, showBackButton = false): void {
 function updateUrlParam(key: string, value: string): void {
   try {
     const url = new URL(window.location.href)
-    url.searchParams.set(key, value)
+    // 空の値と既定の状態（normal）は URL から外す（`role=` `state=normal` を残さない）
+    if (value === '' || (key === 'state' && value === 'normal')) url.searchParams.delete(key)
+    else url.searchParams.set(key, value)
     window.history.replaceState(null, '', url)
   } catch {
     // URL 更新に失敗しても描画には影響しない

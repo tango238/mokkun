@@ -3,6 +3,7 @@
  */
 
 import type { RoleSpecV2 } from '../types/schema-v2'
+import { isIsoDate } from '../parser/v2/iso-date'
 
 /**
  * 現在のロールで表示するか。role の省略は全ロール、現在のロールが未選択なら常に表示する
@@ -22,4 +23,11 @@ export function isoDate(date: Date): string {
 /** until が今日より前なら期限切れ（当日までは表示する） */
 export function isExpired(until: string | undefined, today: string): boolean {
   return until !== undefined && until < today
+}
+
+/** 今日（YYYY-MM-DD）。YYYY-MM-DD の文字列か有効な Date だけ受け付け、それ以外は実行時の日付にする */
+export function resolveToday(today: Date | string | undefined): string {
+  if (typeof today === 'string' && isIsoDate(today)) return today
+  if (today instanceof Date && !Number.isNaN(today.getTime())) return isoDate(today)
+  return isoDate(new Date())
 }

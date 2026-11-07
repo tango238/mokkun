@@ -7,6 +7,7 @@ import type { ParseError } from '../yaml-parser'
 import { checkApp, checkFlows, checkNavigation } from './validate-app'
 import { createVCtx, isObject, PATTERN_KEYS, type Obj, type VCtx } from './validate-context'
 import { checkField } from './validate-field'
+import { TOP_KEYS } from './validate-keys'
 import { checkViews } from './validate-view'
 
 function checkRules(v: VCtx, rules: unknown): void {
@@ -51,6 +52,7 @@ function checkPatterns(v: VCtx, raw: unknown): Record<string, PatternV2> {
 export function validateV2(data: Obj): ParseError[] {
   const errors: ParseError[] = []
   const v = createVCtx(errors, data)
+  v.checkKeys(data, TOP_KEYS, '')
 
   checkApp(v, isObject(data.app) ? data.app : undefined)
   checkRules(v, data.rules)

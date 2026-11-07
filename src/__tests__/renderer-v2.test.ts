@@ -118,12 +118,12 @@ describe('order_form', () => {
 
 describe('order_list', () => {
   const root = dom(renderViewV2(schema, 'order_list'))
-  it('table は 5 見出し、行は list.rows。page-navigation はページが複数のときだけ', () => {
-    expect(root.querySelectorAll('thead th').length).toBe(5 + 1)
+  it('table は 5 見出し（操作列なし）、行は list.rows。page-navigation はページが複数のときだけ', () => {
+    expect(root.querySelectorAll('thead th').length).toBe(5)
     expect(root.querySelectorAll('thead th[aria-sort]').length).toBe(2)
     // list.rows の代表行が出る（ダミー行ではない）
     expect(root.querySelectorAll('tbody tr').length).toBe(5)
-    expect(root.querySelector('[data-empty][hidden]')!.textContent).toBe('受注はまだありません。「新規受注」から登録できます')
+    expect(root.querySelector('[data-empty][hidden]')!.textContent).toBe('受注はまだありません。「新規に受注を登録する」から登録できます')
     // 行が pageSize に収まるのでページ送りは出ない（DADS: ページが 1 つなら出さない）。ダミー行のときは 1 ページ目の見え方を示す
     expect(root.querySelector('nav.dads-page-navigation')).toBeNull()
     const dummy = dom(renderViewV2({ ...schema, views: { v: { ...schema.views.order_list, sections: [{ ...schema.views.order_list.sections[1], list: { ...schema.views.order_list.sections[1].list!, rows: undefined } }] } } }, 'v'))
@@ -158,13 +158,13 @@ function field(component: string, extra: Partial<FieldV2> = {}): FieldV2 {
   return { item: 'x', label: 'ラベル', component, ...extra } as FieldV2
 }
 
-function renderField(f: FieldV2): HTMLElement {
+function renderField(f: FieldV2, state?: 'error'): HTMLElement {
   const s: MokkunV2Schema = {
     mokkun: 2,
     app: { name: 'a' },
     views: { v: { title: 't', goal: 'g', sections: [{ id: 's', title: 'S', fields: [f] }] } },
   }
-  return dom(renderViewV2(s, 'v'))
+  return dom(renderViewV2(s, 'v', { state }))
 }
 
 describe('component → DADS 部品', () => {
@@ -206,7 +206,9 @@ describe('component → DADS 部品', () => {
   })
 
   it('props.error は error-text と aria-invalid を出す', () => {
-    const root = renderField(field('text', { props: { error: '入力してください' } }))
+    // 通常の状態では出さず、error の状態だけ出す（バナーと同じく選んだ状態だけ描く）
+    expect(renderField(field('text', { props: { error: '入力してください' } })).querySelector('.dads-input-text__error-text')).toBeNull()
+    const root = renderField(field('text', { props: { error: '入力してください' } }), 'error')
     const input = root.querySelector('input')!
     expect(input.getAttribute('aria-invalid')).toBe('true')
     expect(root.querySelector('.dads-input-text__error-text')!.textContent).toBe('入力してください')

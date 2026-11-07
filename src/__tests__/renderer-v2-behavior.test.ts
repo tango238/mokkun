@@ -109,7 +109,9 @@ describe('スタイルの保持と destroy', () => {
 describe('エラー出力と ID', () => {
   it('date: エラーが 1 つだけで、fieldset はサポート、各入力はエラーを参照する', () => {
     const schema = build({ sections: [section([f('d', 'date', { help: 'ヘルプ', props: { error: '正しい日付を入力してください' } })])] })
-    const root = dom(renderViewV2(schema, 'v'))
+    // 項目のエラー文は error の状態だけ描く
+    expect(dom(renderViewV2(schema, 'v')).querySelectorAll('[id$="-error"]').length).toBe(0)
+    const root = dom(renderViewV2(schema, 'v', { state: 'error' }))
     const errors = root.querySelectorAll('[id$="-error"]')
     expect(errors.length).toBe(1)
     const ids = Array.from(root.querySelectorAll('[id]')).map(e => e.id)
@@ -124,7 +126,7 @@ describe('エラー出力と ID', () => {
 
   it('radio / checkbox グループのエラーは 1 つで fieldset が参照する', () => {
     const schema = build({ sections: [section([f('r', 'radio', { options: [{ value: 'a', label: 'A' }], props: { error: 'NG' } })])] })
-    const root = dom(renderViewV2(schema, 'v'))
+    const root = dom(renderViewV2(schema, 'v', { state: 'error' }))
     expect(root.querySelectorAll('.dads-form-control-label__error-text').length).toBe(1)
     expect(root.querySelector('fieldset')!.getAttribute('aria-describedby')).toBe('v-r-error')
   })

@@ -153,7 +153,8 @@
       var stateSelect = document.getElementById('state-select');
       var roleSelect = document.getElementById('role-select');
       var params = new URLSearchParams(window.location.search);
-      var STATE_LABELS = { normal: '通常', success: '成功', error: 'エラー', empty: '空', loading: '読み込み中' };
+      // 状態の表示名はライブラリ（Mokkun.utils）のものを使う
+      var STATE_LABELS = Mokkun.utils.V2_STATE_LABELS;
 
       // 状態セレクト: 現在の画面が持つ states.* に対応するものだけ選べる
       function refreshStateSelect() {

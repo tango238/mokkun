@@ -11,14 +11,9 @@ import {
   type Obj,
   type VCtx,
 } from './validate-context'
+import { isIsoDate } from './iso-date'
+import { APP_KEYS, FLOW_KEYS, FLOW_STEP_KEYS, HEADER_KEYS, NAV_GROUP_KEYS, NAV_ITEM_KEYS, NOTICE_KEYS } from './validate-keys'
 
-
-/** YYYY-MM-DD として実在する日付か */
-export function isIsoDate(text: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return false
-  const d = new Date(`${text}T00:00:00Z`)
-  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === text
-}
 
 function checkNotifications(v: VCtx, notifications: unknown): void {
   if (notifications === undefined) return
@@ -32,6 +27,7 @@ function checkNotifications(v: VCtx, notifications: unknown): void {
       v.add('INVALID_VALUE', 'Notice must be an object', p)
       return
     }
+    v.checkKeys(n, NOTICE_KEYS, p)
     v.checkString(n.message, `${p}.message`, 'message', true)
     v.checkEnum(n.variant, NOTICE_VARIANTS, `${p}.variant`, 'variant')
     v.checkRole(n.role, `${p}.role`)
@@ -47,10 +43,12 @@ export function checkApp(v: VCtx, app: Obj | undefined): void {
     v.add('MISSING_REQUIRED_FIELD', 'v2 schema must have an "app" object', 'app')
     return
   }
+  v.checkKeys(app, APP_KEYS, 'app')
   v.checkString(app.name, 'app.name', 'app.name', true)
   v.checkEnum(app.layout, APP_LAYOUTS, 'app.layout', 'app.layout')
-  if (app.header !== undefined && !isObject(app.header)) {
-    v.add('INVALID_VALUE', 'app.header must be an object', 'app.header')
+  if (app.header !== undefined) {
+    if (!isObject(app.header)) v.add('INVALID_VALUE', 'app.header must be an object', 'app.header')
+    else v.checkKeys(app.header, HEADER_KEYS, 'app.header')
   }
   if (app.roles !== undefined && !Array.isArray(app.roles)) {
     v.add('INVALID_VALUE', 'app.roles must be an array', 'app.roles')
@@ -72,6 +70,7 @@ export function checkNavigation(v: VCtx, navigation: unknown): Set<string> | und
       v.add('INVALID_VALUE', 'Navigation group must be an object', gp)
       return
     }
+    v.checkKeys(group, NAV_GROUP_KEYS, gp)
     v.checkString(group.group, `${gp}.group`, 'group', true)
     v.checkRole(group.role, `${gp}.role`)
     if (!Array.isArray(group.items)) {
@@ -79,6 +78,7 @@ export function checkNavigation(v: VCtx, navigation: unknown): Set<string> | und
       return
     }
     group.items.forEach((item, ii) => {
+      if (isObject(item)) v.checkKeys(item, NAV_ITEM_KEYS, `${gp}.items[${ii}]`)
       v.checkViewRef(isObject(item) ? item.view : undefined, `${gp}.items[${ii}].view`)
       if (isObject(item) && isNonEmptyString(item.view)) navViews.add(item.view)
     })
@@ -98,13 +98,17 @@ export function checkFlows(v: VCtx, flows: unknown): void {
       v.add('INVALID_VALUE', 'Flow must be an object', path)
       continue
     }
+    v.checkKeys(flow, FLOW_KEYS, path)
     v.checkString(flow.name, `${path}.name`, 'name', true)
     v.checkString(flow.outcome, `${path}.outcome`, 'outcome', true)
     v.checkEnum(flow.progress, FLOW_PROGRESS, `${path}.progress`, 'progress')
     if (!Array.isArray(flow.steps) || flow.steps.length === 0) {
       v.add('MISSING_REQUIRED_FIELD', 'Flow must have "steps"', `${path}.steps`)
     } else {
-      flow.steps.forEach((step, i) => v.checkViewRef(isObject(step) ? step.view : undefined, `${path}.steps[${i}].view`))
+      flow.steps.forEach((step, i) => {
+        if (isObject(step)) v.checkKeys(step, FLOW_STEP_KEYS, `${path}.steps[${i}]`)
+        v.checkViewRef(isObject(step) ? step.view : undefined, `${path}.steps[${i}].view`)
+      })
     }
   }
 }

@@ -57,9 +57,20 @@ ${renderViewBody(ctx)}
 </div>`
 }
 
+/** undefined の値を持つキーを除く（後ろの引数の undefined が前の値を消さないように） */
+function definedOnly(source: V2RenderOptions): V2RenderOptions {
+  const out: V2RenderOptions = {}
+  if (source.state !== undefined) out.state = source.state
+  if (source.role !== undefined) out.role = source.role
+  if (source.today !== undefined) out.today = source.today
+  return out
+}
+
 /**
  * container に view を描画して振る舞いを結線する。
  * destroy() でイベントを外し、DADS の CSS 注入も解除する（二重に呼んでも何も起きない）。
+ * 同じ container に destroy() せずに続けて mount すると、前の mount のイベントが残って重複して結線される。
+ * 作り直すときは先に前の V2Controller の destroy() を呼ぶこと。
  */
 export function mountViewV2(
   container: HTMLElement,
@@ -69,12 +80,7 @@ export function mountViewV2(
   options: V2RenderOptions = {},
 ): V2Controller {
   // 描画オプションは 5 番目の引数が正。callbacks にまとめて渡しても受け付ける
-  container.innerHTML = renderViewV2(schema, viewName, {
-    state: callbacks.state,
-    role: callbacks.role,
-    today: callbacks.today,
-    ...options,
-  })
+  container.innerHTML = renderViewV2(schema, viewName, { ...definedOnly(callbacks), ...definedOnly(options) })
   // 描画が成功してからスタイルを保持する（描画が例外なら何も保持しない）
   const release = holdV2Styles()
   let detach: () => void
@@ -98,5 +104,5 @@ export function mountViewV2(
 
 export { holdV2Styles } from './styles'
 export { V2_VIEW_STATES }
-export { availableStates, V2_STATE_LABELS } from './view-state'
+export { availableStates, parseViewState, resolveRole, resolveViewState, V2_STATE_LABELS } from './view-state'
 export type { V2RenderOptions, V2ViewState }

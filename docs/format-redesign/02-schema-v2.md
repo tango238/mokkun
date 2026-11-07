@@ -4,6 +4,9 @@
 そのまま YAML の入れ子にしたもの。各層は自分の層に閉じる UX 判断だけを書く。
 
 - 正規形は camelCase。
+- 各オブジェクトに書けるキーは `schema-v2.json` の `additionalProperties: false` と同じで、パーサーも未知のキーをエラー（path 付き）にする（`props` の中だけ自由）。
+- YAML で引用符を付けない日付（`until: 2026-11-20`、`default: 2026-11-14`、`equals: 2026-04-01`、`rows` の値）は js-yaml が Date にするため、
+  パーサーが検証の前に `YYYY-MM-DD`（UTC）の文字列へそろえる。
 - 先頭に `mokkun: 2` を置き、旧フォーマット（`view:` 直下）と判別する。
 - v2 は内部で旧フォーマット（`MokkunSchema`）にコンパイルされ、既存レンダラーで描画する。
   コンパイル規則は末尾の表。
@@ -159,8 +162,8 @@ list:
 | キー | 型 | 意味 |
 |---|---|---|
 | columns | Column[] | 必須。下表 |
-| rows | object[] | 代表行（キーは列 id）。あればダミー行の代わりに使う。行の `id` キー（なければ先頭列の値、なければ 1 始まりの通し番号）が行 ID になり、`bulkActions` の `selectedRows` と入力列の name に使う。`paging.pageSize` があるときは 1 ページ目の分だけ描き、ページ数も実際の行数から出す。`rows` がなければ、列の id / ラベル / type から推測したダミー 3 行（状態列は、同じ view の status / select / radio の選択肢のラベルを借りる。無ければ「処理中 / 出荷済み / 完了」） |
-| rowActions | `{ id, label, kind?, to? }[]` | 行ごとの操作（テキストボタン） |
+| rows | object[] | 代表行（キーは列 id、値は文字列・数値・真偽値・null のスカラー。日付は `"2026-11-07"` か引用符なしの `2026-11-07`）。あればダミー行の代わりに使う。行の `id` キー（なければ先頭列の値）が行 ID になり、`bulkActions` の `selectedRows` と入力列の name に使う。ID が空・重複する行には `#<行の添字（0 始まり）>` を付けて一意にする（例: `A`, `A#1`, `#2`）。`paging.pageSize` があるときは全行を並べ替えてから先頭 `pageSize` 件だけを表示し（2 ページ目以降は `hidden`）、ページ数も実際の行数から出す。`rows` がなければ、列の id / ラベル / type から推測したダミー 3 行（状態列は、同じ view の status / select / radio の選択肢のラベルを借りる。無ければ「処理中 / 出荷済み / 完了」） |
+| rowActions | `{ id, label, kind?, to? }[]` | 行ごとの操作（テキストボタン）。`role` / `confirm` / `style` / `placement` は持てない（パーサーとスキーマが拒否する） |
 | selection | `none` \| `single` \| `multiple` | 行選択 |
 | bulkActions | Action[] | 選択した行への操作。`selection: multiple` のときだけ（それ以外はパーサーがエラー）。表の上の検索と同じ行に outline ボタンで並ぶ。押すと `onAction(id, kind, { section, selectedRows })`（選択なしは空配列。ボタンは無効化しない）。`role`・`confirm` が使える |
 | search / paging / empty | | 検索欄 / ページ送り / 空の文言 |
@@ -208,6 +211,19 @@ list:
 | visibleWhen | Condition | | 表示条件。非表示のあいだは required を評価しない（表示されているときだけ必須は required: true + visibleWhen。表示とは別の条件で必須にするときは requiredWhen） |
 | props | object | | component 固有の追加設定（既存フィールド属性をそのまま渡す）。`date` の `props.calendar: true` はカレンダーボタン（v2 レンダラー: 静的ボタン、ポップオーバーなし）を入力欄の横に付ける |
 
+### キーを使う component
+
+次の component だけが各キーを描画に使う。それ以外に書いても何も起きない（エラーにはせず、`compileV2Warnings` が「使われません」と警告する）。
+
+| キー | 使う component |
+|---|---|
+| `unit` | text / number / time / combobox / duration（readonly・summary の Section では number の値だけ） |
+| `autocomplete` | text / number / time / combobox / textarea / select / browser、date（`bday` のみ） |
+| `accept` / `maxSize` | file / photo_grid（`multiple` は file） |
+| `precision` | date（それ以外はパーサーがエラー。`inline: true` では使われない） |
+| `links` | すべて（サポートテキストの後ろ） |
+| `requiredWhen` | 入力系（readonly・表示系では使われない） |
+
 ### Component と旧タイプの対応
 
 | component | 条件 | 旧タイプ |
@@ -253,7 +269,9 @@ visibleWhen:
   in: [work, seeking]            # 配列のどれかと等しい（複数選択の項目は「どれかを含む」）
 ```
 
-比較する値は、単一値は文字列、複数選択は選択値の配列、単一 checkbox / toggle は `true` / `false`、date は `YYYY-MM-DD`（`precision: month` は `YYYY-MM`）。
+比較する値は、単一値は文字列、複数選択は選択値の配列、単一 checkbox / toggle は `true` / `false`、date は `YYYY-MM-DD`（`precision: month` は `YYYY-MM`。入力欄が空の部分は落ち、年月だけなら `2026-11`）。
+比較は `String()` に直した文字列どうしの一致で、型は区別しない（`true` と `'true'`、`1` と `'1'` は同じ）。
+複数選択の項目に対する `equals` / `in` は「選ばれた値のどれかを含む」、`notEquals` は「含まない」。
 
 ## コンパイル規則（v2 → 旧フォーマット）
 
@@ -310,5 +328,7 @@ visibleWhen:
 `{ path, key, message }[]` として列挙する（検証済みの v2 スキーマを渡す。変換結果は変えない）。
 対象: `placement` / `section.columns` / `section.purpose` / `rowActions[].to` / `states.loading` / `field.width`、
 および `role` / `until` / `Section.actions` / `list.bulkActions` / 列の `to`・`field` / `unit`（number 以外）/ `precision: month` /
-`autocomplete` / `links` / `requiredWhen` / 項目の `to`。ビューアーはコンソールにだけ出し、画面には出さない。
+`autocomplete` / `links` / `requiredWhen` / 項目の `to`、`accept: image` の file の `multiple`・`maxSize`、photo_grid の `accept`・`maxSize`。
+「キーを使う component」の表に当たらない書き方（select の `unit`、radio の `autocomplete`、text の `accept` など）は
+「component では使われません」という警告になる。ビューアーはコンソールにだけ出し、画面には出さない。
 `lib.ts` の `Mokkun.utils.compileV2Warnings` からも使える。

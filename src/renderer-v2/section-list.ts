@@ -68,7 +68,7 @@ export function renderList(section: SectionV2, ctx: ViewContext): string {
           .join(' ')
         cells.push(`<td>${buttons}</td>`)
       }
-      return `<tr${attrs({ 'data-row-id': row.id })}>${cells.join('')}</tr>`
+      return `<tr${attrs({ 'data-row-id': row.id, hidden: row.pageHidden })}>${cells.join('')}</tr>`
     })
     .join('\n      ')
 
@@ -94,7 +94,7 @@ export function renderList(section: SectionV2, ctx: ViewContext): string {
   <button class="dads-button" type="button" data-type="text" data-size="md" data-control="next">次のページ${pageNavNext}</button>
 </nav>`
       : ''
-  return `<div class="mk2-list" data-list="${esc(section.id)}"${attrs({ 'data-page-size': pageSize })}>
+  return `<div class="mk2-list" data-list="${esc(section.id)}"${attrs({ 'data-page-size': pageSize, 'data-paged': given && pageSize !== undefined })}>
 ${controls}
 <figure class="dads-table" data-row-hover-highlight${selection ? ' data-selectable' : ''}${rows.length === 0 ? ' hidden' : ''}>
   <figcaption class="dads-table__caption dads-u-visually-hidden">${esc(section.title)}</figcaption>

@@ -87,7 +87,7 @@ views:
         columns: 3
         actions:
           - { id: search, label: "検索する", kind: custom, style: secondary }
-          - { id: reset_filter, label: "条件をリセットする", kind: reset, style: tertiary }
+          - { id: reset_filter, label: "条件をリセットする", kind: reset, style: secondary }
         fields:
           - item: keyword
             label: "キーワード"
@@ -208,7 +208,7 @@ views:
       - id: basic
         title: "商品の基本情報を入力する"
         fields:
-          - { item: productName, label: "商品名（50文字以内）", component: text, required: true, width: lg, rules: [maxLen50] }
+          - { item: productName, label: "商品名（50文字以内）", component: text, required: true, width: lg, rules: [maxLen50], props: { error: "＊商品名を 50 文字以内で入力してください" } }
           - { item: sku, label: "SKU", component: text, required: true, whyRequired: "入出庫と棚卸しで商品を一意に特定するため", format: "半角英数字とハイフン（全角でも可）", example: "TEA-0100", width: md }
           - { item: unitPrice, label: "単価（税込）", component: number, required: true, unit: "円", width: sm, rules: [positive] }
           - { item: safetyStock, label: "安全在庫", component: number, required: true, unit: "個", width: xs, help: "この数を下回ると欠品間近になります" }

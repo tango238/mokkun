@@ -7,6 +7,7 @@ import type { MokkunSchema } from '../../types/schema'
 import type { MokkunV2Schema } from '../../types/schema-v2'
 import type { ParseResult } from '../yaml-parser'
 import { compileV2 } from './compile-v2'
+import { normalizeDates } from './iso-date'
 import { isObject } from './validate-context'
 import { validateV2 } from './validate-v2'
 
@@ -28,7 +29,17 @@ export function hasMokkunVersionKey(data: unknown): boolean {
  * v2 ドキュメント（yaml.load 済みの生データ）を検証し、検証済みの MokkunV2Schema を返す（コンパイルしない）
  * v2 専用レンダラー（renderer-v2）の入力に使う
  */
-export function parseV2Document(data: unknown): ParseResult<MokkunV2Schema> {
+export function parseV2Document(raw: unknown): ParseResult<MokkunV2Schema> {
+  // 引用符なしの日付（2026-11-20）は js-yaml が Date にする。検証の前に YYYY-MM-DD の文字列へそろえる
+  let data: unknown
+  try {
+    data = normalizeDates(raw)
+  } catch (error) {
+    return {
+      success: false,
+      errors: [{ type: 'SCHEMA_VALIDATION_ERROR', message: error instanceof Error ? error.message : 'Unknown error while reading v2 schema', path: '' }],
+    }
+  }
   if (!isObject(data)) {
     return { success: false, errors: [{ type: 'SCHEMA_VALIDATION_ERROR', message: 'Root must be an object', path: '' }] }
   }

@@ -44,7 +44,7 @@ views:
     role: "営業担当"
     primaryAction:
       id: new_order
-      label: "新規受注"
+      label: "新規に受注を登録する"
       kind: navigate
       to: order_form
       placement: header
@@ -89,12 +89,10 @@ views:
             - { orderId: "10232", customerName: "東都物産株式会社", orderedAt: "2026-11-05", status: "完了", total: 312400 }
             - { orderId: "10231", customerName: "北斗フーズ株式会社", orderedAt: "2026-11-05", status: "受付済", total: 9800 }
             - { orderId: "10230", customerName: "ひかり電機株式会社", orderedAt: "2026-11-02", status: "要対応", total: 76500 }
-          rowActions:
-            - { id: open, label: "開く", kind: navigate, to: order_form }
           search: false
           paging: { pageSize: 20 }
           selection: none
-          empty: "受注はまだありません。「新規受注」から登録できます"
+          empty: "受注はまだありません。「新規に受注を登録する」から登録できます"
 
   order_form:
     title: "受注登録"
@@ -110,7 +108,7 @@ views:
       placement: sticky
     secondaryActions:
       - id: save_draft
-        label: "下書き保存"
+        label: "下書き保存する"
         kind: custom
         style: secondary
       - id: cancel
@@ -242,7 +240,7 @@ views:
       success: { message: "受注 #10234 を登録しました。出荷指示が作成されています" }
     primaryAction:
       id: to_list
-      label: "受注一覧へ"
+      label: "受注一覧を開く"
       kind: navigate
       to: order_list
     secondaryActions:

@@ -4,8 +4,8 @@
 
 import type { ConditionV2, FieldV2, FlowV2, MokkunV2Schema, ViewV2 } from '../types/schema-v2'
 import { expandSectionFields } from '../parser/v2/compile-expand'
-import { matchesCondition } from './condition'
-import { isoDate } from './role'
+import { dateTokenOf, matchesCondition } from './condition'
+import { resolveToday } from './role'
 import { str } from './util'
 
 /** view の状態（ビューアーの「状態」切替）。normal は状態バナーなし */
@@ -45,7 +45,7 @@ export function createContext(schema: MokkunV2Schema, viewName: string, options:
     }
   }
   const state = options.state && V2_VIEW_STATES.includes(options.state) ? options.state : 'normal'
-  const today = typeof options.today === 'string' ? options.today : isoDate(options.today ?? new Date())
+  const today = resolveToday(options.today)
   return { schema, viewName, view, fields, state, role: options.role || undefined, today }
 }
 
@@ -65,16 +65,8 @@ function initialToken(f: FieldV2): string | string[] {
     return raw === undefined || raw === null || raw === '' ? [] : [str(raw)]
   }
   if (f.component === 'checkbox' || f.component === 'toggle') return raw === true || str(raw) === 'true' ? 'true' : 'false'
-  if (f.component === 'date' && !f.inline) return dateToken(str(raw), f.precision)
+  if (f.component === 'date' && !f.inline) return dateTokenOf(str(raw), f.precision)
   return str(raw)
-}
-
-/** date の値を mount 後の DOM から読む形（`y-mm-dd`、precision: month は `y-mm`）にそろえる */
-function dateToken(text: string, precision: FieldV2['precision']): string {
-  const m = /^(\d{4})-(\d{1,2})(?:-(\d{1,2}))?/.exec(text)
-  if (!m) return text
-  const ym = `${m[1]}-${m[2].padStart(2, '0')}`
-  return precision === 'month' || !m[3] ? ym : `${ym}-${m[3].padStart(2, '0')}`
 }
 
 /** 条件を既定値で評価する（条件がなければ true）。参照先が無ければ false */

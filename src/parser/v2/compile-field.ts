@@ -6,6 +6,7 @@ import type { Condition, FieldValidation, InputField } from '../../types/schema'
 import type { ConditionV2, FieldV2, RuleV2 } from '../../types/schema-v2'
 import { normalizeKeysDeep } from '../key-normalizer'
 import type { ExpandedField } from './compile-expand'
+import { ACCEPT_LEGACY_LIST, maxSizeToBytes } from './file-spec'
 
 /** 緩い型のフィールド（旧フォーマットは種類ごとに属性が異なるため） */
 export type LooseField = Record<string, unknown> & { id: string; type: string; label: string }
@@ -51,26 +52,11 @@ const OPTION_TYPES = new Set(['select', 'multi_select', 'radio_group', 'checkbox
 /** value を表示テキストとして読む旧タイプ（それ以外は value → default） */
 const VALUE_TEXT_TYPES = new Set(['badge', 'chip', 'status_label'])
 
-/** accept のキーワード → 旧 file_upload の accept（拡張子・MIME タイプの配列） */
-const ACCEPT_KEYWORD_MAP: Record<string, string[]> = {
-  image: ['image/*'],
-  pdf: ['application/pdf'],
-  document: ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt'],
-}
-
 /** v2 の accept → 旧 file_upload の accept 配列（image は image_uploader になるため扱わない） */
 export function legacyAccept(accept: FieldV2['accept']): string[] | undefined {
   if (accept === undefined) return undefined
   if (Array.isArray(accept)) return accept
-  return Object.hasOwn(ACCEPT_KEYWORD_MAP, accept) ? ACCEPT_KEYWORD_MAP[accept] : [accept]
-}
-
-const SIZE_UNITS: Record<string, number> = { KB: 1024, MB: 1024 ** 2, GB: 1024 ** 3 }
-
-/** "10MB" → バイト数（書式外は undefined） */
-export function maxSizeToBytes(text: string | undefined): number | undefined {
-  const m = /^(\d+)(KB|MB|GB)$/.exec(text ?? '')
-  return m ? Number(m[1]) * SIZE_UNITS[m[2]] : undefined
+  return Object.hasOwn(ACCEPT_LEGACY_LIST, accept) ? ACCEPT_LEGACY_LIST[accept] : [accept]
 }
 
 /** component（+ 条件）→ 旧タイプ */

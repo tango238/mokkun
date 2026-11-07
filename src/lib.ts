@@ -24,7 +24,7 @@ import {
   getAvailableThemes,
   getCurrentTheme,
 } from './theme'
-import { mountViewV2, renderViewV2, holdV2Styles, availableStates, type V2Controller, type V2Callbacks, type V2ViewState } from './renderer-v2'
+import { mountViewV2, renderViewV2, holdV2Styles, availableStates, parseViewState, resolveRole, resolveViewState, V2_STATE_LABELS, type V2Controller, type V2Callbacks, type V2ViewState } from './renderer-v2'
 import { compileV2Warnings } from './parser/v2/compile-warnings'
 import type { MokkunSchema, ScreenDefinition, BuiltInThemeId } from './types'
 import type { MokkunV2Schema } from './types/schema-v2'
@@ -111,6 +111,8 @@ interface InternalState {
   /** v2: 現在のロールと画面の状態 */
   role: string | undefined
   viewState: V2ViewState
+  /** v2: 次の showScreen で使う状態（init の initialState。使ったら消える）。通常は画面を移るたびに通常へ戻る */
+  nextState: V2ViewState | undefined
   appChrome: AppChromeController | null
   tabsCleanup?: (() => void) | null
   wizardController: WizardController | null
@@ -135,8 +137,6 @@ function createInstance(state: InternalState): MokkunInstance {
       syncHash: state.options.syncHash === true,
       onNavigate: to => {
         const fromScreen = state.currentScreenName
-        // 状態は画面ごと。遷移したら通常に戻す
-        state.viewState = 'normal'
         instance.showScreen(to)
         if (fromScreen) state.options.onNavigate?.(fromScreen, to)
       },
@@ -234,8 +234,9 @@ function createInstance(state: InternalState): MokkunInstance {
           return
         }
         state.currentScreenName = screenName
-        // 状態は画面ごと。その画面で選べない状態は通常に戻す
-        if (!availableStates(state.schemaV2, screenName).includes(state.viewState)) state.viewState = 'normal'
+        // 状態は画面ごと。画面を移ったら通常に戻す（init の initialState だけ最初の画面に使う。選べない状態は通常）
+        state.viewState = resolveViewState(state.schemaV2, screenName, state.nextState ?? 'normal')
+        state.nextState = undefined
         renderCurrentScreen()
         return
       }
@@ -250,12 +251,14 @@ function createInstance(state: InternalState): MokkunInstance {
     },
 
     setRole(role) {
-      state.role = role || undefined
+      // app.roles にないロールは未選択（すべて）
+      state.role = state.schemaV2 ? resolveRole(state.schemaV2, role) : undefined
       if (state.schemaV2 && state.currentScreenName) renderCurrentScreen()
     },
 
     setState(viewState) {
-      state.viewState = viewState
+      // 不正な値や、いまの画面で選べない状態は通常
+      state.viewState = state.schemaV2 && state.currentScreenName ? resolveViewState(state.schemaV2, state.currentScreenName, viewState) : 'normal'
       if (state.schemaV2 && state.currentScreenName) renderCurrentScreen()
     },
 
@@ -370,8 +373,9 @@ async function init(options: MokkunInitOptions): Promise<MokkunInstance> {
     schemaV2: null,
     v2Controller: null,
     currentScreenName: null,
-    role: options.role || undefined,
-    viewState: options.initialState ?? 'normal',
+    role: undefined,
+    viewState: 'normal',
+    nextState: undefined,
     appChrome: null,
     wizardController: null,
     actionHandler: null,
@@ -416,9 +420,14 @@ async function init(options: MokkunInitOptions): Promise<MokkunInstance> {
         ? options.initialScreen
         : screenNames[0]
 
+    // role / initialState も画面のロール・状態と同じ解決を通す（不正な値は未選択・通常）
+    state.role = state.schemaV2 ? resolveRole(state.schemaV2, options.role) : undefined
+    state.nextState = parseViewState(options.initialState)
+
     if (initialScreen) {
       instance.showScreen(initialScreen)
     }
+    state.nextState = undefined
 
     // Call ready callback
     options.onReady?.(instance)
@@ -452,6 +461,8 @@ export const Mokkun = {
     parseYaml,
     parseYamlV2,
     compileV2Warnings,
+    /** v2 の状態の表示名（ビューアーのセレクトに使う） */
+    V2_STATE_LABELS,
     getScreen,
     getScreenNames,
     findFieldById,

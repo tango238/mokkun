@@ -6,25 +6,9 @@
 
 import type { MokkunV2Schema } from '../types/schema-v2'
 import { availableStates, V2_STATE_LABELS, V2_VIEW_STATES, type V2ViewState } from '../renderer-v2'
+import { esc } from '../renderer-v2/util'
 
-function esc(text: string): string {
-  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-}
-
-/** URL パラメータなどの文字列を状態にする（不正は normal） */
-export function parseViewState(value: string | null | undefined): V2ViewState {
-  return V2_VIEW_STATES.includes(value as V2ViewState) ? (value as V2ViewState) : 'normal'
-}
-
-/** view で選べない状態なら normal に戻す */
-export function resolveViewState(schema: MokkunV2Schema, screenName: string, state: V2ViewState): V2ViewState {
-  return availableStates(schema, screenName).includes(state) ? state : 'normal'
-}
-
-/** app.roles にあるロールだけ（それ以外は未選択＝すべて） */
-export function resolveRole(schema: MokkunV2Schema, role: string | null | undefined): string | undefined {
-  return role && schema.app.roles?.includes(role) ? role : undefined
-}
+export { parseViewState, resolveRole, resolveViewState } from '../renderer-v2'
 
 /** ツールバーに置く 状態 / ロール セレクト（v2 文書のみ。ロールは app.roles があるときだけ） */
 export function renderV2Controls(schema: MokkunV2Schema, screenName: string, state: V2ViewState, role: string | undefined): string {

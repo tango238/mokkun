@@ -6,6 +6,7 @@ import type { FieldV2, SectionV2 } from '../types/schema-v2'
 import { expandSectionFields } from '../parser/v2/compile-expand'
 import type { ViewContext } from './context'
 import { timelineList } from './fields/display'
+import { formatDateCell } from './list-data'
 import { attrs, esc, str } from './util'
 
 const CHIP_COLORS: Record<string, string> = {
@@ -25,6 +26,8 @@ export function displayText(f: FieldV2): string {
   if (hit) return hit.label
   if (typeof raw === 'number' && f.component === 'number') return `${raw.toLocaleString('ja-JP')}${f.unit ?? ''}`
   if (raw === true || raw === false) return raw ? 'はい' : 'いいえ'
+  // 日付は表示用の書式（2026年11月14日）にする。解釈できない値（すでに表示用の書式など）はそのまま
+  if (f.component === 'date') return formatDateCell(raw)
   return str(raw)
 }
 

@@ -18,6 +18,11 @@ export interface FieldOpts {
   name: string
   /** 初期表示で非表示にするか（visibleWhen を既定値で評価した結果） */
   hidden?: boolean
+  /**
+   * props.error（項目のエラー文）を描くか。既定 true（単体で呼ぶとき）。View の描画では状態が error のときだけ true
+   * （通常の状態ではエラーを出さない）
+   */
+  showError?: boolean
   /** 初期表示で必須か（requiredWhen を既定値で評価した結果）。省略は field.required */
   required?: boolean
 }
@@ -41,7 +46,7 @@ export interface Ctl {
 
 export function makeCtl(f: FieldV2, o: FieldOpts): Ctl {
   const support = supportLines(f)
-  const error = typeof f.props?.error === 'string' && f.props.error ? f.props.error : undefined
+  const error = o.showError !== false && typeof f.props?.error === 'string' && f.props.error ? f.props.error : undefined
   const supportId = support.length > 0 ? `${o.domId}-support` : undefined
   const errorId = error ? `${o.domId}-error` : undefined
   const ids = [errorId, supportId].filter(Boolean).join(' ')

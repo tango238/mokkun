@@ -3,20 +3,7 @@
  */
 
 import type { FieldV2 } from '../../types/schema-v2'
-
-/** キーワード → <input accept> */
-const ACCEPT_ATTR: Record<string, string> = {
-  image: 'image/*',
-  pdf: '.pdf,application/pdf',
-  document: '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt',
-}
-
-/** キーワード → サポートテキストの形式名 */
-const ACCEPT_LABEL: Record<string, string> = {
-  image: '画像',
-  pdf: 'PDF',
-  document: 'PDF・Word・Excel・PowerPoint・テキスト',
-}
+import { ACCEPT_INPUT_ATTR, ACCEPT_LABEL } from '../../parser/v2/file-spec'
 
 /** 拡張子・MIME タイプ 1 つを形式名にする（.pdf → PDF、image/png → PNG、image/* → 画像） */
 function tokenLabel(token: string): string {
@@ -34,7 +21,7 @@ function tokens(accept: string | string[]): string[] {
 /** `<input accept>` の値 */
 export function acceptAttr(accept: FieldV2['accept']): string | undefined {
   if (accept === undefined) return undefined
-  if (typeof accept === 'string' && Object.hasOwn(ACCEPT_ATTR, accept)) return ACCEPT_ATTR[accept]
+  if (typeof accept === 'string' && Object.hasOwn(ACCEPT_INPUT_ATTR, accept)) return ACCEPT_INPUT_ATTR[accept]
   return tokens(accept).join(',')
 }
 

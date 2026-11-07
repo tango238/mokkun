@@ -68,6 +68,6 @@ export function renderPhotoGrid(c: Ctl): string {
     .map(p => `<li class="mk2-photo"><img src="${esc(safeUrl(p.src))}" alt="${esc(p.alt ?? '')}"></li>`)
     .join('')
   const grid = `<ul class="mk2-photo-grid" data-columns="${cols}" aria-label="${esc(c.f.label)}の一覧">${items}</ul>`
-  const html = wrapSingle(c, `${grid}${uploader(c, 'image', true)}`)
+  const html = wrapSingle(c, `${grid}${uploader(c, c.f.accept ?? 'image', true)}`)
   return html.replace('<label class="dads-form-control-label__label"', `<label id="${esc(c.domId)}-label" class="dads-form-control-label__label"`)
 }

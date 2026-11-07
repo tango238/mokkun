@@ -421,7 +421,8 @@ describe('v2 compile (order-entry)', () => {
     expect(table.columns).toHaveLength(5)
     expect(table.columns.map((c: any) => c.sortable)).toEqual([true, false, true, false, false])
     expect(table.pagination.page_size).toBe(20)
-    expect(table.row_actions[0].label).toBe('開く')
+    // 識別子のセルが詳細へのリンクなので、行の「開く」は置かない（R-T01）
+    expect(table.row_actions).toBeUndefined()
 
     const summary = fieldsOf(section(schema.view.order_confirm, '注文内容を確認する'))
     expect(summary[0].type).toBe('definition_list')
@@ -699,7 +700,7 @@ describe('v2 render (order-entry)', () => {
 
   it('order_list: states.empty / list.empty reaches the rendered data_table empty state', () => {
     const table = fieldsOf(section(schema.view.order_list, '受注を選ぶ'))[0] as any
-    expect(table.empty_state.title).toBe('受注はまだありません。「新規受注」から登録できます')
+    expect(table.empty_state.title).toBe('受注はまだありません。「新規に受注を登録する」から登録できます')
     // list.rows は旧 data_table の静的データになる（行があるので空表示は出ない）
     expect(table.data).toHaveLength(5)
     expect(renderScreen(schema.view.order_list)).toContain('株式会社サンプル')

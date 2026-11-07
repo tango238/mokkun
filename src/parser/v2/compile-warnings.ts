@@ -3,7 +3,7 @@
  * ビューアーはコンソールにだけ出す（画面には出さない）。仕様の「コンパイル規則」の「未対応」と対応する。
  */
 
-import type { ActionV2, FieldV2, ListV2, MokkunV2Schema, SectionV2 } from '../../types/schema-v2'
+import type { ActionV2, FieldV2, ListV2, MokkunV2Schema, SectionKindV2, SectionV2 } from '../../types/schema-v2'
 
 export interface V2CompileWarning {
   /** 対象の位置（パーサーのエラーと同じ書き方。例 views.order_form.sections[0].fields[1]） */
@@ -20,11 +20,51 @@ function checkAction(a: ActionV2, path: string, push: Push): void {
   if (a.role !== undefined) push(path, 'role')
 }
 
-function checkField(f: FieldV2, path: string, push: Push): void {
+/** 各キーを描画に使う component（02-schema-v2.md の表と同じ） */
+const UNIT_COMPONENTS = ['text', 'number', 'time', 'combobox', 'duration']
+const AUTOCOMPLETE_COMPONENTS = ['text', 'number', 'time', 'combobox', 'textarea', 'select', 'browser', 'date']
+const FILE_COMPONENTS = ['file', 'photo_grid']
+
+/**
+ * 項目の警告。v2 レンダラーでも使われないキー（component が使わない）と、旧フォーマットへの変換で落ちるキーを分けて挙げる。
+ * kind は Section の種類（readonly / summary では unit は number の値にだけ付く）
+ */
+function checkField(f: FieldV2, path: string, push: Push, kind: SectionKindV2 = 'form'): void {
+  const ignored = (key: string, why: string) => push(path, key, `${key} は component "${f.component}" では使われません（${why}）`)
   if (f.width !== undefined) push(path, 'width', 'width は旧レンダラーでは無視されます')
-  if (f.unit !== undefined && f.component !== 'number') push(path, 'unit', 'unit は旧スキーマでは number だけが持ちます')
-  if (f.precision === 'month') push(path, 'precision')
-  if (f.autocomplete !== undefined) push(path, 'autocomplete')
+
+  // unit
+  if (f.unit !== undefined) {
+    const display = kind === 'readonly' || kind === 'summary'
+    if (!UNIT_COMPONENTS.includes(f.component)) ignored('unit', `使えるのは ${UNIT_COMPONENTS.join(' / ')}`)
+    else if (display && f.component !== 'number') ignored('unit', 'readonly / summary では number の値にだけ付きます')
+    else if (f.component !== 'number') push(path, 'unit', 'unit は旧スキーマでは number だけが持ちます')
+  }
+  // autocomplete
+  if (f.autocomplete !== undefined) {
+    if (!AUTOCOMPLETE_COMPONENTS.includes(f.component)) ignored('autocomplete', `使えるのは ${AUTOCOMPLETE_COMPONENTS.join(' / ')}`)
+    else if (f.component === 'date' && f.autocomplete !== 'bday') ignored('autocomplete', 'date で使えるのは bday だけ')
+    else push(path, 'autocomplete')
+  }
+  // precision
+  if (f.precision === 'month') {
+    if (f.inline) ignored('precision', 'inline（カレンダー表示）では年月だけの入力にならない')
+    else push(path, 'precision')
+  }
+  // file: accept / maxSize / multiple
+  for (const key of ['accept', 'maxSize'] as const) {
+    if (f[key] !== undefined && !FILE_COMPONENTS.includes(f.component)) ignored(key, '使えるのは file / photo_grid')
+  }
+  if (f.component === 'file' && f.accept === 'image') {
+    for (const key of ['multiple', 'maxSize'] as const) {
+      if (f[key] !== undefined) push(path, key, `accept: image は旧フォーマットで image_uploader になり、${key} を持てないため落ちます`)
+    }
+  }
+  if (f.component === 'photo_grid') {
+    for (const key of ['accept', 'maxSize'] as const) {
+      if (f[key] !== undefined) push(path, key, `${key} は旧フォーマットの photo_manager に受け皿がないため落ちます`)
+    }
+  }
   if (f.links !== undefined) push(path, 'links')
   if (f.requiredWhen !== undefined) push(path, 'requiredWhen')
   if (f.to !== undefined) push(path, 'to')
@@ -46,7 +86,7 @@ function checkSection(section: SectionV2, path: string, push: Push): void {
   if (section.columns !== undefined) push(path, 'columns', 'columns は旧スキーマの FormSection にレイアウト指定がないため落ちます')
   if (section.actions !== undefined) push(path, 'actions')
   if (section.list) checkList(section.list, `${path}.list`, push)
-  section.fields?.forEach((f, i) => checkField(f, `${path}.fields[${i}]`, push))
+  section.fields?.forEach((f, i) => checkField(f, `${path}.fields[${i}]`, push, section.kind ?? 'form'))
 }
 
 /** 既定の文言: 「<key> は旧レンダラーでは表現できず、無視されます」 */

@@ -61,8 +61,21 @@ function cellContent(col: ListColumnV2, value: unknown): string {
   return col.to ? cellLink(col.to, html) : html
 }
 
+/** 並べ替えに使う値（数値は数、日付は ISO。表示は桁区切りや日本語表記なので、表示文字列では順序が崩れる） */
+function sortValue(col: ListColumnV2, value: unknown): string | undefined {
+  if (isEmpty(value)) return undefined
+  const kind = columnKind(col)
+  if (kind === 'number') {
+    const n = Number(str(value).replace(/,/g, ''))
+    return Number.isFinite(n) ? String(n) : undefined
+  }
+  if (kind === 'date') return value instanceof Date ? value.toISOString().slice(0, 10) : str(value)
+  return undefined
+}
+
 export function renderCell(col: ListColumnV2, row: ListRow, index: number, base: string): string {
   if (col.field) return `<td>${inputCell(col, col.field, row, index, base)}</td>`
   const number = columnKind(col) === 'number'
-  return `<td${number ? ' class="mk2-cell--number"' : ''}>${cellContent(col, row.values[col.id])}</td>`
+  const attributes = attrs({ class: number ? 'mk2-cell--number' : undefined, 'data-sort-value': sortValue(col, row.values[col.id]) })
+  return `<td${attributes}>${cellContent(col, row.values[col.id])}</td>`
 }

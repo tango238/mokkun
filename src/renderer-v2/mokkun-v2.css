@@ -534,8 +534,25 @@
   justify-content: flex-end;
 }
 
-/* 行選択のチェックボックス / ラジオを行の中央に合わせる */
-.mk2-list td > :is(.dads-checkbox, .dads-radio) {
-  display: inline-flex;
+/* 行選択のチェックボックス / ラジオを行の中央に合わせる（セルは baseline 揃えで、ラベルの上余白の分だけ上に寄っていた） */
+.mk2-list td:has(> :is(.dads-checkbox, .dads-radio)) {
   vertical-align: middle;
+}
+
+.mk2-list td > :is(.dads-checkbox, .dads-radio):is([data-size]) {
+  padding-block: 0;
+  align-content: center;
+}
+
+/* sticky が 1 つのボタンだけのとき（確認画面の主アクション）は、右寄せのコンパクトな帯にする */
+.mk2-sticky[data-compact] {
+  width: fit-content;
+  margin-left: auto;
+  padding: 12px 16px;
+  border-radius: calc(8 / 16 * 1rem);
+}
+
+/* バナーの見出しは 1 文字だけの行（「ん」など）を残さずに折り返す */
+.mokkun-v2 .dads-notification-banner__heading-text {
+  text-wrap: pretty;
 }
