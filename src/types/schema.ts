@@ -1084,6 +1084,8 @@ export interface TooltipField extends Omit<BaseInputField, 'placeholder'> {
  */
 export interface BadgeField extends BaseInputField {
   type: 'badge'
+  /** 表示値（指定時はラベルの代わりに表示する） */
+  value?: string | number
   /** バッジのカラー */
   color?: 'gray' | 'blue' | 'green' | 'yellow' | 'red'
   /** サイズ */
@@ -1405,6 +1407,8 @@ export interface TimelineField extends BaseInputField {
  */
 export interface ChipField extends BaseInputField {
   type: 'chip'
+  /** 表示テキスト（未指定時は label） */
+  value?: string | number
   /** バリアント */
   variant?: 'default' | 'primary' | 'success' | 'warning' | 'danger'
   /** 削除可能 */
@@ -1416,6 +1420,8 @@ export interface ChipField extends BaseInputField {
  */
 export interface StatusLabelField extends BaseInputField {
   type: 'status_label'
+  /** 表示テキスト（未指定時は label） */
+  value?: string | number
   /** バリアント */
   variant?: 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'info'
 }
@@ -1525,6 +1531,7 @@ export interface StepperField extends BaseInputField {
     id: string
     label: string
     completed?: boolean
+    status?: StepStatus | StepStatusWithText
   }>
   /** 現在のステップ */
   currentStep?: number

@@ -453,11 +453,12 @@ export class StatusLabel {
       default: 'grey', primary: 'blue', success: 'green', warning: 'yellow', danger: 'red', info: 'blue',
     }
     const type = Object.hasOwn(typeMap, variant) ? typeMap[variant] : 'grey'
+    const displayText = (field as InputField & { value?: string | number }).value ?? field.label
 
     // インタラクティブ版 (render()) と同じクラス名。
     const statusHtml = `
       <span class="mokkun-status-label status-label status-label-${type} status-label-medium" data-type="${type}">
-        <span class="status-label-content" role="status">${field.label ? `<span class="status-label-text">${escapeHtml(field.label)}</span>` : ''}</span>
+        <span class="status-label-content" role="status">${displayText !== undefined && displayText !== '' ? `<span class="status-label-text">${escapeHtml(String(displayText))}</span>` : ''}</span>
       </span>
     `
     return createFieldWrapper(field, statusHtml)

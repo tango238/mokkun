@@ -666,13 +666,16 @@ export class SectionNav {
   // ===========================================================================
 
   static renderField(field: InputField): string {
-    const items = (field as InputField & { items?: Array<{ id: string; label: string; href?: string }> }).items
+    const items = (field as InputField & { items?: Array<string | { id?: string; label: string; href?: string }> }).items
     if (Array.isArray(items) && items.length > 0) {
-      // items 指定あり: 定義どおりのリンクを描画する
-      const itemsHtml = items.map((item, i) => `
+      // items 指定あり: 定義どおりのリンクを描画する（文字列はラベル兼アンカー）
+      const itemsHtml = items.map((raw, i) => {
+        const item = typeof raw === 'string' ? { label: raw, href: `#${raw}` } : raw
+        return `
           <li class="section-nav-item${i === 0 ? ' active' : ''}">
-            <a href="${escapeHtml(item.href ?? `#${item.id}`)}" class="section-nav-link">${escapeHtml(item.label)}</a>
-          </li>`).join('')
+            <a href="${escapeHtml(item.href ?? `#${item.id ?? ''}`)}" class="section-nav-link">${escapeHtml(String(item.label ?? ''))}</a>
+          </li>`
+      }).join('')
       return createFieldWrapper(field, `
       <nav class="mokkun-section-nav"${field.label ? ` aria-label="${escapeHtml(field.label)}"` : ''}>
         <ul class="section-nav-list">${itemsHtml}

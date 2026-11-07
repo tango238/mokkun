@@ -99,7 +99,7 @@ steps:
 | repeatable | `{ min?, max?, addLabel? }` | | 繰り返し可能なまとまり |
 | note | string | | 補足説明（information_panel） |
 | columns | 1 \| 2 \| 3 | | 項目の配置 |
-| visibleWhen | Condition | | 表示条件 |
+| visibleWhen | Condition | | 表示条件。**セクション内のフィールドに適用される**（セクション単位の表示制御ではない） |
 | use | string | | patterns のキー。fields を継承 |
 | fields | Field[] | | kind が form / readonly / summary のとき |
 | list | List | | kind が list のとき |
@@ -186,25 +186,38 @@ visibleWhen:
 
 ## コンパイル規則（v2 → 旧フォーマット）
 
+「未対応」は v2 では書けるが、現状のレンダラー/旧スキーマに受け皿がなく出力に反映されないもの。
+
 | v2 | 旧フォーマット |
 |---|---|
-| app.header + app.navigation | 各 view の app_header（navigations に group の items を展開、view.nav と一致する項目を active） |
+| app.header + app.navigation | 各 view の app_header（navigations に group の items を展開、view.nav と一致する項目を active。id は `nav-<通し番号>-<view>`）。`app.layout: plain` では出力しない。navigation の `icon` は AppHeader が持たないため未対応 |
 | app.navigation の group | app_navi の items（current は view.nav が属する group） |
-| app.notifications | 各 view 先頭の notification_bar |
-| flow.steps（progress: stepper） | 該当 view 先頭の stepper（現在 step は view の位置） |
-| view.title / goal / description | title / purpose / description |
+| app.notifications | 各 view の「お知らせ」セクション（notification_bar） |
+| flow.steps（progress: stepper） | 該当 view 先頭の「進行状況」セクション（stepper のみ。現在 step は view の位置、前の step は completed）。`progress: none` では出さない |
+| view.states.success / error | 「お知らせ」セクションの response_message（variant に対応）。通知と状態メッセージが無ければ「お知らせ」は出さない |
+| view.states.empty | list の empty_state（`list.empty` が無いときのフォールバック） |
+| view.states.loading | 未対応 |
+| view.title / goal / description | title / purpose(=goal) / description（description が無ければ goal を description にも使う） |
 | view.layout: tabs | sections を tabs フィールド1つにまとめる |
-| view.layout: sectioned | 先頭に section_nav を自動生成 |
-| view.states.success / error | response_message（variant に対応） |
-| view.states.empty | list の emptyState |
-| primaryAction / secondaryActions | actions。primary は style: primary。placement: sticky は float_area |
-| action.confirm | delete_confirm_dialog（danger のとき）。それ以外は action の confirm_message |
-| section.title / purpose / note | section_name / 先頭の information_panel |
-| section.reveal: collapsed | accordion_panel に fields を内包 |
-| section.repeatable | repeater に fields を内包 |
-| section.kind: list | data_table 1つ |
-| section.kind: readonly | definition_list |
-| section.use | patterns の fields を先頭に展開 |
-| field.item / label / example / help / whyRequired | id / label / placeholder / description（help と whyRequired を結合） |
-| field.rules | validation |
-| field.props | そのままフィールドに merge |
+| view.layout: sectioned | 先頭に「画面の構成」セクション（section_nav。本体セクションだけを列挙）を自動生成 |
+| primaryAction / secondaryActions | actions。primary は style: primary |
+| action.placement（sticky / header / footer） | 未対応（shell レイアウトは全アクションを画面ヘッダーに置く。float_area は子を持てないため生成しない） |
+| action.confirm | action の confirm（title=label, message）。`confirm.danger: true` は action の `style: danger`。ダイアログ用の追加フィールドやセクションは出さない |
+| section.title / note | section_name / 先頭の information_panel |
+| section.purpose | 未対応（出力先がない） |
+| section.columns | 未対応（FormSection にレイアウト指定がない） |
+| section.visibleWhen | セクション内の各トップレベルフィールドの visible_when（フィールド自身の visibleWhen が優先）。フィールド単位であり、セクションの見出しは隠れない |
+| section.reveal: collapsed（kind: form のみ） | accordion_panel に fields を内包（トリガー文言は「入力欄を開く」） |
+| section.repeatable（kind: form のみ） | repeater に fields を内包 |
+| section.kind: list | data_table 1つ（columns は sortable 未指定を false にする） |
+| section.kind: readonly / summary | definition_list（`{term: label, description: 値}`。options があれば表示ラベルに置換、値なしは `-`） |
+| section.use | patterns の fields を先頭に展開。id は `<section.id>_<item>`、pattern 内の visibleWhen は書き換える。pattern は `fields` と `note` のみ（use のネストは不可） |
+| list.rowActions[].to | 未対応（data_table の行アクションに遷移先がない） |
+| list.search / paging / selection | filters.show_search / pagination / selection |
+| field.item / label / example / help / whyRequired / format | id / label / placeholder / description（help・whyRequired・「入力形式: format」を「。」で結合） |
+| field.value | badge / chip / status は `value`（表示テキスト）。それ以外は `default` |
+| field.rules | validation（文字列は top-level rules のキーで、無ければエラー。オブジェクトはそのまま。複数は順にマージ） |
+| field.props | camelCase を内部 snake_case に正規化して最後に merge |
+| 合成フィールドの id | `_v2_` 接頭辞（item は `_v2_` で始められない）。同一 view で item が重複するとエラー |
+| visibleWhen `{item, equals}` | `visible_when: {field, operator: eq, value}`。item は同じ view のフィールド id でなければならない |
+| view の fields | sections の input_fields を平坦化して screen.fields にも持つ（旧フォーマットの正規化と同じ） |

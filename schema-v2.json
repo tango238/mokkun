@@ -90,55 +90,12 @@
     "Rule": {
       "type": "object",
       "properties": {
-        "required": {
-          "type": [
-            "boolean",
-            "string"
-          ]
-        },
-        "min": {
-          "type": [
-            "number",
-            "string"
-          ]
-        },
-        "max": {
-          "type": [
-            "number",
-            "string"
-          ]
-        },
-        "pattern": {
-          "oneOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "object",
-              "properties": {
-                "regex": {
-                  "type": "string"
-                },
-                "message": {
-                  "type": "string"
-                }
-              },
-              "additionalProperties": false,
-              "required": [
-                "regex",
-                "message"
-              ]
-            }
-          ]
-        },
-        "custom": {
-          "type": "string"
-        },
         "message": {
           "type": "string"
         }
       },
-      "additionalProperties": false
+      "additionalProperties": true,
+      "description": "共通バリデーション。message 以外は旧 FieldValidation（required/min/max/pattern/custom）をそのまま書く"
     },
     "Notice": {
       "type": "object",
@@ -372,7 +329,22 @@
       "required": [
         "id",
         "label"
-      ]
+      ],
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "navigate"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "required": [
+          "to"
+        ]
+      }
     },
     "StateMessage": {
       "type": "object",
@@ -442,7 +414,22 @@
             "required": [
               "id",
               "label"
-            ]
+            ],
+            "if": {
+              "properties": {
+                "kind": {
+                  "const": "navigate"
+                }
+              },
+              "required": [
+                "kind"
+              ]
+            },
+            "then": {
+              "required": [
+                "to"
+              ]
+            }
           }
         },
         "search": {
@@ -479,10 +466,12 @@
       "properties": {
         "item": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "pattern": "^(?!_v2_)"
         },
         "label": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "component": {
           "enum": [
@@ -628,7 +617,8 @@
           ]
         },
         "visibleWhen": {
-          "$ref": "#/definitions/Condition"
+          "$ref": "#/definitions/Condition",
+          "description": "セクション内のフィールドに適用される（セクション単位の表示制御ではない）"
         },
         "use": {
           "type": "string"
@@ -647,81 +637,74 @@
       "required": [
         "id",
         "title"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "list"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "required": [
+              "list"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "list",
+                  "readonly",
+                  "summary"
+                ]
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "reveal"
+                  ]
+                },
+                {
+                  "required": [
+                    "repeatable"
+                  ]
+                }
+              ]
+            }
+          }
+        }
       ]
     },
     "Pattern": {
       "type": "object",
+      "description": "再利用可能なフィールド群（fields と note のみ。use のネストは非対応）",
       "properties": {
-        "id": {
-          "type": "string",
-          "minLength": 1
-        },
-        "title": {
-          "type": "string",
-          "minLength": 1
-        },
-        "purpose": {
-          "type": "string"
-        },
-        "kind": {
-          "enum": [
-            "form",
-            "list",
-            "readonly",
-            "summary"
-          ]
-        },
-        "reveal": {
-          "enum": [
-            "open",
-            "collapsed"
-          ]
-        },
-        "repeatable": {
-          "type": "object",
-          "properties": {
-            "min": {
-              "type": "integer",
-              "minimum": 0
-            },
-            "max": {
-              "type": "integer",
-              "minimum": 1
-            },
-            "addLabel": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": false
-        },
-        "note": {
-          "type": "string"
-        },
-        "columns": {
-          "enum": [
-            1,
-            2,
-            3
-          ]
-        },
-        "visibleWhen": {
-          "$ref": "#/definitions/Condition"
-        },
-        "use": {
-          "type": "string"
-        },
         "fields": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/Field"
           }
         },
-        "list": {
-          "$ref": "#/definitions/List"
+        "note": {
+          "type": "string"
         }
       },
-      "additionalProperties": false,
-      "description": "再利用可能な Section（id / title は省略可）"
+      "additionalProperties": false
     },
     "View": {
       "type": "object",

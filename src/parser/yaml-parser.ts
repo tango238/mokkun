@@ -5,7 +5,7 @@
 
 import yaml from 'js-yaml'
 import { normalizeKeysDeep } from './key-normalizer'
-import { isV2Document, parseV2 } from './v2/parse-v2'
+import { hasMokkunVersionKey, parseV2 } from './v2/parse-v2'
 import type {
   MokkunSchema,
   MokkunSchemaRaw,
@@ -1620,7 +1620,8 @@ export function parseYaml(yamlText: string): ParseResult<MokkunSchema> {
     const loaded = yaml.load(yamlText)
 
     // v2 フォーマット（mokkun: 2）は camelCase ネイティブのためキー正規化を通さず専用パーサーへ
-    if (isV2Document(loaded)) {
+    // `mokkun` キーがあるのに 2 でない場合も v1 に落とさず、バージョンエラーを返す
+    if (hasMokkunVersionKey(loaded)) {
       return parseV2(loaded)
     }
 

@@ -196,8 +196,11 @@ export interface SectionV2 {
   list?: ListV2
 }
 
-/** patterns の値（Section から id / title を省略できる） */
-export type PatternV2 = Partial<SectionV2>
+/** patterns の値（fields と note のみ。use のネストは非対応） */
+export interface PatternV2 {
+  fields?: FieldV2[]
+  note?: string
+}
 
 // =============================================================================
 // Field / Component

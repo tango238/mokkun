@@ -55,4 +55,31 @@ describe('schema-v2.json', () => {
     delete noVersion.mokkun
     expect(validate(noVersion)).toBe(false)
   })
+
+  it('Pattern accepts only fields/note; navigate needs "to"; list kind needs "list"; reveal/repeatable need form', () => {
+    const { validate } = createValidator()
+    const withPattern = loadSample()
+    withPattern.patterns = { p: { fields: [], note: 'n', title: 'x' } }
+    expect(validate(withPattern)).toBe(false)
+
+    const nav = loadSample()
+    delete nav.views.order_form.primaryAction.to
+    expect(validate(nav)).toBe(false)
+
+    const list = loadSample()
+    delete list.views.order_list.sections[1].list
+    expect(validate(list)).toBe(false)
+
+    const reveal = loadSample()
+    reveal.views.order_confirm.sections[0].reveal = 'collapsed'
+    expect(validate(reveal)).toBe(false)
+
+    const emptyLabel = loadSample()
+    emptyLabel.views.order_form.sections[0].fields[0].label = ''
+    expect(validate(emptyLabel)).toBe(false)
+
+    const okPattern = loadSample()
+    okPattern.patterns = { p: { fields: [{ item: 'x', label: 'X', component: 'text' }], note: 'n' } }
+    expect(validate(okPattern)).toBe(true)
+  })
 })

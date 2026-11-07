@@ -393,6 +393,7 @@ export class Badge {
       max_count?: number
       maxCount?: number
       variant?: 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'info'
+      value?: string | number
     }
     const variantToColor: Record<string, string> = {
       default: 'gray', primary: 'blue', success: 'green', warning: 'yellow', danger: 'red', info: 'blue',
@@ -418,6 +419,8 @@ export class Badge {
       valueHtml = '<span class="badge-dot-indicator" aria-hidden="true"></span>'
     } else if (badgeField.text !== undefined && badgeField.text !== '') {
       valueHtml = `<span class="badge-content" role="status">${escapeHtml(badgeField.text)}</span>`
+    } else if (badgeField.value !== undefined && badgeField.value !== '' && typeof badgeField.count !== 'number') {
+      valueHtml = `<span class="badge-content" role="status">${escapeHtml(String(badgeField.value))}</span>`
     } else if (typeof badgeField.count === 'number') {
       const display = maxCount !== undefined && badgeField.count > maxCount
         ? `${maxCount}+`
@@ -425,7 +428,10 @@ export class Badge {
       valueHtml = `<span class="badge-content" role="status">${escapeHtml(display)}</span>`
     }
 
-    const labelHtml = field.label
+    // value を表示テキストとして使う場合は、ラベルの重複表示を避ける
+    const valueIsText = badgeField.value !== undefined && badgeField.value !== '' && !badgeField.dot
+      && !(badgeField.text !== undefined && badgeField.text !== '') && typeof badgeField.count !== 'number'
+    const labelHtml = field.label && !valueIsText
       ? `<span class="badge-label">${escapeHtml(field.label)}</span>`
       : ''
 
