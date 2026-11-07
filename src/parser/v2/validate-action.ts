@@ -23,8 +23,8 @@ export function checkAction(v: VCtx, action: unknown, path: string, opts: Action
   v.checkEnum(action.kind, ACTION_KINDS, `${path}.kind`, 'kind')
   v.checkEnum(action.placement, ACTION_PLACEMENTS, `${path}.placement`, 'placement')
   v.checkEnum(action.style, ACTION_STYLES, `${path}.style`, 'style')
-  if (action.kind === 'navigate') v.checkViewRef(action.to, `${path}.to`)
-  else if (action.to !== undefined) v.checkViewRef(action.to, `${path}.to`)
+  // navigate は必須。submit の送信後の遷移先など、ほかの kind でも書かれていれば view の存在を検査する
+  if (action.kind === 'navigate' || action.to !== undefined) v.checkViewRef(action.to, `${path}.to`)
   if (action.confirm !== undefined) {
     if (!isObject(action.confirm)) v.add('INVALID_VALUE', 'confirm must be an object', `${path}.confirm`)
     else {

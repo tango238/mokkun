@@ -331,6 +331,7 @@ views:
       id: submit
       label: "申し込む"
       kind: submit
+      to: application_done
       placement: sticky
     sections:
       - id: applicant

@@ -125,6 +125,7 @@ interface V2Controller { destroy(): void }
 availableStates(schema, viewName): V2ViewState[]   // 選べる状態（normal は常に）
 ```
 
+`kind: submit` のアクションに `to` があるときは、`onAction(id, "submit", payload)` を呼んだあとに `onNavigate(to)` を呼ぶ（`syncHash` も navigate と同じ。`confirm` があれば確定後。`to` なしでは `onNavigate` を呼ばない）。ボタンには `data-navigate-to` で `to` を持たせる。`primaryAction` / `secondaryActions` / `Section.actions` / `list.bulkActions` のどれでも同じ。
 `onAction` の payload は Section 内の操作だけが持つ: `Section.actions` は `{ section }`、`list.bulkActions` は `{ section, selectedRows }`。
 `Mokkun.init` は `role` と `initialState` を受け取り、インスタンスは `setRole(role)` / `setState(state)` / `getAvailableStates()` を持つ。
 状態は画面ごとの見え方なので、**画面を移ると（ナビ・navigate アクション・画面セレクト・`showScreen` のどれでも）通常に戻る**。

@@ -104,6 +104,17 @@ describe('list の変換', () => {
 describe('compileV2Warnings', () => {
   const warn = (schema: ReturnType<typeof load>) => compileV2Warnings(schema).map(w => `${w.path} ${w.key}`)
 
+  it('submit の to は警告し、navigate の to は警告しない', () => {
+    const w = warn(load(mk({}, {
+      primaryAction: { id: 'p', label: 'P', kind: 'submit', to: 'v' },
+      secondaryActions: [{ id: 'q', label: 'Q', kind: 'navigate', to: 'v' }, { id: 'r', label: 'R', to: 'v' }],
+    })))
+    expect(w).toContain('views.v.primaryAction to')
+    expect(w).toContain('views.v.secondaryActions[1] to')
+    expect(w).not.toContain('views.v.secondaryActions[0] to')
+    expect(warn(load(mk({}, { primaryAction: { id: 'c', label: 'C', kind: 'custom', to: 'v' } })))).not.toContain('views.v.primaryAction to')
+  })
+
   it('従来から落ちるキー: placement / columns / purpose / rowActions.to / states.loading / width', () => {
     const w = warn(load(mk({}, {
       primaryAction: { id: 'p', label: 'P', placement: 'sticky' },

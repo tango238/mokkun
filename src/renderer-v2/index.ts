@@ -25,9 +25,9 @@ export interface V2ActionPayload {
 }
 
 export interface V2Callbacks {
-  /** グローバルナビ・パンくず・navigate アクションで遷移先 view を通知する */
+  /** グローバルナビ・パンくず・navigate アクション・submit アクションの to（送信後）で遷移先 view を通知する */
   onNavigate?: (view: string) => void
-  /** navigate 以外のアクション（submit / custom / reset）を実行したとき。Section 内の操作は payload を持つ */
+  /** navigate 以外のアクション（submit / custom / reset）を実行したとき（submit に to があれば、このあと onNavigate も呼ぶ）。Section 内の操作は payload を持つ */
   onAction?: (actionId: string, kind: string, payload?: V2ActionPayload) => void
   /** true のとき、遷移時に location.hash も書き換える（既定 false） */
   syncHash?: boolean

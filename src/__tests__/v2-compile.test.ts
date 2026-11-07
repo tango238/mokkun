@@ -186,6 +186,12 @@ describe('v2 parse: errors never throw', () => {
     expect(errorPaths(mk({}, { primaryAction: { id: 'a', label: 'A', kind: 'navigate' } }))).toContain('views.v.primaryAction.to')
   })
 
+  it('submit action with "to" must point to an existing view', () => {
+    expect(errorPaths(mk({}, { primaryAction: { id: 'a', label: 'A', kind: 'submit', to: 'missing' } }))).toContain('views.v.primaryAction.to')
+    expect(errorPaths(mk({}, { primaryAction: { id: 'a', label: 'A', to: 'missing' } }))).toContain('views.v.primaryAction.to')
+    expect(parseV2(mk({}, { primaryAction: { id: 'a', label: 'A', kind: 'submit', to: 'v' } })).success).toBe(true)
+  })
+
   it('reveal / repeatable on a non-form section is an error', () => {
     const paths = errorPaths(mk({}, {
       sections: [

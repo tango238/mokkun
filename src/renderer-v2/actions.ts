@@ -81,7 +81,8 @@ export function renderActionButton(
     'data-size': size,
     'data-action': action.id,
     'data-action-kind': action.kind ?? 'submit',
-    'data-navigate-to': action.kind === 'navigate' ? action.to : undefined,
+    // navigate の遷移先、または submit の送信後の遷移先
+    'data-navigate-to': action.kind === 'navigate' || (action.kind ?? 'submit') === 'submit' ? action.to : undefined,
     'data-confirm': action.confirm ? dialogId(ctx, action) : undefined,
     'aria-haspopup': action.confirm ? 'dialog' : undefined,
     ...extra,

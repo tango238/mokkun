@@ -1,6 +1,6 @@
 /**
  * mountViewV2 の振る舞い結線（イベント委譲）
- * - 遷移: グローバルナビ・パンくず・navigate アクション → callbacks.onNavigate
+ * - 遷移: グローバルナビ・パンくず・navigate アクション・submit の送信後の遷移（to） → callbacks.onNavigate
  * - 確認ダイアログ: アクションボタンで開き、確定ボタンでアクションを実行
  * - visibleWhen / repeatable / accordion 以外の DADS 部品の最小限の JS
  */
@@ -73,6 +73,8 @@ export function attachV2Behavior(root: HTMLElement, callbacks: V2Callbacks): () 
     const payload = payloadOf(button)
     if (payload) callbacks.onAction?.(button.dataset.action ?? '', kind, payload)
     else callbacks.onAction?.(button.dataset.action ?? '', kind)
+    // submit の送信後の遷移先。onAction を呼んだあとに遷移する
+    if (kind === 'submit' && to) navigate(to)
   }
 
   root.addEventListener(

@@ -21,7 +21,7 @@ const TODAY = '2026-11-07'
 /** サンプルごとに、旧フォーマットで落ちるはずのキー */
 const EXPECTED_WARNINGS: Record<string, string[]> = {
   'order-entry.yaml': ['placement', 'columns', 'purpose', 'loading', 'to', 'actions'],
-  'childcare-application.yaml': ['precision', 'autocomplete', 'links', 'requiredWhen', 'until', 'actions'],
+  'childcare-application.yaml': ['precision', 'autocomplete', 'links', 'requiredWhen', 'until', 'actions', 'to'],
   'inventory-admin.yaml': ['role', 'until', 'bulkActions', 'actions', 'field', 'to'],
 }
 

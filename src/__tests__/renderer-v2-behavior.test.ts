@@ -523,3 +523,106 @@ describe('syncHash', () => {
     b.destroy()
   })
 })
+
+describe('submit + to（送信後の遷移）', () => {
+  const act = (extra: Record<string, unknown> = {}) => ({ id: 'send', label: '送る', kind: 'submit' as const, ...extra })
+  const click = (id: string) => container.querySelector<HTMLElement>(`[data-action="${id}"]`)!.click()
+
+  it('onAction のあとに onNavigate が呼ばれる', () => {
+    const calls: string[] = []
+    mountViewV2(container, build({ primaryAction: act({ to: 'w' }) }), 'v', {
+      onAction: (id, kind) => calls.push(`action:${id}:${kind}`),
+      onNavigate: v => calls.push(`navigate:${v}`),
+    })
+    click('send')
+    expect(calls).toEqual(['action:send:submit', 'navigate:w'])
+  })
+  it('kind 省略（既定の submit）でも効き、secondaryActions でも効く', () => {
+    const calls: string[] = []
+    mountViewV2(container, build({ primaryAction: act(), secondaryActions: [{ id: 'send2', label: '送る2', to: 'w' }] }), 'v', {
+      onAction: (id, kind) => calls.push(`action:${id}:${kind}`),
+      onNavigate: v => calls.push(`navigate:${v}`),
+    })
+    click('send2')
+    expect(calls).toEqual(['action:send2:submit', 'navigate:w'])
+  })
+  it('to なしでは onNavigate を呼ばない', () => {
+    const onNavigate = vi.fn()
+    const onAction = vi.fn()
+    mountViewV2(container, build({ primaryAction: act() }), 'v', { onAction, onNavigate })
+    click('send')
+    expect(onAction).toHaveBeenCalledWith('send', 'submit')
+    expect(onNavigate).not.toHaveBeenCalled()
+  })
+  it('confirm 付きは、ボタンを押しただけでは呼ばず、確定のあとに onAction → onNavigate', () => {
+    const calls: string[] = []
+    mountViewV2(container, build({ primaryAction: act({ to: 'w', confirm: { message: '送りますか？' } }) }), 'v', {
+      onAction: id => calls.push(`action:${id}`),
+      onNavigate: v => calls.push(`navigate:${v}`),
+    })
+    click('send')
+    expect(calls).toEqual([])
+    container.querySelector<HTMLElement>('[data-dialog-confirm]')!.click()
+    expect(calls).toEqual(['action:send', 'navigate:w'])
+  })
+  it('Section.actions でも効き、payload も渡る', () => {
+    const calls: string[] = []
+    const sec = {
+      id: 's', title: 'S', kind: 'form', fields: [],
+      actions: [act({ id: 'sec_send', to: 'w' })],
+    } as unknown as SectionV2
+    mountViewV2(container, build({ sections: [sec] }), 'v', {
+      onAction: (id, _k, p) => calls.push(`action:${id}:${p?.section}`),
+      onNavigate: v => calls.push(`navigate:${v}`),
+    })
+    click('sec_send')
+    expect(calls).toEqual(['action:sec_send:s', 'navigate:w'])
+  })
+  it('list.bulkActions でも効き、selectedRows が渡る', () => {
+    const calls: string[] = []
+    let rows: string[] | undefined
+    const sec = {
+      id: 'l', title: 'L', kind: 'list',
+      list: {
+        columns: [{ id: 'name', label: 'N' }],
+        rows: [{ id: 'A-1', name: 'a' }, { id: 'B-2', name: 'b' }],
+        selection: 'multiple',
+        bulkActions: [{ id: 'bulk_send', label: '一括送信', to: 'w' }],
+      },
+    } as unknown as SectionV2
+    mountViewV2(container, build({ sections: [sec] }), 'v', {
+      onAction: (id, _k, p) => { calls.push(`action:${id}`); rows = p?.selectedRows },
+      onNavigate: v => calls.push(`navigate:${v}`),
+    })
+    const box = container.querySelector<HTMLInputElement>('input[data-row-select]')!
+    box.checked = true
+    box.dispatchEvent(new Event('change', { bubbles: true }))
+    click('bulk_send')
+    expect(calls).toEqual(['action:bulk_send', 'navigate:w'])
+    expect(rows).toEqual(['A-1'])
+  })
+  it('navigate は onNavigate だけ 1 回、reset / custom の to では遷移しない', () => {
+    const onNavigate = vi.fn()
+    const onAction = vi.fn()
+    mountViewV2(container, build({
+      primaryAction: act({ id: 'c', kind: 'custom', to: 'w' }),
+      secondaryActions: [{ id: 'r', label: 'R', kind: 'reset', to: 'w' }, { id: 'n', label: 'N', kind: 'navigate', to: 'w' }],
+    }), 'v', { onAction, onNavigate })
+    click('c')
+    expect(onAction).toHaveBeenCalledWith('c', 'custom')
+    click('r')
+    expect(onAction).toHaveBeenCalledWith('r', 'reset')
+    expect(onNavigate).not.toHaveBeenCalled()
+    onAction.mockClear()
+    click('n')
+    expect(onNavigate).toHaveBeenCalledTimes(1)
+    expect(onNavigate).toHaveBeenCalledWith('w')
+    expect(onAction).not.toHaveBeenCalled()
+  })
+  it('syncHash: true なら location.hash も書き換える', () => {
+    window.location.hash = ''
+    mountViewV2(container, build({ primaryAction: act({ to: 'w' }) }), 'v', { syncHash: true })
+    click('send')
+    expect(window.location.hash).toBe('#w')
+  })
+})

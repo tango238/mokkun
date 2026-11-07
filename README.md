@@ -235,6 +235,25 @@ validations:
       min: 1
 ```
 
+### v2 形式のアクション（ActionV2）
+
+`mokkun: 2` の YAML では、`primaryAction` / `secondaryActions` / Section の `actions` / list の `bulkActions` に次のアクションを書きます。
+
+| キー | 意味 |
+| --- | --- |
+| `id` / `label` | 必須 |
+| `kind` | `submit`（既定）/ `navigate` / `custom` / `reset` |
+| `to` | `navigate` の遷移先 view（必須）、または `submit` の送信後の遷移先 view。`views` に無い名前はエラー |
+| `confirm` | 実行前の確認ダイアログ（`{ message, danger? }`）。`submit` + `to` では、確定したあとに送信と遷移を行う |
+
+`kind: submit` に `to` を書くと、送信したときに `onAction(id, "submit", payload)` を呼んだうえで `onNavigate(to)` を呼びます（`syncHash: true` なら `location.hash` も `to` にします）。`Mokkun.init` を使うときは `onSubmit(screen, data)` → `onNavigate(from, to)` の順に呼ばれます。
+
+0.2.1 から、submit の `to` は送信後の遷移先として使われます（以前は無視されました）。
+
+```yaml
+primaryAction: { id: login, label: "ログインする", kind: submit, to: dashboard }
+```
+
 ## 使用方法
 
 ### ライブラリビルド

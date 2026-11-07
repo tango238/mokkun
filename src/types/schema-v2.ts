@@ -118,7 +118,7 @@ export interface ActionV2 {
   id: string
   label: string
   kind?: ActionKindV2
-  /** navigate の遷移先 view */
+  /** navigate の遷移先 view、または submit の送信後の遷移先 view */
   to?: string
   placement?: ActionPlacementV2
   style?: ActionStyleV2

@@ -111,7 +111,7 @@ action の `id` は View の中で一意（主・副・`list.rowActions`・`list
 | id | string | 必須 |
 | label | string | 必須 |
 | kind | `submit` \| `navigate` \| `custom` \| `reset` | 既定 `submit` |
-| to | string | navigate の遷移先 view |
+| to | string | navigate の遷移先 view、または submit の送信後の遷移先 view（views のキー。存在しない view はパーサーがエラー）。submit では `onAction(id, "submit")` を呼んだあとに遷移する（`confirm` があれば確定後）。旧レンダラーへは navigate の `to` だけ出力する（submit の `to` は `compileV2Warnings` が警告する） |
 | placement | `header` \| `footer` \| `sticky` | 既定 `footer`。sticky は float_area |
 | style | `primary` \| `secondary` \| `tertiary` \| `danger` | primaryAction の既定は `primary`。`tertiary` は中止などのテキストボタン（旧レンダラーへは secondary として変換） |
 | role | string \| string[] | このロールにだけ表示する。省略は全ロール。現在のロールに含まれない操作（とその確認ダイアログ）は描かない。ロールが未選択なら常に描く。旧レンダラーへは出力しない |

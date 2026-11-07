@@ -18,6 +18,7 @@ type Push = (path: string, key: string, message?: string) => void
 function checkAction(a: ActionV2, path: string, push: Push): void {
   if (a.placement !== undefined) push(path, 'placement', 'placement は旧レンダラーでは無視されます（全アクションを画面ヘッダーに置きます）')
   if (a.role !== undefined) push(path, 'role')
+  if (a.to !== undefined && (a.kind ?? 'submit') === 'submit') push(path, 'to', 'submit の to（送信後の遷移先）は旧フォーマットに受け皿がないため落ちます')
 }
 
 /** 各キーを描画に使う component（02-schema-v2.md の表と同じ） */

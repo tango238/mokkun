@@ -337,7 +337,8 @@
           ]
         },
         "to": {
-          "type": "string"
+          "type": "string",
+          "description": "navigate の遷移先 view、または submit の送信後の遷移先 view（views のキー）"
         },
         "placement": {
           "enum": [
