@@ -108,7 +108,7 @@ views:
         kind: custom
         style: secondary
       - id: cancel
-        label: "やめる"
+        label: "キャンセル"
         kind: navigate
         to: order_list
         style: tertiary

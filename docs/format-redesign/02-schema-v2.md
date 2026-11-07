@@ -85,7 +85,7 @@ steps:
 | to | string | navigate の遷移先 view |
 | placement | `header` \| `footer` \| `sticky` | 既定 `footer`。sticky は float_area |
 | style | `primary` \| `secondary` \| `tertiary` \| `danger` | primaryAction の既定は `primary`。`tertiary` は中止などのテキストボタン（旧レンダラーへは secondary として変換） |
-| confirm | `{ message, danger? }` | 実行前の確認（Flow の判断） |
+| confirm | `{ message, danger? }` | 実行前の確認（Flow の判断）。危険な操作は `style: danger` で示す。`danger` は旧フォーマット変換用で、新しく書かない |
 
 ## Section
 
