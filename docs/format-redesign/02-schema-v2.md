@@ -132,12 +132,12 @@ list:
 | component | Component | ○ | 下表 |
 | required | boolean | | |
 | whyRequired | string | | 必須の理由。help に併記 |
-| example | string | | 例示。placeholder として使う |
+| example | string | | 例示。v2 レンダラーではサポートテキストに「例: …」として描画する（placeholder は使わない）。旧フォーマットへの変換時のみ placeholder になる |
 | help | string | | ヘルプ |
 | format | string | | 入力形式の説明 |
 | default | any | | 既定値 |
 | options | `{ value, label }[]` | | select / radio / checkbox / combobox / browser |
-| multiple | boolean | | select / checkbox で複数 |
+| multiple | boolean | | select / checkbox で複数。file では `props.multiple: true`（正規キー化は検討中） |
 | variant | string | | component ごとの表示 variant |
 | inline | boolean | | date のカレンダー表示（月表示をそのまま出す） |
 | width | `xs` \| `sm` \| `md` \| `lg` \| `full` | | 入力欄の幅（約 6 / 10 / 20 / 30rem / 100%）。v2 レンダラーのみ。旧フォーマットへは出力しない |
@@ -145,7 +145,7 @@ list:
 | value | any | | 表示系 component の表示値 |
 | readonly | boolean | | |
 | rules | string[] \| Rule[] | | バリデーション。文字列は rules のキー |
-| visibleWhen | Condition | | |
+| visibleWhen | Condition | | 表示条件。非表示のあいだは required を評価しない（条件付き必須は required: true + visibleWhen で書く） |
 | props | object | | component 固有の追加設定（既存フィールド属性をそのまま渡す）。`date` の `props.calendar: true` はカレンダーボタン（v2 レンダラー: 静的ボタン、ポップオーバーなし）を入力欄の横に付ける |
 
 ### Component と旧タイプの対応
@@ -174,7 +174,7 @@ list:
 | badge | | badge |
 | chip | | chip |
 | status | | status_label |
-| timeline | | timeline |
+| timeline | props.items: `[{ time, title, description? }]` | timeline |
 | map | | google_map_embed |
 
 ### Condition

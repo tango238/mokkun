@@ -628,7 +628,7 @@
         },
         "visibleWhen": {
           "$ref": "#/definitions/Condition",
-          "description": "セクション内のフィールドに適用される（セクション単位の表示制御ではない）"
+          "description": "表示条件。v2 レンダラーではセクション全体を隠す。旧フォーマットへの変換ではセクション内の各フィールドの条件になる"
         },
         "use": {
           "type": "string"
