@@ -102,7 +102,7 @@ export function mountViewV2(
   }
 }
 
-export { holdV2Styles } from './styles'
+export { holdV2Styles, MOKKUN_V2_CSS } from './styles'
 export { V2_VIEW_STATES }
 export { availableStates, parseViewState, resolveRole, resolveViewState, V2_STATE_LABELS } from './view-state'
 export type { V2RenderOptions, V2ViewState }

@@ -1,6 +1,6 @@
 {
   "name": "mokkun",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "YAML-based presentation and form builder",
   "type": "module",
   "bin": {
@@ -15,7 +15,8 @@
       "import": "./dist/mokkun.esm.js",
       "require": "./dist/mokkun.js"
     },
-    "./style.css": "./dist/mokkun.css"
+    "./style.css": "./dist/mokkun.css",
+    "./v2.css": "./dist/mokkun-v2.css"
   },
   "files": [
     "bin/cli.mjs",
@@ -23,6 +24,7 @@
     "dist/mokkun.js",
     "dist/mokkun.esm.js",
     "dist/mokkun.css",
+    "dist/mokkun-v2.css",
     "dist/mokkun.js.map",
     "dist/mokkun.esm.js.map",
     "dist/types",

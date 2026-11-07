@@ -353,6 +353,38 @@ instance.showScreen('login');
 
 ```
 
+### 静的な HTML として使う（iframe の srcdoc など）
+
+`renderViewV2` が返す HTML 文字列を、`mountViewV2` を使わずに iframe の `srcdoc` などへ入れて表示できます。このとき v2 の描画に必要な CSS（DADS + v2）は自動では入らないので、利用側で一緒に入れます。
+
+- `MOKKUN_V2_CSS`（`Mokkun.v2Css` も同じ）: DADS と v2 のスタイルを結合した CSS 文字列。`mountViewV2` が差し込む `<style>` と同じ中身です
+- `mokkun/v2.css`（`dist/mokkun-v2.css`）: 同じ中身の CSS ファイル。`<link>` で読み込む場合に使います
+
+`v2.css` はホストのページに直接 `<link>` しないでください。DADS の CSS は `html` / `a` / `:root` などの要素セレクタに当たるので、iframe など別の文書の中で読み込みます。
+
+```ts
+import { parseYamlV2, renderViewV2, MOKKUN_V2_CSS } from 'mokkun'
+
+const result = parseYamlV2(yamlText)
+if (result.success) {
+  const html = renderViewV2(result.data, 'list')
+  iframe.srcdoc = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${MOKKUN_V2_CSS}</style></head><body>${html}</body></html>`
+}
+```
+
+静的な HTML にはクリックの処理が付きません。画面の遷移などは、次の属性を見て利用側で扱ってください（`mountViewV2` を使うとこれらは自動で結線されます）。
+
+| 属性 | 意味 |
+| --- | --- |
+| `data-nav-view` | グローバルナビ・パンくずなどの遷移先 view 名 |
+| `data-navigate-to` | navigate アクション（と submit の `to`）の遷移先 view 名 |
+| `data-submenu-toggle` | サブメニューの開閉 |
+| `data-action`（と `data-action-kind`） | アクションのボタン。`data-action` がアクション ID、`data-action-kind` が submit / custom / reset の種別。利用側でこれらの押下を通知として扱います |
+
+そのほかの操作（確認ダイアログ・タブ・並べ替え・繰り返し・表示条件など）は静的な HTML では動きません。必要なら `mountViewV2` を使ってください。
+
+なお、親ページの CSP は srcdoc の iframe にも効きます。`font-src` が厳しいと Google Fonts（Noto Sans JP）を読めず、OS の標準フォントで表示されます。
+
 ### サンプルファイル
 
 `examples/`フォルダに動作するサンプルが用意されています：

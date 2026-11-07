@@ -363,3 +363,30 @@ view:
     })
   })
 })
+
+describe('MOKKUN_V2_CSS（静的 HTML 用の CSS）', () => {
+  it('空でなく、v2 と DADS の主要なセレクタを含む', async () => {
+    const { MOKKUN_V2_CSS } = await import('../lib')
+    expect(MOKKUN_V2_CSS.length).toBeGreaterThan(0)
+    expect(MOKKUN_V2_CSS).toContain('.mokkun-v2')
+    expect(MOKKUN_V2_CSS).toContain('.dads-')
+    expect(Mokkun.v2Css).toBe(MOKKUN_V2_CSS)
+  })
+
+  it('mountViewV2 が差し込む <style> の中身と同じ', async () => {
+    const { mountViewV2, parseYamlV2, MOKKUN_V2_CSS } = await import('../lib')
+    const r = parseYamlV2('mokkun: 2\napp:\n  name: A\nviews:\n  home:\n    title: ホーム\n    goal: g\n    sections: []\n')
+    if (!r.success) throw new Error(r.errors.map(e => e.message).join(', '))
+    const el = document.createElement('div')
+    document.body.appendChild(el)
+    const ctl = mountViewV2(el, r.data, 'home')
+    expect(document.getElementById('mokkun-v2-styles')?.textContent).toBe(MOKKUN_V2_CSS)
+    ctl.destroy()
+    el.remove()
+  })
+
+  it('holdV2Styles がランタイムで export されている', async () => {
+    const lib = await import('../lib')
+    expect(typeof lib.holdV2Styles).toBe('function')
+  })
+})

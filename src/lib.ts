@@ -24,7 +24,7 @@ import {
   getAvailableThemes,
   getCurrentTheme,
 } from './theme'
-import { mountViewV2, renderViewV2, holdV2Styles, availableStates, parseViewState, resolveRole, resolveViewState, V2_STATE_LABELS, type V2Controller, type V2Callbacks, type V2ViewState } from './renderer-v2'
+import { mountViewV2, renderViewV2, holdV2Styles, MOKKUN_V2_CSS, availableStates, parseViewState, resolveRole, resolveViewState, V2_STATE_LABELS, type V2Controller, type V2Callbacks, type V2ViewState } from './renderer-v2'
 import { compileV2Warnings } from './parser/v2/compile-warnings'
 import type { MokkunSchema, ScreenDefinition, BuiltInThemeId } from './types'
 import type { MokkunV2Schema } from './types/schema-v2'
@@ -467,6 +467,8 @@ export const Mokkun = {
     getScreenNames,
     findFieldById,
   },
+  /** v2 の描画に必要な CSS（DADS + v2）。renderViewV2 の HTML を iframe の srcdoc などで表示するときに使う */
+  v2Css: MOKKUN_V2_CSS,
   /** Theme management */
   theme: {
     apply: applyTheme,
@@ -483,7 +485,7 @@ if (typeof window !== 'undefined') {
 export type { MokkunSchema, ScreenDefinition, BuiltInThemeId, MokkunV2Schema }
 
 // v2 レンダラー（DADS 準拠）
-export { renderViewV2, mountViewV2, parseYamlV2, parseV2Document, isV2Document, compileV2Warnings }
+export { renderViewV2, mountViewV2, holdV2Styles, MOKKUN_V2_CSS, parseYamlV2, parseV2Document, isV2Document, compileV2Warnings }
 export type { V2Controller, V2Callbacks, V2ViewState }
 export type { V2RenderOptions, V2ActionPayload } from './renderer-v2'
 export type { V2CompileWarning } from './parser/v2/compile-warnings'

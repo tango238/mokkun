@@ -9,6 +9,12 @@
 import dadsCss from './dads.css?inline'
 import v2Css from './mokkun-v2.css?inline'
 
+/**
+ * v2 の描画に必要なすべての CSS（DADS + v2）。renderViewV2 の HTML を iframe の srcdoc などで
+ * 静的に表示するときに、利用側が <style> として入れる。mountViewV2 が差し込む <style> と同じ中身。
+ */
+export const MOKKUN_V2_CSS: string = `${dadsCss}\n${v2Css}`
+
 const STYLE_ID = 'mokkun-v2-styles'
 /** スタイルを必要としている保持者の数（0 になったら <style> を外す） */
 let holders = 0
@@ -17,7 +23,7 @@ function insertStyle(): void {
   if (typeof document === 'undefined' || document.getElementById(STYLE_ID)) return
   const style = document.createElement('style')
   style.id = STYLE_ID
-  style.textContent = `${dadsCss}\n${v2Css}`
+  style.textContent = MOKKUN_V2_CSS
   document.head.appendChild(style)
 }
 
