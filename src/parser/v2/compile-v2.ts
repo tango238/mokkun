@@ -192,7 +192,13 @@ function compileField(ef: ExpandedField, ruleDefs: Record<string, RuleV2> | unde
   }
 
   // props は最後に merge。v2 は camelCase なので内部の snake_case キーへ正規化する
-  if (f.props) Object.assign(out, normalizeKeysDeep(f.props) as Record<string, unknown>)
+  if (f.props) {
+    const props = { ...(normalizeKeysDeep(f.props) as Record<string, unknown>) }
+    // 安全策: id / type は props で上書きさせない（parseV2 でもエラーにしている）
+    delete props.id
+    delete props.type
+    Object.assign(out, props)
+  }
   return out as unknown as InputField
 }
 

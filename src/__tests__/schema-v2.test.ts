@@ -42,7 +42,9 @@ describe('schema-v2.json', () => {
     const data = loadSample()
     data.views.order_form.sections[0].fields[0].component = 'hologram'
     expect(validate(data)).toBe(false)
-    expect(validate.errors?.some((e) => e.instancePath.endsWith('/component'))).toBe(true)
+    expect(validate.errors).toContainEqual(
+      expect.objectContaining({ keyword: 'enum', instancePath: '/views/order_form/sections/0/fields/0/component' })
+    )
   })
 
   it('rejects unknown keys and a missing mokkun: 2', () => {
@@ -50,33 +52,56 @@ describe('schema-v2.json', () => {
     const extra = loadSample()
     extra.views.order_form.sections[0].fields[0].unknownKey = 1
     expect(validate(extra)).toBe(false)
+    expect(validate.errors).toContainEqual(
+      expect.objectContaining({
+        keyword: 'additionalProperties',
+        instancePath: '/views/order_form/sections/0/fields/0',
+        params: { additionalProperty: 'unknownKey' },
+      })
+    )
 
     const noVersion = loadSample()
     delete noVersion.mokkun
     expect(validate(noVersion)).toBe(false)
+    expect(validate.errors).toContainEqual(
+      expect.objectContaining({ keyword: 'required', instancePath: '', params: { missingProperty: 'mokkun' } })
+    )
   })
 
   it('Pattern accepts only fields/note; navigate needs "to"; list kind needs "list"; reveal/repeatable need form', () => {
     const { validate } = createValidator()
+    const errorsOf = (data: unknown) => {
+      expect(validate(data)).toBe(false)
+      return validate.errors ?? []
+    }
+
     const withPattern = loadSample()
     withPattern.patterns = { p: { fields: [], note: 'n', title: 'x' } }
-    expect(validate(withPattern)).toBe(false)
+    expect(errorsOf(withPattern)).toContainEqual(
+      expect.objectContaining({ keyword: 'additionalProperties', instancePath: '/patterns/p', params: { additionalProperty: 'title' } })
+    )
 
     const nav = loadSample()
     delete nav.views.order_form.primaryAction.to
-    expect(validate(nav)).toBe(false)
+    expect(errorsOf(nav)).toContainEqual(
+      expect.objectContaining({ keyword: 'required', instancePath: '/views/order_form/primaryAction', params: { missingProperty: 'to' } })
+    )
 
     const list = loadSample()
     delete list.views.order_list.sections[1].list
-    expect(validate(list)).toBe(false)
+    expect(errorsOf(list)).toContainEqual(
+      expect.objectContaining({ keyword: 'required', instancePath: '/views/order_list/sections/1', params: { missingProperty: 'list' } })
+    )
 
     const reveal = loadSample()
     reveal.views.order_confirm.sections[0].reveal = 'collapsed'
-    expect(validate(reveal)).toBe(false)
+    expect(errorsOf(reveal).some((e) => e.keyword === 'not' && e.instancePath === '/views/order_confirm/sections/0')).toBe(true)
 
     const emptyLabel = loadSample()
     emptyLabel.views.order_form.sections[0].fields[0].label = ''
-    expect(validate(emptyLabel)).toBe(false)
+    expect(errorsOf(emptyLabel)).toContainEqual(
+      expect.objectContaining({ keyword: 'minLength', instancePath: '/views/order_form/sections/0/fields/0/label' })
+    )
 
     const okPattern = loadSample()
     okPattern.patterns = { p: { fields: [{ item: 'x', label: 'X', component: 'text' }], note: 'n' } }

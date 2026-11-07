@@ -255,7 +255,18 @@ function validateV2(data: Obj): ParseError[] {
       }
     }
     if (field.visibleWhen !== undefined) checkConditionShape(field.visibleWhen, `${path}.visibleWhen`)
-    if (field.props !== undefined && !isObject(field.props)) add('INVALID_VALUE', 'props must be an object', `${path}.props`)
+    if (field.props !== undefined) {
+      if (!isObject(field.props)) {
+        add('INVALID_VALUE', 'props must be an object', `${path}.props`)
+      } else {
+        // id / type は item / component から決まるため props で上書きさせない
+        for (const key of ['id', 'type']) {
+          if (Object.hasOwn(field.props, key)) {
+            add('INVALID_VALUE', `props.${key} is not allowed (it is derived from item / component)`, `${path}.props.${key}`)
+          }
+        }
+      }
+    }
   }
 
   // --- patterns ---
@@ -337,6 +348,8 @@ function validateV2(data: Obj): ParseError[] {
     // 展開後の id（重複検出と visibleWhen 参照チェック用）
     const fieldIds = new Set<string>()
     const conditions: Array<{ item: string; path: string }> = []
+    // パターン由来の項目（bare 名 → 前置後 id）。参照ミスのヒント用
+    const patternIds: Array<{ item: string; id: string }> = []
     const sectionIds = new Set<string>()
 
     view.sections.forEach((section, si) => {
@@ -376,6 +389,9 @@ function validateV2(data: Obj): ParseError[] {
       }
 
       if (kind === 'list') {
+        if (section.fields !== undefined) {
+          add('INVALID_VALUE', 'fields is not valid for kind "list" (use "list.columns")', `${sp}.fields`)
+        }
         const list = section.list
         if (!isObject(list)) {
           add('MISSING_REQUIRED_FIELD', 'Section of kind "list" must have "list"', `${sp}.list`)
@@ -423,6 +439,7 @@ function validateV2(data: Obj): ParseError[] {
           : `${sp}.fields[${i - expanded.filter(e => e.fromPattern).length}].item`
         if (fieldIds.has(ef.id)) add('INVALID_VALUE', `Duplicate field id "${ef.id}" in view "${viewName}"`, fp)
         fieldIds.add(ef.id)
+        if (ef.fromPattern) patternIds.push({ item: ef.field.item, id: ef.id })
         const cond = ef.field.visibleWhen as FieldV2['visibleWhen'] | undefined
         if (isObject(cond) && isNonEmptyString((cond as Obj).item)) {
           conditions.push({ item: cond.item, path: ef.fromPattern ? `${sp}.use` : `${fp.replace(/\.item$/, '')}.visibleWhen.item` })
@@ -431,7 +448,11 @@ function validateV2(data: Obj): ParseError[] {
     })
 
     for (const c of conditions) {
-      if (!fieldIds.has(c.item)) add('INVALID_VALUE', `visibleWhen references unknown field "${c.item}"`, c.path)
+      if (!fieldIds.has(c.item)) {
+        const hit = patternIds.find(p => p.item === c.item)
+        const hint = hit ? `（パターン由来の項目は ${hit.id} で参照します）` : ''
+        add('INVALID_VALUE', `visibleWhen references unknown field "${c.item}"${hint}`, c.path)
+      }
     }
   }
 
@@ -451,7 +472,7 @@ export function parseV2(data: unknown): ParseResult<MokkunSchema> {
       errors: [
         {
           type: 'SCHEMA_VALIDATION_ERROR',
-          message: `unsupported mokkun format version: ${JSON.stringify(data.mokkun)} (expected 2)`,
+          message: `unsupported mokkun format version: ${JSON.stringify(data.mokkun)} (expected the number 2)`,
           path: 'mokkun',
         },
       ],

@@ -7,6 +7,7 @@ import { readFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { parseYaml } from '../parser/yaml-parser'
 import { isV2Document, parseV2 } from '../parser/v2/parse-v2'
+import { compileV2 } from '../parser/v2/compile-v2'
 import { renderScreen } from '../renderer/screen-renderer'
 import type { MokkunSchema, FormSection, InputField, ScreenDefinition } from '../types/schema'
 
@@ -302,6 +303,54 @@ describe('v2 parse: fields, rules, patterns, ids', () => {
     expect(p({ item: 'ghost', equals: 1 }, 'field')).toContain('views.v.sections[0].fields[0].visibleWhen.item')
     expect(p({ equals: 1 }, 'section')).toContain('views.v.sections[0].visibleWhen.item')
     expect(p({ item: 'ghost', equals: 1 }, 'section')).toContain('views.v.sections[0].visibleWhen.item')
+  })
+})
+
+describe('v2 parse: props, list fields, hints', () => {
+  it('props.id / props.type are rejected, and stripped by compileV2 as a safety net', () => {
+    const doc = mk({}, { sections: [{ id: 's', title: 'S', fields: [field({ props: { id: 'x', type: 'select', inputType: 'email' } })] }] })
+    const paths = errorPaths(doc)
+    expect(paths).toContain('views.v.sections[0].fields[0].props.id')
+    expect(paths).toContain('views.v.sections[0].fields[0].props.type')
+    const r = parseV2(doc)
+    if (!r.success) expect(r.errors.every((e) => e.type === 'INVALID_VALUE')).toBe(true)
+    // 検証を通さず直接コンパイルしても上書きされない
+    const out = compileV2(doc as any).view.v.sections![0].input_fields![0] as any
+    expect(out.id).toBe('f')
+    expect(out.type).toBe('text')
+    expect(out.input_type).toBe('email')
+  })
+
+  it('fields on a kind: list section is an error', () => {
+    const paths = errorPaths(mk({}, {
+      sections: [{ id: 's', title: 'S', kind: 'list', list: { columns: [{ id: 'a', label: 'A' }] }, fields: [field({})] }],
+    }))
+    expect(paths).toContain('views.v.sections[0].fields')
+  })
+
+  it('version error wording', () => {
+    const r = parseV2({ mokkun: 3 })
+    expect(r.success).toBe(false)
+    if (!r.success) expect(r.errors[0].message).toBe('unsupported mokkun format version: 3 (expected the number 2)')
+  })
+
+  it('unknown visibleWhen item hints at the prefixed id of a pattern field', () => {
+    const r = parseV2(mk({
+      patterns: { addr: { fields: [field({ item: 'zip' })] } },
+    }, {
+      sections: [
+        { id: 'ship', title: 'S', use: 'addr' },
+        { id: 'other', title: 'O', fields: [field({ item: 'x', visibleWhen: { item: 'zip', equals: 1 } })] },
+      ],
+    }))
+    expect(r.success).toBe(false)
+    if (!r.success) {
+      const e = r.errors.find((x) => x.path === 'views.v.sections[1].fields[0].visibleWhen.item')!
+      expect(e.message).toContain('（パターン由来の項目は ship_zip で参照します）')
+    }
+    // 該当しない場合はヒントなし
+    const r2 = parseV2(mk({}, { sections: [{ id: 's', title: 'S', fields: [field({ visibleWhen: { item: 'ghost', equals: 1 } })] }] }))
+    if (!r2.success) expect(r2.errors[0].message).not.toContain('パターン由来')
   })
 })
 

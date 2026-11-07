@@ -439,8 +439,10 @@ export class Badge {
       ? ` aria-label="${escapeHtml(`${field.label ?? ''} ${typeof badgeField.count === 'number' ? `${badgeField.count}件` : ''}`.trim())}"`
       : ''
 
+    const captionHtml = valueIsText && field.label ? `<span class="field-caption">${escapeHtml(field.label)}</span>` : ''
+    const ariaAttr = valueIsText && field.label ? ` aria-label="${escapeHtml(`${field.label}: ${String(badgeField.value)}`)}"` : ''
     const badgeHtml = `
-      <span class="${classes.join(' ')}" data-color="${escapeHtml(color)}" data-size="${escapeHtml(size)}"${dotAria}>${labelHtml}${valueHtml}</span>
+      ${captionHtml}<span class="${classes.join(' ')}" data-color="${escapeHtml(color)}" data-size="${escapeHtml(size)}"${dotAria || ariaAttr}>${labelHtml}${valueHtml}</span>
     `
 
     return createFieldWrapper(field, badgeHtml)

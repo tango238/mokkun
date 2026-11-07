@@ -133,4 +133,20 @@ describe('value as display text (badge / chip / status_label)', () => {
     expect(c.querySelector('.badge-label')!.textContent).toBe('L')
     expect(dom(Badge.renderField(f({ type: 'badge' }))).querySelector('.badge-label')!.textContent).toBe('L')
   })
+
+  it('the label survives when value is shown: caption plus aria-label', () => {
+    const s = dom(StatusLabel.renderField(f({ type: 'status_label', label: 'ステータス', value: '処理中' })))
+    expect(s.querySelector('.field-caption')!.textContent).toBe('ステータス')
+    expect(s.querySelector('.mokkun-status-label')!.getAttribute('aria-label')).toBe('ステータス: 処理中')
+    const c = dom(Chip.renderField(f({ type: 'chip', label: '区分', value: 'VIP' })))
+    expect(c.querySelector('.field-caption')!.textContent).toBe('区分')
+    expect(c.querySelector('.mokkun-chip')!.getAttribute('aria-label')).toBe('区分: VIP')
+    const b = dom(Badge.renderField(f({ type: 'badge', label: '通知', value: '新着' })))
+    expect(b.querySelector('.field-caption')!.textContent).toBe('通知')
+    expect(b.querySelector('.mokkun-badge')!.getAttribute('aria-label')).toBe('通知: 新着')
+    // value が無ければ従来どおり（キャプション・aria-label なし）
+    const plain = dom(StatusLabel.renderField(f({ type: 'status_label' })))
+    expect(plain.querySelector('.field-caption')).toBeNull()
+    expect(plain.querySelector('.mokkun-status-label')!.hasAttribute('aria-label')).toBe(false)
+  })
 })
